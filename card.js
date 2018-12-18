@@ -7,6 +7,27 @@ function Card(suite, rank) {
 
 Card.prototype.display = function () {
     var s = '';
+    switch (this.suite) {
+        case Card.SUITE.SPADE:
+            s = '\u2660';
+            break;
+        case Card.SUITE.HEART:
+            s = '\u2665';
+            break;
+        case Card.SUITE.CLUB:
+            s = '\u2663';
+            break;
+        case Card.SUITE.DIAMOND:
+            s = '\u2666';
+            break;
+        case Card.SUITE.SMALL_JOKER:
+            s = '\u2657';
+            break;
+        case Card.SUITE.BIG_JOKER:
+            s = '\u265b';
+            break;
+    }
+
     switch (this.rank) {
         case 11:
             s += 'J';
@@ -27,16 +48,16 @@ Card.prototype.display = function () {
             s += this.rank;
     }
 
-    return this.suite.symbol + s;
+    return s;
 };
 
 Card.SUITE = {
-	CLUB: {val: 1, symbol:'\u2663'},
-	DIAMOND: {val: 2, symbol: '\u2666'},
-	HEART: {val: 3, symbol: '\u2665'},
-	SPADE: {val: 4, symbol: '\u2660'},
-	SMALL_JOKER: {val: 5, symbol: '\u2657'},
-	BIG_JOKER: {val: 6, symbol: '\u265b'}
+	CLUB: 'C',
+    DIAMOND: 'D',
+    HEART: 'H',
+    SPADE: 'S',
+    SMALL_JOKER: 'V',
+    BIG_JOKER: 'W'
 };
 
 Card.RANK = {
@@ -76,6 +97,7 @@ Card.prototype.isTrump = function (trump_suite, game_rank) {
 };
 
 Card.prototype.trumpRank = function (trump_suite, game_rank) {
+    debugger;
     if (this.rank === game_rank) {
         return this.suite === trump_suite ? 15 : 14;
     }
@@ -100,7 +122,7 @@ Card.compare = function(a,b) {
 		return a.rank === b.rank ? 0 : (a.rank > b.rank ? 1 : -1);
 	}
 
-	return a.suite.val > b.suite.val ? 1 : -1;
+	return a.suite > b.suite ? 1 : -1;
 };
 
 Card.getRanks = function (cards) {
@@ -113,12 +135,16 @@ Card.getRanks = function (cards) {
     return s;
 };
 
-Card.allConnected = function (cards, trump_suite, game_rank) {
-    var minRank = cards[0].trumpRank(trump_suite, game_rank);
+Card.allConnected = function (card_keys) {
+    if (!Array.isArray(card_keys) || card_keys.length < 1) return false;
+
+    debugger;
+    var minRank = Number.parseInt(card_keys[0].substring(1));
     var maxRank = minRank;
     var ranks = [minRank];
-    for (var x = 1, c; c = cards[x]; x++) {
-        var cRank = c.trumpRank(trump_suite, game_rank);
+    var cRank;
+    for (var x = 1, ck; ck = card_keys[x]; x++) {
+        cRank = Number.parseInt(ck.substring(1));
         if (ranks.indexOf(cRank) >= 0) return false;
         ranks.push(cRank);
         if (cRank < minRank) {
@@ -128,5 +154,5 @@ Card.allConnected = function (cards, trump_suite, game_rank) {
         }
     }
 
-    return maxRank - minRank + 1 === cards.length;
+    return maxRank - minRank + 1 === card_keys.length;
 };

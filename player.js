@@ -48,7 +48,10 @@ Player.prototype.addCard = function (card) {
 
 Player.prototype.removeCard = function (card) {
     var x = this.trumps.indexOf(card);
-    if (x >= 0) this.trumps.splice(x, 1);
+    if (x >= 0) {
+        this.trumps.splice(x, 1);
+        return;
+    }
     switch (card.suite) {
         case Card.SUITE.SPADE:
             x = this.spades.indexOf(card);
@@ -129,14 +132,40 @@ Player.prototype.showHand = function () {
 Player.prototype.pushData = function () {
     if (this.sock == null) return;
 
+    var S = Card.getRanks(this.spades);
+    var H = Card.getRanks(this.hearts);
+    var D = Card.getRanks(this.diamonds);
+    var C = Card.getRanks(this.clubs);
+    var T = [];
+
+    for (var x = 0, c; c = this.trumps[x]; x++) {
+        switch (c.suite) {
+            case Card.SUITE.SPADE:
+                S.push(c.rank);
+                break;
+            case Card.SUITE.HEART:
+                H.push(c.rank);
+                break;
+            case Card.SUITE.CLUB:
+                C.push(c.rank);
+                break;
+            case Card.SUITE.DIAMOND:
+                D.push(c.rank);
+                break;
+            default:
+                T.push(c.rank);
+                break;
+        }
+    }
+
     var json = {
         rank: this.currentRank,
         seat: this.currentTable.getSeat(this),
-        S: Card.getRanks(this.spades),
-        H: Card.getRanks(this.hearts),
-        D: Card.getRanks(this.diamonds),
-        C: Card.getRanks(this.clubs),
-        T: Card.getRanks(this.trumps)
+        S: S,
+        H: H,
+        D: C,
+        C: D,
+        T: T
     };
 
     try {

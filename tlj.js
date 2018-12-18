@@ -18,23 +18,61 @@ while (players.length < 6) {
 var game = new Game(players, 4);
 
 var n = 1;
-//players.forEach(function (p) {
+players.forEach(function (p) {
 //    console.log('' + (n++));
 //    console.log(p.showHand());
-//    p.currentRank = 10;
-//});
+    p.currentRank = 14;
+});
 
 game.setContractor(players[4]);
-//game.setTrump(new Card(Card.SUITE.HEART, 5));
-game.setTrump(new Card(Card.SUITE.SMALL_JOKER, Card.RANK.SmallJoker));
+//game.setTrump(new Card(Card.SUITE.CLUB, 7));
+//game.setTrump(new Card(Card.SUITE.SPADE, 14));
+game.setTrump(new Card(Card.SUITE.HEART, 14));
+//game.setTrump(new Card(Card.SUITE.HEART, 7));
+//game.setTrump(new Card(Card.SUITE.SMALL_JOKER, Card.RANK.SmallJoker));
 n = 1;
 //players.forEach(function (p) {
 //    console.log('' + (n++));
 //    console.log(p.showHand());
 //});
 
+//console.log(players[4].currentRank);
+//console.log(game.rank);
 var cards = [];
-cards.push(new Card(Card.SUITE.SPADE, 3));
-cards.push(new Card(Card.SUITE.SPADE, 3));
+//cards.push(new Card(Card.SUITE.SPADE, 5));
+//cards.push(new Card(Card.SUITE.SPADE, 3));
+//cards.push(new Card(Card.SUITE.SPADE, 3));
+//cards.push(new Card(Card.SUITE.SPADE, 4));
+//cards.push(new Card(Card.SUITE.SPADE, 4));
+//cards.push(new Card(Card.SUITE.SPADE, 5));
+//cards.push(new Card(Card.SUITE.SPADE, 5));
+//cards.push(new Card(Card.SUITE.SPADE, 6));
+//cards.push(new Card(Card.SUITE.SPADE, 6));
+//cards.push(new Card(Card.SUITE.SPADE, 13));
+//cards.push(new Card(Card.SUITE.SPADE, 13));
+//cards.push(new Card(Card.SUITE.SPADE, 13));
+cards.push(new Card(Card.SUITE.SPADE, 14));
+cards.push(new Card(Card.SUITE.SPADE, 14));
+cards.push(new Card(Card.SUITE.SPADE, 14));
+//cards.push(new Card(Card.SUITE.SPADE, 8));
+//cards.push(new Card(Card.SUITE.SPADE, 8));
+
+//cards.push(new Card(Card.SUITE.HEART, 14));
+//cards.push(new Card(Card.SUITE.HEART, 14));
+cards.push(new Card(Card.SUITE.HEART, 13));
+cards.push(new Card(Card.SUITE.HEART, 13));
+cards.push(new Card(Card.SUITE.HEART, 13));
+//cards.push(new Card(Card.SUITE.SMALL_JOKER, Card.RANK.SmallJoker));
+//cards.push(new Card(Card.SUITE.SMALL_JOKER, Card.RANK.SmallJoker));
+//cards.push(new Card(Card.SUITE.SMALL_JOKER, Card.RANK.SmallJoker));
+//cards.push(new Card(Card.SUITE.BIG_JOKER, Card.RANK.BigJoker));
+//cards.push(new Card(Card.SUITE.BIG_JOKER, Card.RANK.BigJoker));
+
+//cards.push(new Card(Card.SUITE.HEART, 13));
+//cards.push(new Card(Card.SUITE.HEART, 13));
+//cards.push(new Card(Card.SUITE.CLUB, 7));
+//cards.push(new Card(Card.SUITE.CLUB, 7));
+debugger;
 console.log('Hand type: ' + game.getHandType(players[0], cards));
+//console.log('Hand type: ' + game.getHandType(players[0], new Card(Card.SUITE.SPADE, 5)));
 
