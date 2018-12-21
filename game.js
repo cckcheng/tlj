@@ -32,7 +32,12 @@ function Hand(player, cards, trump, rank) {
     this.cards = cards;
     this.type = {cat: 0, len: 1};
     this.isTrump = false;
+    this.isFlop = false;    // play mixed cards together
     this.maxRank = 0;
+    this.minRank = 0;
+    this.totalPairs = 0;
+    this.totalTrips = 0;
+    this.totalQuads = 0;
 
     this.doAnalysis(cards, trump, rank);
 
@@ -71,19 +76,20 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
         this.type.cat = Hand.COMBINATION.SINGLE;
         this.type.len = this.cardNumber;
         this.isTrump = cards.isTrump(trump, rank);
-        this.maxRank = cards.rank;
+        this.minRank = this.maxRank = cards.rank;
     } else if (cards.length == 1) {
         this.cardNumber = 1;
         this.type.cat = Hand.COMBINATION.SINGLE;
         this.type.len = this.cardNumber;
         this.isTrump = cards[0].isTrump(trump, rank);
-        this.maxRank = cards[0].rank;
+        this.minRank = this.maxRank = cards[0].rank;
     } else {
+        // >= 2 cards
         this.cardNumber = cards.length;
         this.type.len = this.cardNumber;
         var c0 = cards[0];
         var tRank = c0.trumpRank(trump, rank);
-        this.maxRank = tRank;
+        this.minRank = this.maxRank = tRank;
         this.isTrump = c0.isTrump(trump, rank);
         var ck = c0.suite + tRank;
         stat[ck] = 1;
@@ -103,6 +109,7 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
             }
 
             tRank = c.trumpRank(trump, rank);
+            if (tRank < this.minRank) this.minRank = tRank;
             if (tRank > this.maxRank) this.maxRank = tRank;
             ck = c.suite + tRank;
             if (stat[ck]) {
@@ -114,21 +121,52 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
 
         this.type.cat = Hand.COMBINATION.MIXED;
         var values = Object.values(stat);
-        if (Hand.isMixed(values)) return;
-
-        if (this.cardNumber === 2) {
-            if (values.length === 1) this.type.cat = Hand.COMBINATION.PAIR;
-        } else if (this.cardNumber === 3) {
-            if (values.length === 1) this.type.cat = Hand.COMBINATION.TRIPS;
-        } else if (this.cardNumber === 4) {
-            if (values.length === 1) {
-                this.type.cat = Hand.COMBINATION.QUADS;
-            } else if (values.length === 2) {
-                if (Card.allConnected(Object.keys(stat))) this.type.cat = Hand.COMBINATION.TRACTOR2;
+        for (var x = 0, v; v = values[x]; x++) {
+            if (v < 2) continue;
+            if (v === 4) {
+                this.totalQuads++;
+                this.totalTrips++;
+                this.totalPairs += 2;
+            } else if (v === 3) {
+                this.totalTrips++;
+                this.totalPairs++;
+            } else if (v === 2) {
+                this.totalPairs++;
             }
-        } else {
-            // cardNumber > 4
-            if (!Card.allConnected(Object.keys(stat))) return;
+        }
+
+        if (Hand.isMixed(values)) {
+            this.isFlop = true;
+            return;
+        }
+
+        if (values[0] === 1) {
+            this.type.cat = Hand.COMBINATION.SINGLE;
+            this.type.len = 1;
+            this.isFlop = true;
+            return;
+        }
+
+        if (values.length === 1 || Card.allSplit(Object.keys(stat))) {
+            this.isFlop = true;
+            switch (values[0]) {
+                case 2:
+                    this.type.cat = Hand.COMBINATION.PAIR;
+                    this.type.len = 2;
+                    break;
+                case 3:
+                    this.type.cat = Hand.COMBINATION.TRIPS;
+                    this.type.len = 3;
+                    break;
+                case 4:
+                    this.type.cat = Hand.COMBINATION.QUADS;
+                    this.type.len = 4;
+                    break;
+            }
+            return;
+        }
+
+        if (Card.allConnected(Object.keys(stat))) {
             switch (values[0]) {
                 case 2:
                     this.type.cat = Hand.COMBINATION.TRACTOR2;
@@ -140,7 +178,10 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
                     this.type.cat = Hand.COMBINATION.TRACTOR4;
                     break;
             }
+            return;
         }
+
+        this.isFlop = true;
     }
 };
 
@@ -165,16 +206,107 @@ Hand.COMBINATION = {
     MIXED: 111
 };
 
-function Round(trump, rank) {
+function Round(players, trump, rank) {
     this.playList = [];
     var leadingHand = null;
+    var firstHand = null;
+
+    function findHighers(cards, hand_type, rank, is_trump) {
+        if (cards == null || cards.length < 1) return false;
+        if (hand_type.cat === Hand.COMBINATION.SINGLE) {
+            var c = cards[cards.length - 1];
+            return (is_trump ? c.trumpRank(trump, rank) : c.rank) > rank;
+        }
+
+        debugger;
+        var nRequired = hand_type.len;
+        if (cards.length < nRequired) return false;
+
+        switch (hand_type.cat) {
+            case Hand.COMBINATION.QUADS:
+            case Hand.COMBINATION.TRIPS:
+            case Hand.COMBINATION.PAIR:
+                var r0 = 0, count = 1;
+                for (var x = cards.length - 1, c; x >= 0 && (c = cards[x]); x--) {
+                    var rnk = (is_trump ? c.trumpRank(trump, rank) : c.rank);
+                    if (rnk <= rank) return false;
+                    if (rnk != r0) {
+                        r0 = rnk;
+                        count = 1;
+                        continue;
+                    }
+                    count++;
+                    if (count >= nRequired) {
+                        return rnk > rank;
+                    }
+                }
+                break;
+        }
+        return false;
+    }
+
+    function hasHigherCards(player, hand, suite) {
+        var hand_type = hand.type;
+        var rank = hand.minRank;
+        if (hand.isTrump) {
+            return findHighers(player.trumps, hand_type, rank, true);
+        }
+
+        switch (suite) {
+            case Card.SUITE.SPADE:
+                if (findHighers(player.spades, hand_type, rank)) return true;
+                break;
+            case Card.SUITE.HEART:
+                if (findHighers(player.hearts, hand_type, rank)) return true;
+                break;
+            case Card.SUITE.CLUB:
+                if (findHighers(player.clubs, hand_type, rank)) return true;
+                break;
+            case Card.SUITE.DIAMOND:
+                if (findHighers(player.diamonds, hand_type, rank)) return true;
+                break;
+        }
+
+        return false;
+    }
+
+    this.isValidLeadingHand = function (player, cards) {
+        if (player == null || cards == null) return false;
+        if (!Array.isArray(cards)) return true;
+        if (cards.length < 1) return false;
+        if (cards.length === 1) return true;
+        var hand = new Hand(player, cards, trump, rank);
+        if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) return false;
+        if (!hand.isFlop) return true;
+
+        debugger;
+        switch (hand.type.cat) {
+            case Hand.COMBINATION.SINGLE:
+            case Hand.COMBINATION.PAIR:
+            case Hand.COMBINATION.TRIPS:
+            case Hand.COMBINATION.QUADS:
+                for (var x = 0, p; p = players[x]; x++) {
+                    if (p === player) continue;
+                    if (hasHigherCards(p, hand, cards[0].suite)) return false;
+                }
+                return true;
+
+            default:
+                break;
+        }
+
+        return true;
+    };
+
     this.addHand = function (player, cards) {
         var hand = new Hand(player, cards, trump, rank);
+        if (firstHand == null) firstHand = hand;
         if (leadingHand == null || hand.compareTo(leadingHand) > 0) {
             leadingHand = hand;
         }
         this.playList.push(hand);
     };
+
     this.getNextLeadingPlayer = function () {
         return leadingHand.player;
     };
@@ -207,7 +339,12 @@ Game.prototype.judge = function () {
 
 Game.prototype.getHandType = function (player, cards) {
     var hand = new Hand(player, cards, this.trump, this.rank);
-    return hand.type.cat + ':' + hand.type.len;
+    return hand.type.cat + ':' + hand.type.len + ", max rank-" + hand.maxRank;
+};
+
+Game.prototype.isLeadingValid = function (player, cards) {
+    var round = new Round(this.players, this.trump, this.rank);
+    return round.isValidLeadingHand(player, cards);
 };
 
 Game.prototype.promote = function () {

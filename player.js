@@ -1,5 +1,5 @@
 var Card = require('./card');
-var table = require('./table');
+var Table = require('./table');
 
 module.exports = Player;
 

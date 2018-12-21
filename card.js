@@ -97,7 +97,7 @@ Card.prototype.isTrump = function (trump_suite, game_rank) {
 };
 
 Card.prototype.trumpRank = function (trump_suite, game_rank) {
-    debugger;
+//    debugger;
     if (this.rank === game_rank) {
         return this.suite === trump_suite ? 15 : 14;
     }
@@ -136,6 +136,7 @@ Card.getRanks = function (cards) {
 };
 
 Card.allConnected = function (card_keys) {
+    // test if all ranks are connected
     if (!Array.isArray(card_keys) || card_keys.length < 1) return false;
 
     debugger;
@@ -155,4 +156,24 @@ Card.allConnected = function (card_keys) {
     }
 
     return maxRank - minRank + 1 === card_keys.length;
+};
+
+Card.allSplit = function (card_keys) {
+    // test if all ranks are split
+    if (!Array.isArray(card_keys) || card_keys.length < 1) return false;
+
+    var ranks = [];
+    for (var x = 0, ck; ck = card_keys[x]; x++) {
+        ranks.push(Number.parseInt(ck.substring(1)));
+    }
+    ranks.sort();
+
+    debugger;
+    var r0 = ranks[0];
+    for (var x = 1, r1; r1 = ranks[x]; x++) {
+        if (r1 - r0 === 1) return false;
+        r0 = r1;
+    }
+
+    return true;
 };
