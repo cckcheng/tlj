@@ -27,8 +27,8 @@ players.forEach(function (p) {
 game.setContractor(players[4]);
 //game.setTrump(new Card(Card.SUITE.CLUB, 7));
 //game.setTrump(new Card(Card.SUITE.SPADE, 14));
-//game.setTrump(new Card(Card.SUITE.SPADE, 6));
-game.setTrump(new Card(Card.SUITE.HEART, 7));
+game.setTrump(new Card(Card.SUITE.SPADE, 6));
+//game.setTrump(new Card(Card.SUITE.HEART, 7));
 //game.setTrump(new Card(Card.SUITE.SMALL_JOKER, Card.RANK.SmallJoker));
 n = 1;
 //players.forEach(function (p) {
@@ -63,13 +63,11 @@ var cards = [];
 cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
-cards.push(new Card(Card.SUITE.HEART, 9));
 //cards.push(new Card(Card.SUITE.HEART, 9));
 //cards.push(new Card(Card.SUITE.HEART, 11));
 //cards.push(new Card(Card.SUITE.HEART, 11));
 //cards.push(new Card(Card.SUITE.HEART, 13));
 //cards.push(new Card(Card.SUITE.HEART, 13));
-cards.push(new Card(Card.SUITE.HEART, 2));
 cards.push(new Card(Card.SUITE.HEART, 2));
 cards.push(new Card(Card.SUITE.HEART, 2));
 cards.push(new Card(Card.SUITE.HEART, 2));

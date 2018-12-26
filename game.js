@@ -226,12 +226,12 @@ function Round(players, trump, rank) {
             case Hand.COMBINATION.QUADS:
             case Hand.COMBINATION.TRIPS:
             case Hand.COMBINATION.PAIR:
-                var r0 = 0, count = 1;
+                var c0 = null, count = 1;
                 for (var x = cards.length - 1, c; x >= 0 && (c = cards[x]); x--) {
                     var rnk = (is_trump ? c.trumpRank(trump, rank) : c.rank);
                     if (rnk <= rank) return false;
-                    if (rnk != r0) {
-                        r0 = rnk;
+                    if (!c.equals(c0)) {
+                        c0 = c;
                         count = 1;
                         continue;
                     }

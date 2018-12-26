@@ -113,7 +113,7 @@ Card.prototype.trumpRank = function (trump_suite, game_rank) {
 };
 
 Card.prototype.equals = function (c) {
-    if (!c) return false;
+    if (c == null) return false;
     return this.suite === c.suite && this.rank === c.rank;
 };
 
