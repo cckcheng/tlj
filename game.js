@@ -206,18 +206,19 @@ Hand.COMBINATION = {
     MIXED: 111
 };
 
-function Round(players, trump, rank) {
+function Round(players, trump, gameRank) {
     this.playList = [];
     var leadingHand = null;
     var firstHand = null;
 
-    function findHighers(cards, hand_type, rank, is_trump) {
+    function findHighers(cards, hand_type, minRank) {
         if (cards == null || cards.length < 1) return false;
         if (hand_type.cat === Hand.COMBINATION.SINGLE) {
             var c = cards[cards.length - 1];
-            return (is_trump ? c.trumpRank(trump, rank) : c.rank) > rank;
+            return c.trumpRank(trump, gameRank) > minRank;
         }
 
+        console.log(Card.showCards(cards));
         debugger;
         var nRequired = hand_type.len;
         if (cards.length < nRequired) return false;
@@ -226,18 +227,18 @@ function Round(players, trump, rank) {
             case Hand.COMBINATION.QUADS:
             case Hand.COMBINATION.TRIPS:
             case Hand.COMBINATION.PAIR:
-                var r0 = 0, count = 1;
+                var c0 = null, count = 1;
                 for (var x = cards.length - 1, c; x >= 0 && (c = cards[x]); x--) {
-                    var rnk = (is_trump ? c.trumpRank(trump, rank) : c.rank);
-                    if (rnk <= rank) return false;
-                    if (rnk != r0) {
-                        r0 = rnk;
+                    var rnk = c.trumpRank(trump, gameRank);
+                    if (rnk <= minRank) return false;
+                    if (!c.equals(c0)) {
+                        c0 = c;
                         count = 1;
                         continue;
                     }
                     count++;
                     if (count >= nRequired) {
-                        return rnk > rank;
+                        return rnk > minRank;
                     }
                 }
                 break;
@@ -247,23 +248,23 @@ function Round(players, trump, rank) {
 
     function hasHigherCards(player, hand, suite) {
         var hand_type = hand.type;
-        var rank = hand.minRank;
+        var minRank = hand.minRank;
         if (hand.isTrump) {
-            return findHighers(player.trumps, hand_type, rank, true);
+            return findHighers(player.trumps, hand_type, minRank);
         }
 
         switch (suite) {
             case Card.SUITE.SPADE:
-                if (findHighers(player.spades, hand_type, rank)) return true;
+                if (findHighers(player.spades, hand_type, minRank)) return true;
                 break;
             case Card.SUITE.HEART:
-                if (findHighers(player.hearts, hand_type, rank)) return true;
+                if (findHighers(player.hearts, hand_type, minRank)) return true;
                 break;
             case Card.SUITE.CLUB:
-                if (findHighers(player.clubs, hand_type, rank)) return true;
+                if (findHighers(player.clubs, hand_type, minRank)) return true;
                 break;
             case Card.SUITE.DIAMOND:
-                if (findHighers(player.diamonds, hand_type, rank)) return true;
+                if (findHighers(player.diamonds, hand_type, minRank)) return true;
                 break;
         }
 
@@ -275,7 +276,7 @@ function Round(players, trump, rank) {
         if (!Array.isArray(cards)) return true;
         if (cards.length < 1) return false;
         if (cards.length === 1) return true;
-        var hand = new Hand(player, cards, trump, rank);
+        var hand = new Hand(player, cards, trump, gameRank);
         if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) return false;
         if (!hand.isFlop) return true;
 
@@ -299,7 +300,7 @@ function Round(players, trump, rank) {
     };
 
     this.addHand = function (player, cards) {
-        var hand = new Hand(player, cards, trump, rank);
+        var hand = new Hand(player, cards, trump, gameRank);
         if (firstHand == null) firstHand = hand;
         if (leadingHand == null || hand.compareTo(leadingHand) > 0) {
             leadingHand = hand;
