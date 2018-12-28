@@ -98,7 +98,7 @@ Player.prototype.resortCards = function (trump_suite, game_rank) {
     this.trumps.sort(function (a, b) {
         var aRank = a.trumpRank(trump_suite, game_rank);
         var bRank = b.trumpRank(trump_suite, game_rank);
-        if (aRank === bRank) return 0;
+        if (aRank === bRank) return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
         return aRank > bRank ? 1 : -1;
     });
 };

@@ -14,8 +14,8 @@ function Deck(decks) {
             this._wholeDeck.push(new Card(Card.SUITE.CLUB, r));
             this._wholeDeck.push(new Card(Card.SUITE.HEART, r));
         }
-        this._wholeDeck.push(new Card(Card.SUITE.SMALL_JOKER, Card.RANK.SmallJoker));
-        this._wholeDeck.push(new Card(Card.SUITE.BIG_JOKER, Card.RANK.BigJoker));
+        this._wholeDeck.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
+        this._wholeDeck.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
     }
 }
 

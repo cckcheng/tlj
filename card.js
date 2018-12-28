@@ -20,12 +20,6 @@ Card.prototype.display = function () {
         case Card.SUITE.DIAMOND:
             s = '\u2666';
             break;
-        case Card.SUITE.SMALL_JOKER:
-            s = '\u2657';
-            break;
-        case Card.SUITE.BIG_JOKER:
-            s = '\u265b';
-            break;
     }
 
     switch (this.rank) {
@@ -42,7 +36,10 @@ Card.prototype.display = function () {
             s += 'A';
             break;
         case Card.RANK.SmallJoker:
+            s += '\u2657';
+            break;
         case Card.RANK.BigJoker:
+            s = '\u265b';
             break;
         default:
             s += this.rank;
@@ -56,8 +53,7 @@ Card.SUITE = {
     DIAMOND: 'D',
     HEART: 'H',
     SPADE: 'S',
-    SMALL_JOKER: 'V',
-    BIG_JOKER: 'W'
+    JOKER: 'V'
 };
 
 Card.RANK = {
@@ -119,10 +115,14 @@ Card.prototype.equals = function (c) {
 
 Card.compare = function(a,b) {
 	if(a.suite === b.suite) {
-		return a.rank === b.rank ? 0 : (a.rank > b.rank ? 1 : -1);
+		return a.rank - b.rank;
 	}
 
 	return a.suite > b.suite ? 1 : -1;
+};
+
+Card.compareNumber = function (a, b) {
+    return a - b;
 };
 
 Card.getRanks = function (cards) {
@@ -142,6 +142,16 @@ Card.showCards = function (cards) {
         s += c.display();
     }
     return s;
+};
+
+Card.sortCards = function (cards, trump_suite, game_rank) {
+    if (cards == null || !Array.isArray(cards) || cards.length <= 1) return;
+    cards.sort(function (a, b) {
+        var aRank = a.trumpRank(trump_suite, game_rank);
+        var bRank = b.trumpRank(trump_suite, game_rank);
+        if (aRank === bRank) return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
+        return aRank > bRank ? 1 : -1;
+    });
 };
 
 Card.allConnected = function (card_keys) {
@@ -175,7 +185,7 @@ Card.allSplit = function (card_keys) {
     for (var x = 0, ck; ck = card_keys[x]; x++) {
         ranks.push(Number.parseInt(ck.substring(1)));
     }
-    ranks.sort();
+    ranks.sort(Card.compareNumber);
 
     debugger;
     var r0 = ranks[0];

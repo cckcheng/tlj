@@ -1,8 +1,8 @@
 module.exports = Game;
 
-var Player = require('./player');
 var Card = require('./card');
 var Deck = require('./deck');
+var HandStat = require('./stat');
 
 function Game(players, deckNumber) {
     this.players = players;
@@ -66,6 +66,10 @@ function Hand(player, cards, trump, rank) {
 
         return -1;
     };
+
+    this.display = function () {
+        return '{' + this.type.cat + ':' + this.type.len + '}, ' + this.minRank;
+    };
 }
 
 Hand.prototype.doAnalysis = function (cards, trump, rank) {
@@ -121,6 +125,7 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
 
         this.type.cat = Hand.COMBINATION.MIXED;
         var values = Object.values(stat);
+        var cardKeys = Object.keys(stat);
         for (var x = 0, v; v = values[x]; x++) {
             if (v < 2) continue;
             if (v === 4) {
@@ -137,6 +142,7 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
 
         if (Hand.isMixed(values)) {
             this.isFlop = true;
+            this.generateSubHands(stat);
             return;
         }
 
@@ -147,7 +153,7 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
             return;
         }
 
-        if (values.length === 1 || Card.allSplit(Object.keys(stat))) {
+        if (values.length === 1 || Card.allSplit(cardKeys)) {
             this.isFlop = true;
             switch (values[0]) {
                 case 2:
@@ -166,7 +172,7 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
             return;
         }
 
-        if (Card.allConnected(Object.keys(stat))) {
+        if (Card.allConnected(cardKeys)) {
             switch (values[0]) {
                 case 2:
                     this.type.cat = Hand.COMBINATION.TRACTOR2;
@@ -182,6 +188,144 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
         }
 
         this.isFlop = true;
+        this.generateSubHands(stat);
+    }
+};
+
+Hand.prototype.generateSubHands = function (stat) {
+//    debugger;
+    var singles = [];
+    var pairs = [];
+    var trips = [];
+    var quads = [];
+    for (var ck in stat) {
+        var rnk = Number.parseInt(ck.substr(1));
+        switch (stat[ck]) {
+            case 1:
+                singles.push(rnk);
+                break;
+            case 2:
+                pairs.push(rnk);
+                break;
+            case 3:
+                trips.push(rnk);
+                break;
+            case 4:
+                quads.push(rnk);
+                break;
+        }
+    }
+
+    this.subHands = [];
+    if (singles.length > 0) {
+        singles.sort(Card.compareNumber);
+        this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.SINGLE, len: 1}, singles[0], this.isTrump));
+    }
+
+    if (pairs.length > 0) {
+        pairs.sort(Card.compareNumber);
+        var rnk0 = pairs[0];
+        if (pairs.length === 1) {
+            this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.PAIR, len: 2}, rnk0, this.isTrump));
+        } else {
+            var count = 1;
+            var minRank = rnk0;
+            var preRank = rnk0;
+            var addOnce = false;
+            for (var x = 1, rnk; rnk = pairs[x]; x++) {
+                if (rnk !== preRank + 1) {
+                    if (count >= 2) {
+                        this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR2, len: count * 2}, minRank, this.isTrump));
+                    } else if (!addOnce) {
+                        this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.PAIR, len: 2}, minRank, this.isTrump));
+                        addOnce = true;
+                    }
+                    count = 1;
+                    minRank = rnk;
+                } else {
+                    count++;
+                }
+                preRank = rnk;
+            }
+
+            if (count >= 2) {
+                this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR2, len: count * 2}, minRank, this.isTrump));
+            } else if (!addOnce) {
+                this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.PAIR, len: 2}, minRank, this.isTrump));
+            }
+        }
+    }
+
+    if (trips.length > 0) {
+        trips.sort(Card.compareNumber);
+        var rnk0 = trips[0];
+        if (trips.length === 1) {
+            this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRIPS, len: 3}, rnk0, this.isTrump));
+        } else {
+            var count = 1;
+            var minRank = rnk0;
+            var preRank = rnk0;
+            var addOnce = false;
+            for (var x = 1, rnk; rnk = trips[x]; x++) {
+                if (rnk !== preRank + 1) {
+                    if (count >= 2) {
+                        this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR3, len: count * 3}, minRank, this.isTrump));
+                    } else if (!addOnce) {
+                        this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRIPS, len: 3}, minRank, this.isTrump));
+                        addOnce = true;
+                    }
+                    count = 1;
+                    minRank = rnk;
+                } else {
+                    count++;
+                }
+                preRank = rnk;
+            }
+
+            if (count >= 2) {
+                this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR3, len: count * 3}, minRank, this.isTrump));
+            } else if (!addOnce) {
+                this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRIPS, len: 3}, minRank, this.isTrump));
+            }
+        }
+    }
+
+    if (quads.length > 0) {
+        quads.sort(Card.compareNumber);
+        var rnk0 = quads[0];
+        if (quads.length === 1) {
+            this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.QUADS, len: 4}, rnk0, this.isTrump));
+        } else {
+            var count = 1;
+            var minRank = rnk0;
+            var preRank = rnk0;
+            var addOnce = false;
+            for (var x = 1, rnk; rnk = quads[x]; x++) {
+                if (rnk !== preRank + 1) {
+                    if (count >= 2) {
+                        this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR4, len: count * 4}, minRank, this.isTrump));
+                    } else if (!addOnce) {
+                        this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.QUADS, len: 4}, minRank, this.isTrump));
+                        addOnce = true;
+                    }
+                    count = 1;
+                    minRank = rnk;
+                } else {
+                    count++;
+                }
+                preRank = rnk;
+            }
+
+            if (count >= 2) {
+                this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR4, len: count * 4}, minRank, this.isTrump));
+            } else if (!addOnce) {
+                this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.QUADS, len: 4}, minRank, this.isTrump));
+            }
+        }
+    }
+
+    if (this.subHands.length > 1) {
+        this.subHands.sort(SimpleHand.compare);
     }
 };
 
@@ -206,20 +350,39 @@ Hand.COMBINATION = {
     MIXED: 111
 };
 
+function SimpleHand(handType, minRank, isTrump) {
+    // for comparation purpose
+    this.type = handType;   // object {cat:, len:}
+    this.minRank = minRank; // number
+    this.isTrump = isTrump; // boolean
+
+    this.display = function () {
+        return '{' + this.type.cat + ':' + this.type.len + '}, ' + this.minRank;
+    };
+}
+
+SimpleHand.compare = function (a, b) {
+    if (a.type.len === b.type.len) {
+        return a.minRank - b.minRank;
+    }
+
+    return a.type.len - b.type.len;
+};
+
 function Round(players, trump, gameRank) {
     this.playList = [];
     var leadingHand = null;
     var firstHand = null;
 
     function findHighers(cards, hand_type, minRank) {
+        console.log(Card.showCards(cards));
+        debugger;
         if (cards == null || cards.length < 1) return false;
         if (hand_type.cat === Hand.COMBINATION.SINGLE) {
             var c = cards[cards.length - 1];
             return c.trumpRank(trump, gameRank) > minRank;
         }
 
-        console.log(Card.showCards(cards));
-        debugger;
         var nRequired = hand_type.len;
         if (cards.length < nRequired) return false;
 
@@ -241,8 +404,55 @@ function Round(players, trump, gameRank) {
                         return rnk > minRank;
                     }
                 }
-                break;
+                return false;
         }
+
+        var hand_stat = new HandStat(cards, trump, gameRank);
+        var sortedRanks = null;
+        var unit = 1;
+        debugger;
+
+        switch (hand_type.cat) {
+            case Hand.COMBINATION.TRACTOR4:
+                sortedRanks = hand_stat.sortedRanks(4);
+                unit = 4;
+                break;
+            case Hand.COMBINATION.TRACTOR3:
+                sortedRanks = hand_stat.sortedRanks(3);
+                unit = 3;
+                break;
+            case Hand.COMBINATION.TRACTOR2:
+                if (hand_type.len === 4) {
+                    if (hand_stat.sortedRanks(4).length > 0) return true;    // quads can beat two pair tractor
+                }
+                sortedRanks = hand_stat.sortedRanks(2);
+                unit = 2;
+                break;
+            default:
+                // should never run into here
+                console.log('ERROR: invalid hand type: ' + hand_type.cat);
+                return false;
+        }
+
+        console.log(sortedRanks);
+        if (sortedRanks.length * unit < hand_type.len) return false;
+        var preRnk = 0;
+        var count = unit;
+        for (var x = sortedRanks.length - 1, rnk; rnk = sortedRanks[x]; x--) {
+            if (rnk <= minRank) return false;
+            if (preRnk === 0) {
+                preRnk = rnk;
+                continue;
+            }
+            if (rnk !== preRnk - 1) {
+                count = unit;
+            } else {
+                count += unit;
+                if (count === hand_type.len) return true;
+            }
+            preRnk = rnk;
+        }
+
         return false;
     }
 
@@ -271,6 +481,20 @@ function Round(players, trump, gameRank) {
         return false;
     }
 
+    function hasHigherHand(player, simple_hand, suite) {
+        var ret = false;
+        for (var x = 0, p; p = players[x]; x++) {
+            if (p === player) continue;
+            if (hasHigherCards(p, simple_hand, suite)) {
+                ret = true;
+                break;
+            }
+        }
+
+        if(ret) player.mustLead = simple_hand;
+        return ret;
+    }
+
     this.isValidLeadingHand = function (player, cards) {
         if (player == null || cards == null) return false;
         if (!Array.isArray(cards)) return true;
@@ -281,19 +505,12 @@ function Round(players, trump, gameRank) {
         if (!hand.isFlop) return true;
 
         debugger;
-        switch (hand.type.cat) {
-            case Hand.COMBINATION.SINGLE:
-            case Hand.COMBINATION.PAIR:
-            case Hand.COMBINATION.TRIPS:
-            case Hand.COMBINATION.QUADS:
-                for (var x = 0, p; p = players[x]; x++) {
-                    if (p === player) continue;
-                    if (hasHigherCards(p, hand, cards[0].suite)) return false;
-                }
-                return true;
+        if (hand.subHands == null) {
+            return !hasHigherHand(player, hand, cards[0].suite);
+        }
 
-            default:
-                break;
+        for (var x = 0, sHand; sHand = hand.subHands[x]; x++) {
+            if (hasHigherHand(player, sHand, cards[0].suite)) return false;
         }
 
         return true;
@@ -328,7 +545,7 @@ Game.prototype.setTrump = function (card) {
     }
     this.contractor.sortHand();
 
-    if (card.suite !== Card.SUITE.SMALL_JOKER && card.suite !== Card.SUITE.BIG_JOKER) this.trump = card.suite;
+    if (card.suite !== Card.SUITE.JOKER) this.trump = card.suite;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.resortCards(this.trump, this.rank);
     }
