@@ -60,8 +60,9 @@ function Hand(player, cards, trump, rank) {
 
         if (this.isTrump && !other.isTrump) {
             // mixed
-            var otherValues = Object.values(other.stat);
-            // TODO
+            if(this.totalPairs< other.totalPairs || this.totalTrips < other.totalTrips || this.totalQuads<other.totalQuads) return -1;
+			if(other.subHands == null || other.subHands.length<1) return 1;
+			// TODO
         }
 
         return -1;
