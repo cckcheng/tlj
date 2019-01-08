@@ -18,13 +18,16 @@ server.on('connection', function (sock) {
     sock.on('data', function (data) {
         handleData(sock, data);
     });
-    sock.on('close', function (data) {
-        handleClose(sock, data);
+    sock.on('close', function (hadError) {
+        handleClose(sock, hadError);
+    });
+    sock.on('error', function (err) {
+        console.log('Error: ' + sock.remoteAddress + ':' + sock.remotePort + '; ' + err);
     });
 });
 
-function handleClose(sock, data) {
-    console.log('Closed: ' + sock.remoteAddress + ':' + data);
+function handleClose(sock, hadError) {
+    console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
 }
 
 function handleData(sock, data) {
