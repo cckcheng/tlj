@@ -2,10 +2,22 @@ var net = require('net');
 var Player = require('./player');
 var Table = require('./table');
 
+var args = process.argv.slice(2);
+
 //var PORT = 8001;
 var PORT = 6688;
-var HOST = '172.16.107.204';
+//var HOST = '192.168.1.8';
+//var HOST = '172.16.107.204';
 //var HOST = '127.0.0.1';
+var HOST = 'tlj.webhop.me';
+
+if(args.length >0) {
+    HOST = args[0];
+}
+if(args.length>1) {
+    PORT = args[1];
+}
+
 
 var server = net.createServer();
 server.listen(PORT, HOST);
