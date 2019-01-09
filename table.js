@@ -49,6 +49,16 @@ Table.prototype.seatAvailable = function () {
     return this._positions.length > 0;
 };
 
+Table.prototype.allRobots = function () {
+    for (var x = 0, p; x < SEAT_NUMBER; x++) {
+        p = this.players[x];
+        if (p == null) continue;
+        if (p.sock != null) return false;
+    }
+
+    return true;
+};
+
 Table.prototype.addPlayer = function (player) {
     if (this._positions.length < 1) {
         // no seat available
@@ -78,7 +88,7 @@ Table.prototype.startGame = function () {
 };
 
 Table.prototype.getSeat = function (player) {
-    return this.players.indexOf(player);
+    return this.players.indexOf(player) + 1;    // 1->6
 };
 
 Table.prototype.getNextRank = function (rank, delta) {

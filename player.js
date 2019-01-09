@@ -16,6 +16,16 @@ function Player(o) {
 
     this.currentTable = null;
     this.currentRank = null;
+
+    this.replaceRobot = function (id, sock) {
+        this.id = id;
+        this.sock = sock;
+    };
+
+    this.toRobot = function () {
+        this.id = null;
+        this.sock = null;
+    };
 }
 
 Player.prototype.newHand = function () {
@@ -85,7 +95,7 @@ Player.prototype.resortCards = function (trump_suite, game_rank) {
         for (var x = suiteCollection.length - 1, c; x >= 0 && (c = suiteCollection[x]); x--) {
             if (c.rank === game_rank || c.suite === trump_suite) {
                 trumpCollection.push(c);
-                suiteCollection.splice(x, 1)
+                suiteCollection.splice(x, 1);
             }
         }
     }
@@ -183,4 +193,15 @@ Player.prototype.playCards = function (cards) {
 
 Player.prototype.promote = function (delta) {
     this.currentRank = this.currentTable.getNextRank(this.currentRank, delta);
+};
+
+Player.prototype.sendMessage = function (msg) {
+    var json = {
+        message: msg
+    };
+
+    try {
+        this.sock.write(JSON.stringify(json));
+    } catch (err) {
+    }
 };
