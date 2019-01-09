@@ -70,6 +70,7 @@ Table.prototype.addPlayer = function (player) {
 Table.prototype.startGame = function () {
     var game = new Game(this.players, this.deckNumber);
     this.games.push(game);
+    debugger;
     for (var x = 0, p; p = this.players[x]; x++) {
         if (p.currentRank == null) p.currentRank = this.matchType.ranks[0];
         p.pushData();

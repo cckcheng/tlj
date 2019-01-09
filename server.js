@@ -18,7 +18,6 @@ if(args.length>1) {
     PORT = args[1];
 }
 
-
 var server = net.createServer();
 server.listen(PORT, HOST);
 
@@ -40,9 +39,12 @@ server.on('connection', function (sock) {
 
 function handleClose(sock, hadError) {
     console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
+    var playerId = sock.remoteAddress + ':' + sock.remotePort;
+    delete onlinePlayers[playerId];
 }
 
 function handleData(sock, data) {
+
     console.log(sock.remoteAddress + ':' + data);
 //    sock.write('reveived\n');
     try {
@@ -97,16 +99,16 @@ function handleData(sock, data) {
     }
 
     function createNewTable(player) {
-        var table = new Table();
-        pendingTables.push(table);
+        var table = new Table({});
+//        pendingTables.push(table);
         table.addPlayer(player);
 
         // for testing
         table.addPlayer(new Player());
         table.addPlayer(new Player());
         table.addPlayer(new Player());
-//        table.addPlayer(new Player());
-//        table.addPlayer(new Player());
+        table.addPlayer(new Player());
+        table.addPlayer(new Player());
         table.startGame();
     }
 }
