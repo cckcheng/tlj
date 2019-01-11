@@ -23,7 +23,6 @@ function Player(o) {
     };
 
     this.toRobot = function () {
-        this.id = null;
         this.sock = null;
     };
 }

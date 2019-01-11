@@ -22,7 +22,8 @@ if(args.length>1) {
 var server = net.createServer();
 server.listen(PORT, HOST);
 
-var onlinePlayers = {};
+var onlinePlayers = {}; // sockID <-> player
+var activePlayers = {}; // playerId <-> player
 var runningTables = [];
 var robots = [];
 
@@ -41,25 +42,33 @@ server.on('connection', function (sock) {
 
 function handleClose(sock, hadError) {
     console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
-    var playerId = sock.remoteAddress + ':' + sock.remotePort;
-    var player = onlinePlayers[playerId];
+    var sockId = sock.remoteAddress + ':' + sock.remotePort;
+    var player = onlinePlayers[sockId];
     if (player == null) return;
-    delete onlinePlayers[playerId];
+    delete onlinePlayers[sockId];
 
     var table = player.currentTable;
-    if (table == null) return;
+    if (table == null) {
+        if (player.id != null) {
+            delete activePlayers[player.id];
+        }
+        return;
+    }
 
     player.toRobot();
     if (table.allRobots()) {
         for (var x = 0, p, idx; x < table.players.length; x++) {
             p = table.players[x];
             if (p == null) continue;
-            idx = robots.indexOf(p);
-            if (idx >= 0) robots.splice(idx, 1);
+            p.currentTable = null;
+            if (p.id != null) {
+                delete activePlayers[p.id];
+            } else {
+                idx = robots.indexOf(p);
+                if (idx >= 0) robots.splice(idx, 1);
+            }
         }
         runningTables.splice(runningTables.indexOf(table), 1);
-    } else {
-        robots.push(player);
     }
 }
 
@@ -74,31 +83,41 @@ function handleData(sock, data) {
         return;
     }
 
-    var playerId = sock.remoteAddress + ':' + sock.remotePort;
-    if (dt.id) {
-        playerId = dt.id;
-    }
+    var sockId = sock.remoteAddress + ':' + sock.remotePort;
 
     var player = null;
-    if (onlinePlayers[playerId] === undefined) {
-        player = onlinePlayers[playerId] = new Player({id: playerId, sock: sock});
+    if (onlinePlayers[sockId] == null) {
+        if (dt.id == null) {
+            console.log('missing player id!');
+            return;
+        }
+
+        player = activePlayers[dt.id];
+        if (player == null) {
+            player = new Player({id: dt.id, sock: sock});
+            activePlayers[dt.id] = player;
+        } else {
+            player.sock = sock;
+        }
+        onlinePlayers[sockId] = player;
     } else {
         console.log('exist user');
-        player = onlinePlayers[playerId];
+        player = onlinePlayers[sockId];
     }
 
     switch (dt.action) {
         case 'join_table':
             if (player.currentTable != null) {
-                console.log('exist table: ' + player.currentTable);
+                console.log('exist table.');
                 player.pushData();
             } else {
                 if (robots.length < 1) {
                     createNewTable(player);
                 } else {
+                    console.log('replace robot.');
                     var robot = robots.shift();
-                    robot.replaceRobot(playerId, sock);
-                    onlinePlayers[playerId] = player = robot;
+                    robot.replaceRobot(player.id, sock);
+                    onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
                     player.pushData();
                 }
             }
