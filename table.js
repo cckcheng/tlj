@@ -59,6 +59,14 @@ Table.prototype.allRobots = function () {
     return true;
 };
 
+Table.prototype.dismiss = function () {
+    for (var x = 0, p; x < this.players.length; x++) {
+        p = this.players[x];
+        if (p == null) continue;
+        p.currentTable = null;
+    }
+};
+
 Table.prototype.addPlayer = function (player) {
     if (this._positions.length < 1) {
         // no seat available

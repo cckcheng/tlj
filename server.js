@@ -57,18 +57,11 @@ function handleClose(sock, hadError) {
 
     player.toRobot();
     if (table.allRobots()) {
-        for (var x = 0, p, idx; x < table.players.length; x++) {
-            p = table.players[x];
-            if (p == null) continue;
-            p.currentTable = null;
-            if (p.id != null) {
-                delete activePlayers[p.id];
-            } else {
-                idx = robots.indexOf(p);
-                if (idx >= 0) robots.splice(idx, 1);
-            }
-        }
+        table.dismiss();
         runningTables.splice(runningTables.indexOf(table), 1);
+        if (player.id != null) {
+            delete activePlayers[player.id];
+        }
     }
 }
 
@@ -111,12 +104,17 @@ function handleData(sock, data) {
                 console.log('exist table.');
                 player.pushData();
             } else {
-                if (robots.length < 1) {
+                var robot = null;
+                while (robots.length > 0) {
+                    robot = robots.shift();
+                    if (!(robot.currentTable == null)) break;
+                }
+
+                if (robot == null || robot.currentTable == null) {
                     createNewTable(player);
                 } else {
                     console.log('replace robot.');
-                    var robot = robots.shift();
-                    robot.replaceRobot(player.id, sock);
+                    robot.replaceRobot(player.id, player.sock);
                     onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
                     player.pushData();
                 }
