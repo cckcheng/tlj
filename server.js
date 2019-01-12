@@ -98,9 +98,10 @@ function handleData(sock, data) {
         player = onlinePlayers[sockId];
     }
 
+    var currentTable = player.currentTable;
     switch (dt.action) {
         case 'join_table':
-            if (player.currentTable != null) {
+            if (currentTable != null) {
                 console.log('exist table.');
                 player.pushData();
             } else {
@@ -119,6 +120,11 @@ function handleData(sock, data) {
                     player.pushData();
                 }
             }
+            break;
+
+        default:
+            if (currentTable == null) return;
+            currentTable.notifyPlayers(player, dt);
             break;
     }
 

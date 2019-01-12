@@ -24,7 +24,7 @@ var game_rank = 7;
 players.forEach(function (p) {
 //    console.log('' + (n++));
 //    console.log(p.showHand());
-    p.currentRank = game_rank;
+    p.matchInfo.currentRank = game_rank;
 });
 
 game.setContractor(players[4]);
@@ -36,7 +36,7 @@ n = 1;
 //    console.log(p.showHand());
 //});
 
-//console.log(players[4].currentRank);
+//console.log(players[4].matchInfo.currentRank);
 //console.log(game.rank);
 var cards = [];
 //cards.push(new Card(Card.SUITE.SPADE, 5));

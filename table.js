@@ -7,9 +7,11 @@ var Deck = require('./deck');
 
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
+const TIMEOUT = 5;     // 20 seconds
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
+    this.matchInfos = [];
     var pos = 0;
     while (pos < SEAT_NUMBER) {
         this._positions.push(pos++);
@@ -65,6 +67,7 @@ Table.prototype.dismiss = function () {
         if (p == null) continue;
         p.currentTable = null;
     }
+    clearInterval(this.rotateTimer);
 };
 
 Table.prototype.addPlayer = function (player) {
@@ -90,9 +93,31 @@ Table.prototype.startGame = function () {
     this.games.push(game);
     debugger;
     for (var x = 0, p; p = this.players[x]; x++) {
-        if (p.currentRank == null) p.currentRank = this.matchType.ranks[0];
+        if (this.games.length === 1) {
+            // first game, init match info
+            p.matchInfo = new MatchInfo(this, p);
+            this.matchInfos.push(p.matchInfo);
+        }
         p.pushData();
     }
+    this.actionPlayerIdx = 0;
+
+    function nextTurn(t) {
+        t.actionPlayerIdx++;
+        if (t.actionPlayerIdx >= SEAT_NUMBER) t.actionPlayerIdx -= SEAT_NUMBER;
+        console.log('nextTurn: ' + t.actionPlayerIdx);
+    }
+
+    this.rotateTimer = setInterval(nextTurn, TIMEOUT * 1000, this);
+};
+
+Table.prototype.notifyPlayers = function (player, json) {
+    if (player != this.players[this.actionPlayerIdx]) return;    // late response
+    if (json.game != this.games.length) teturn;  // not current game
+
+    console.log('playerId: ' + player.id);
+    this.actionPlayerIdx++;
+    this.rotateTimer.refresh();
 };
 
 Table.prototype.getSeat = function (player) {
@@ -111,3 +136,12 @@ Table.prototype.getNextRank = function (rank, delta) {
 
     return this.matchType.ranks[nextIdx];
 };
+
+// record match info per player
+function MatchInfo(t, player) {
+    this.player = player;
+    this.currentRank = t.matchType.ranks[0];
+    this.lastBid = 0;   // last bid points
+    this.points = 0;    // points collected (before contractor's partner appears)
+    this.contracts = 0; // contract times
+}

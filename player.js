@@ -15,7 +15,7 @@ function Player(o) {
     this.trumps = [];
 
     this.currentTable = null;
-    this.currentRank = null;
+    this.matchInfo = null;
 
     this.replaceRobot = function (id, sock) {
         this.id = id;
@@ -138,6 +138,13 @@ Player.prototype.showHand = function () {
     return s;
 };
 
+Player.prototype.pushJson = function (json) {
+    try {
+        this.sock.write(JSON.stringify(json));
+    } catch (err) {
+    }
+};
+
 Player.prototype.pushData = function () {
     if (this.sock == null) return;
 
@@ -167,9 +174,23 @@ Player.prototype.pushData = function () {
         }
     }
 
+    var seat = this.currentTable.getSeat(this);
+    var playerInfo = [];
+    var totalPlayer = this.currentTable.players.length;
+    for (var count = totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
+        if (x >= totalPlayer) x -= totalPlayer;
+        p = this.currentTable.players[x];
+        playerInfo.push({
+            seat: x + 1,
+            rank: p.matchInfo.currentRank
+        });
+    }
+
     var json = {
-        rank: this.currentRank,
-        seat: this.currentTable.getSeat(this),
+        rank: this.matchInfo.currentRank,
+        game: this.currentTable.games.length,
+        seat: seat,
+        players: playerInfo,
         S: S,
         H: H,
         D: C,
@@ -191,7 +212,7 @@ Player.prototype.playCards = function (cards) {
 };
 
 Player.prototype.promote = function (delta) {
-    this.currentRank = this.currentTable.getNextRank(this.currentRank, delta);
+    this.matchInfo.currentRank = this.currentTable.getNextRank(this.matchInfo.currentRank, delta);
 };
 
 Player.prototype.sendMessage = function (msg) {
