@@ -1,5 +1,5 @@
 var Card = require('./card');
-var Table = require('./table');
+var HandStat = require('./stat');
 
 module.exports = Player;
 
@@ -213,6 +213,94 @@ Player.prototype.playCards = function (cards) {
 
 Player.prototype.promote = function (delta) {
     this.matchInfo.currentRank = this.currentTable.getNextRank(this.matchInfo.currentRank, delta);
+};
+
+Player.prototype.evaluate = function () {
+    debugger;
+    var currentGameRank = this.matchInfo.currentRank;
+    this.canBid = false;
+    if(this.trumps.length>0){
+        this.canBid = true;
+    } else {
+        this.canBid = hasGameRankCard(this.spades);
+        if(!this.canBid) this.canBid = hasGameRankCard(this.hearts);
+        if(!this.canBid) this.canBid = hasGameRankCard(this.diamonds);
+        if(!this.canBid) this.canBid = hasGameRankCard(this.clubs);
+    }
+
+    if(!this.canBid)return;
+
+    function hasGameRankCard(suite) {
+        for(var x=0,c;c=suite[x];x++) {
+            if(c.rank === currentGameRank) return true;
+        }
+        return false;
+    } 
+
+    var totalPairs = 0;
+    var totalTrips = 0;
+    var totalQuads = 0;
+    
+    var tractorPoints = 0;
+    var additionPoints = 0;
+    
+    this.handStrongth = 0;
+    for(var x=0,c; c=this.trumps[x];x++) {
+        if(c.rank === Card.RANK.BigJoker) {
+            this.handStrongth += 4;
+        } else if(c.rank === Card.RANK.SmallJoker) {
+            this.handStrongth += 2;
+        }
+    }
+    
+    function evalSuiteStrongth(suite) {
+        var stat = new HandStat(suite, Card.SUITE.JOKER, currentGameRank);
+        totalPairs += stat.totalPairs;
+        totalTrips += stat.totalTrips;
+        totalQuads += stat.totalQuads;
+        
+        if(stat.totalTrips > 0) {
+            var arr = stat.sortedRanks(3);
+            for(var x=0,rnk,lRnk=-1; rnk=arr[x]; x++) {
+                if(rnk === 14) {
+                    // the special card, card rank equals to players's current game rank
+                    additionPoints += 3;
+                    continue;
+                }
+                if(rnk === lRnk+1) {
+                    tractorPoints+=3;
+                }
+                lRnk = rnk;
+            }
+        }
+        if(stat.totalPairs > 0) {
+            var arr = stat.sortedRanks(2);
+            for(var x=0,rnk,lRnk=-1; rnk=arr[x]; x++) {
+                if(rnk === 14) {
+                    // the special card, card rank equals to players's current game rank
+                    additionPoints += 2;
+                    continue;
+                }
+                if(rnk === lRnk+1) {
+                    tractorPoints+=2;
+                }
+                lRnk = rnk;
+            }
+        }
+    }
+    
+    evalSuiteStrongth(this.spades);
+    evalSuiteStrongth(this.hearts);
+    evalSuiteStrongth(this.diamonds);
+    evalSuiteStrongth(this.clubs);
+    
+    this.handStrongth += totalPairs*2;
+    this.handStrongth += totalTrips;
+    this.handStrongth += totalQuads;
+    this.handStrongth += tractorPoints;
+    this.handStrongth += additionPoints;
+    console.log('tractor: ' + tractorPoints);
+    console.log('addition: ' + additionPoints);
 };
 
 Player.prototype.sendMessage = function (msg) {

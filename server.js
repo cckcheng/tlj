@@ -124,7 +124,7 @@ function handleData(sock, data) {
 
         default:
             if (currentTable == null) return;
-            currentTable.notifyPlayers(player, dt);
+            currentTable.processPlayerAction(player, dt);
             break;
     }
 

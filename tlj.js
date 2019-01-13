@@ -6,16 +6,33 @@ var Game = require('./game');
 
 var table = new Table({
 //    matchType: Table.MATCH_TYPE.HALF
-    matchType: Table.MATCH_TYPE.POINTS
+//    matchType: Table.MATCH_TYPE.POINTS
+    matchType: Table.MATCH_TYPE.FREE
 //    matchType: Table.MATCH_TYPE.EXPRESS
 });
 
+
 var players = [];
+var player;
 while (players.length < 6) {
-    players.push(new Player());
+    player = new Player();
+    players.push(player);
+    table.addPlayer(player);
 }
 
+table.startGame();
+
 var game = new Game(players, 4);
+table.players.forEach(function (p) {
+//    console.log('' + (n++));
+//    console.log(p.showHand());
+//    p.matchInfo.currentRank = game_rank;
+    console.log(p.showHand());
+    p.evaluate();
+    console.log('Hand Strongth: ' + p.handStrongth);
+});
+
+if(true) return;
 
 var n = 1;
 //var trump_suite = Card.SUITE.HEART;
@@ -24,8 +41,13 @@ var game_rank = 7;
 players.forEach(function (p) {
 //    console.log('' + (n++));
 //    console.log(p.showHand());
-    p.matchInfo.currentRank = game_rank;
+//    p.matchInfo.currentRank = game_rank;
+    console.log(p.showHand());
+    p.evaluate();
+    console.log('Hand Strongth: ' + p.handStrongth);
 });
+
+if(true) return;
 
 game.setContractor(players[4]);
 game.setTrump(new Card(trump_suite, 7));

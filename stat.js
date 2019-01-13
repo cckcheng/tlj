@@ -1,6 +1,9 @@
 module.exports = HandStat;
 
 function HandStat(cards, trump_suite, game_rank) {
+    this.totalPairs = 0;
+    this.totalTrips = 0;
+    this.totalQuads = 0;
     this.stat = {};
     for (var x = 0, c; c = cards[x]; x++) {
         var tRank = c.trumpRank(trump_suite, game_rank);
@@ -13,6 +16,19 @@ function HandStat(cards, trump_suite, game_rank) {
     }
 
     this.values = Object.values(this.stat);
+    for (var x = 0, v; v = this.values[x]; x++) {
+        if (v < 2) continue;
+        if (v === 4) {
+            this.totalQuads++;
+            this.totalTrips++;
+            this.totalPairs += 2;
+        } else if (v === 3) {
+            this.totalTrips++;
+            this.totalPairs++;
+        } else if (v === 2) {
+            this.totalPairs++;
+        }
+    }
 }
 
 // return sorted ranks for pair/trips/quads, where num = 2,3,4

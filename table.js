@@ -11,7 +11,6 @@ const TIMEOUT = 5;     // 20 seconds
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
-    this.matchInfos = [];
     var pos = 0;
     while (pos < SEAT_NUMBER) {
         this._positions.push(pos++);
@@ -40,6 +39,10 @@ Table.MATCH_TYPE = {
     POINTS: {
         title: 'All Points(5/10/K)',
         ranks: [5, 10, 13, 14]
+    },
+    FREE: {
+        title: 'Free(2->5)',
+        ranks: [2,3,4,5]
     },
     EXPRESS: {
         title: 'Express(10->A)',
@@ -92,26 +95,29 @@ Table.prototype.startGame = function () {
     var game = new Game(this.players, this.deckNumber);
     this.games.push(game);
     debugger;
-    for (var x = 0, p; p = this.players[x]; x++) {
-        if (this.games.length === 1) {
-            // first game, init match info
+    if (this.games.length === 1) {
+        // first game, init match info
+        for (var x = 0, p; p = this.players[x]; x++) {
             p.matchInfo = new MatchInfo(this, p);
-            this.matchInfos.push(p.matchInfo);
         }
+    }
+    for (var x = 0, p; p = this.players[x]; x++) {
         p.pushData();
     }
     this.actionPlayerIdx = 0;
 
     function nextTurn(t) {
+        
         t.actionPlayerIdx++;
         if (t.actionPlayerIdx >= SEAT_NUMBER) t.actionPlayerIdx -= SEAT_NUMBER;
-        console.log('nextTurn: ' + t.actionPlayerIdx);
+//        console.log('nextTurn: ' + t.actionPlayerIdx);
+//        game.nextPlayer();
     }
 
     this.rotateTimer = setInterval(nextTurn, TIMEOUT * 1000, this);
 };
 
-Table.prototype.notifyPlayers = function (player, json) {
+Table.prototype.processPlayerAction = function (player, json) {
     if (player != this.players[this.actionPlayerIdx]) return;    // late response
     if (json.game != this.games.length) teturn;  // not current game
 

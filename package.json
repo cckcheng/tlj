@@ -4,5 +4,7 @@
     "keywords": ["util", "functional", "server", "client", "browser"],
     "author": "ccheng",
     "contributors": [],
-    "dependencies": {}
+    "dependencies": {}, "scripts":{
+"start":"node tlj.js"}
+
 }
