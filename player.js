@@ -218,24 +218,30 @@ Player.prototype.promote = function (delta) {
 Player.prototype.evaluate = function () {
     debugger;
     var currentGameRank = this.matchInfo.currentRank;
-    this.canBid = false;
-    if(this.trumps.length>0){
-        this.canBid = true;
-    } else {
-        this.canBid = hasGameRankCard(this.spades);
-        if(!this.canBid) this.canBid = hasGameRankCard(this.hearts);
-        if(!this.canBid) this.canBid = hasGameRankCard(this.diamonds);
-        if(!this.canBid) this.canBid = hasGameRankCard(this.clubs);
+    var honorPoints = 0;
+    for (var x = 0, c; c = this.trumps[x]; x++) {
+        if (c.rank === Card.RANK.BigJoker) {
+            honorPoints += 4;
+        } else if (c.rank === Card.RANK.SmallJoker) {
+            honorPoints += 2;
+        }
     }
 
-    if(!this.canBid)return;
-
-    function hasGameRankCard(suite) {
-        for(var x=0,c;c=suite[x];x++) {
-            if(c.rank === currentGameRank) return true;
+    function totalGameRankCard(suite) {
+        var n = 0;
+        for (var x = 0, c; c = suite[x]; x++) {
+            if (c.rank === currentGameRank) n++;
         }
-        return false;
-    } 
+        return n;
+    }
+
+    honorPoints += totalGameRankCard(this.spades);
+    honorPoints += totalGameRankCard(this.hearts);
+    honorPoints += totalGameRankCard(this.diamonds);
+    honorPoints += totalGameRankCard(this.clubs);
+
+    this.canBid = honorPoints > 0;
+    if(!this.canBid)return;
 
     var totalPairs = 0;
     var totalTrips = 0;
@@ -243,16 +249,7 @@ Player.prototype.evaluate = function () {
     
     var tractorPoints = 0;
     var additionPoints = 0;
-    
-    this.handStrongth = 0;
-    for(var x=0,c; c=this.trumps[x];x++) {
-        if(c.rank === Card.RANK.BigJoker) {
-            this.handStrongth += 4;
-        } else if(c.rank === Card.RANK.SmallJoker) {
-            this.handStrongth += 2;
-        }
-    }
-    
+
     function evalSuiteStrongth(suite) {
         var stat = new HandStat(suite, Card.SUITE.JOKER, currentGameRank);
         totalPairs += stat.totalPairs;
@@ -294,13 +291,12 @@ Player.prototype.evaluate = function () {
     evalSuiteStrongth(this.diamonds);
     evalSuiteStrongth(this.clubs);
     
+    this.handStrongth = honorPoints;
     this.handStrongth += totalPairs*2;
     this.handStrongth += totalTrips;
     this.handStrongth += totalQuads;
     this.handStrongth += tractorPoints;
     this.handStrongth += additionPoints;
-    console.log('tractor: ' + tractorPoints);
-    console.log('addition: ' + additionPoints);
 };
 
 Player.prototype.sendMessage = function (msg) {
