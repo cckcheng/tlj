@@ -190,6 +190,7 @@ Player.prototype.pushData = function () {
         rank: this.matchInfo.currentRank,
         game: this.currentTable.games.length,
         seat: seat,
+        handStrongth: this.handStrongth,
         players: playerInfo,
         S: S,
         H: H,

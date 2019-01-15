@@ -105,6 +105,7 @@ Table.prototype.startGame = function () {
         shuffleArray(this.players);
     }
     for (var x = 0, p; p = this.players[x]; x++) {
+        p.evaluate();
         p.pushData();
     }
     this.actionPlayerIdx = 0;
