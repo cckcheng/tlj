@@ -1,5 +1,6 @@
 var Card = require('./card');
 var HandStat = require('./stat');
+var Table = require('./table');
 
 module.exports = Player;
 
@@ -190,8 +191,8 @@ Player.prototype.pushData = function () {
         rank: this.matchInfo.currentRank,
         game: this.currentTable.games.length,
         seat: seat,
-        handStrongth: this.handStrongth,
-        iTrump: this.intendTrumpSuite || '',
+        iTrump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
+        minBid: Table.Debugging ? this.minBid : -1,
         players: playerInfo,
         S: S,
         H: H,
@@ -257,6 +258,11 @@ Player.prototype.evaluate = function () {
         }
 
         var point = iTrumps.length / 3.0; // length point
+        if (iTrumps.length > 14) {
+            // extra length bonus
+            var extra = iTrumps.length - 14;
+            point += extra * extra * 0.1;
+        }
 
         iTrumps.sort(function (a, b) {
             var aRank = a.trumpRank(cSuite, currentGameRank);
@@ -293,7 +299,7 @@ Player.prototype.evaluate = function () {
     var totalGameCardNum = gameCardNumSpade + gameCardNumHeart + gameCardNumDiamond + gameCardNumClub;
     honorPoints += totalGameCardNum;
 
-    this.handStrongth = honorPoints;
+    var handStrongth = honorPoints;
     this.canBid = honorPoints > 0;
     if (!this.canBid) return;
 
@@ -320,7 +326,7 @@ Player.prototype.evaluate = function () {
             this.intendTrumpSuite = Card.SUITE.CLUB;
         }
 
-        this.handStrongth += Math.round(maxTrumpPoint);
+        handStrongth += maxTrumpPoint;
     } else {
         this.intendTrumpSuite = Card.SUITE.JOKER;
     }
@@ -378,11 +384,13 @@ Player.prototype.evaluate = function () {
     if (this.intendTrumpSuite !== Card.SUITE.DIAMOND) evalSuiteStrongth(this.diamonds);
     if (this.intendTrumpSuite !== Card.SUITE.CLUB) evalSuiteStrongth(this.clubs);
     
-    this.handStrongth += totalPairs * 2;
-    this.handStrongth += totalTrips;
-    this.handStrongth += totalQuads * 3;
-    this.handStrongth += tractorPoints;
-    this.handStrongth += additionPoints;
+    handStrongth += totalPairs * 2;
+    handStrongth += totalTrips;
+    handStrongth += totalQuads * 3;
+    handStrongth += tractorPoints;
+    handStrongth += additionPoints;
+
+    this.minBid = 200 + Math.round((30 - handStrongth) * 2 / 3) * 5;
 };
 
 Player.prototype.sendMessage = function (msg) {
