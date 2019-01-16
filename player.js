@@ -306,21 +306,17 @@ Player.prototype.evaluate = function () {
     if (totalGameCardNum > 0) {
         this.intendTrumpSuite = Card.SUITE.SPADE;
         var maxTrumpPoint = (gameCardNumSpade === 0 ? -1 : trumpPoint(this, Card.SUITE.SPADE));
-        console.log('S: ' + maxTrumpPoint);
         var trumpPointHeart = (gameCardNumHeart === 0 ? -1 : trumpPoint(this, Card.SUITE.HEART));
-        console.log('H: ' + trumpPointHeart);
         if (trumpPointHeart > maxTrumpPoint) {
             maxTrumpPoint = trumpPointHeart;
             this.intendTrumpSuite = Card.SUITE.HEART;
         }
         var trumpPointDiamond = (gameCardNumDiamond === 0 ? -1 : trumpPoint(this, Card.SUITE.DIAMOND));
-        console.log('D: ' + trumpPointDiamond);
         if (trumpPointDiamond > maxTrumpPoint) {
             maxTrumpPoint = trumpPointDiamond;
             this.intendTrumpSuite = Card.SUITE.DIAMOND;
         }
         var trumpPointClub = (gameCardNumClub === 0 ? -1 : trumpPoint(this, Card.SUITE.CLUB));
-        console.log('C: ' + trumpPointClub + "\n");
         if (trumpPointClub > maxTrumpPoint) {
             maxTrumpPoint = trumpPointClub;
             this.intendTrumpSuite = Card.SUITE.CLUB;
@@ -391,6 +387,7 @@ Player.prototype.evaluate = function () {
     handStrongth += additionPoints;
 
     this.minBid = 200 + Math.round((30 - handStrongth) * 2 / 3) * 5;
+    console.log('minBid: ' + this.minBid + "\n");
 };
 
 Player.prototype.sendMessage = function (msg) {
