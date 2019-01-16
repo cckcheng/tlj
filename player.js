@@ -240,10 +240,7 @@ Player.prototype.evaluate = function () {
 
     function trumpPoint(p, cSuite) {
         // evaluate the trump strongth for a given suite
-        var iTrumps = [];
-        for (var x = 0, c; c = p.trumps[x]; x++) {
-            iTrumps.push(c);
-        }
+        var iTrumps = p.trumps.slice(0);
         for (var x = 0, c; c = p.spades[x]; x++) {
             if (c.suite === cSuite || c.rank === currentGameRank) iTrumps.push(c);
         }

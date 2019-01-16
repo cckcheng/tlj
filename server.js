@@ -12,11 +12,18 @@ var HOST = '172.16.107.204';
 //var HOST = '127.0.0.1';   // this does not work
 //var HOST = 'tlj.webhop.me';   // this does not work
 
-if(args.length >0) {
-    HOST = args[0];
-}
-if(args.length>1) {
-    PORT = args[1];
+if (args.length > 0) {
+    var arg = args.shift();
+    if (arg.substr(0, 1) === '-') {
+        if (/[Dd]/.test(arg)) Table.Debugging = true;
+        arg = args.shift();
+    }
+
+    if (arg != null) {
+        HOST = arg;
+        arg = args.shift();
+        if (arg != null) PORT = arg;
+    }
 }
 
 var server = net.createServer();

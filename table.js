@@ -5,7 +5,7 @@ var Game = require('./game');
 var Card = require('./card');
 var Deck = require('./deck');
 
-Table.Debugging = true;
+Table.Debugging = false;
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const TIMEOUT = Table.Debugging ? 5 : 30;     // default: 30 seconds
