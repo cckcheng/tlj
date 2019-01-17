@@ -181,17 +181,14 @@ Player.prototype.pushData = function () {
     for (var count = totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
         if (x >= totalPlayer) x -= totalPlayer;
         p = this.currentTable.players[x];
-        playerInfo.push({
-            seat: x + 1,
-            rank: p.matchInfo.currentRank
-        });
+        playerInfo.push(p.matchInfo.toJson(x + 1));
     }
 
-    var json = {
-        rank: this.matchInfo.currentRank,
+    var json = Object.assign({
+        action: 'init',
         game: this.currentTable.games.length,
-        seat: seat,
         iTrump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
+        initBid: this.currentTable.game.initBidPoint,
         minBid: Table.Debugging ? this.minBid : -1,
         players: playerInfo,
         S: S,
@@ -199,7 +196,7 @@ Player.prototype.pushData = function () {
         D: D,
         C: C,
         T: T
-    };
+    }, this.matchInfo.toJson(seat));
 
     try {
         this.sock.write(JSON.stringify(json));
@@ -261,13 +258,13 @@ Player.prototype.evaluate = function () {
             point += extra * extra * 0.1;
         }
 
-        iTrumps.sort(function (a, b) {
-            var aRank = a.trumpRank(cSuite, currentGameRank);
-            var bRank = b.trumpRank(cSuite, currentGameRank);
-            if (aRank === bRank) return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
-            return aRank > bRank ? 1 : -1;
-        });
-        console.log(Card.showCards(iTrumps));
+//        iTrumps.sort(function (a, b) {
+//            var aRank = a.trumpRank(cSuite, currentGameRank);
+//            var bRank = b.trumpRank(cSuite, currentGameRank);
+//            if (aRank === bRank) return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
+//            return aRank > bRank ? 1 : -1;
+//        });
+//        console.log(Card.showCards(iTrumps));
         var stat = new HandStat(iTrumps, cSuite, currentGameRank);
         point += stat.totalPairs;
         point += stat.totalTrips;
@@ -384,7 +381,7 @@ Player.prototype.evaluate = function () {
     handStrongth += additionPoints;
 
     this.minBid = 200 + Math.round((30 - handStrongth) * 2 / 3) * 5;
-    console.log('minBid: ' + this.minBid + "\n");
+    if (Table.Debugging) console.log('minBid: ' + this.minBid + "\n");
 };
 
 Player.prototype.sendMessage = function (msg) {

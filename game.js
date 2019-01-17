@@ -9,9 +9,9 @@ function Game(players, deckNumber) {
     this.deckNumber = deckNumber;
     this.totalPoint = deckNumber * 100;
     this.initBidPoint = this.totalPoint * 0.7;
-    this.status = 'bidding';
+    this.stage = Game.BIDDING_STAGE;
 
-    this.collectePoint = 0;
+    this.collectedPoint = 0;
     this.contractPoint = 0;
 
     this.contractor = null;
@@ -26,6 +26,9 @@ function Game(players, deckNumber) {
 
     this.rounds = [];
 }
+
+Game.BIDDING_STAGE = 'bid';
+Game.PLAYING_STAGE = 'play';
 
 function Hand(player, cards, trump, rank) {
     this.player = player;

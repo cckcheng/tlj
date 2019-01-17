@@ -93,8 +93,8 @@ Table.prototype.addPlayer = function (player) {
 };
 
 Table.prototype.startGame = function () {
-    var game = new Game(this.players, this.deckNumber);
-    this.games.push(game);
+    this.game = new Game(this.players, this.deckNumber);
+    this.games.push(this.game);
     debugger;
     if (this.games.length === 1) {
         // first game, init match info
@@ -103,6 +103,11 @@ Table.prototype.startGame = function () {
         }
     } else {
         shuffleArray(this.players);
+        // init game info
+        for (var x = 0, p; p = this.players[x]; x++) {
+            p.matchInfo.lastBid = '-';
+            p.matchInfo.points = 0;
+        }
     }
     for (var x = 0, p; p = this.players[x]; x++) {
         p.evaluate();
@@ -111,14 +116,28 @@ Table.prototype.startGame = function () {
     this.actionPlayerIdx = 0;
 
     function nextTurn(t) {
-        
         t.actionPlayerIdx++;
         if (t.actionPlayerIdx >= SEAT_NUMBER) t.actionPlayerIdx -= SEAT_NUMBER;
 //        console.log('nextTurn: ' + t.actionPlayerIdx);
 //        game.nextPlayer();
+        t.notifyPlayer(t.players[t.actionPlayerIdx], t.game.stage);
     }
 
     this.rotateTimer = setInterval(nextTurn, TIMEOUT * 1000, this);
+};
+
+Table.prototype.notifyPlayer = function (player, stage) {
+    var json = {};
+    switch (stage) {
+        case Game.BIDDING_STAGE:
+            json.action = 'bid';
+            break;
+        case Game.PLAYING_STAGE:
+            json.action = 'play';
+            break;
+    }
+
+    player.pushJson(json);
 };
 
 Table.prototype.processPlayerAction = function (player, json) {
@@ -162,7 +181,17 @@ function shuffleArray(arr) {
 function MatchInfo(t, player) {
     this.player = player;
     this.currentRank = t.matchType.ranks[0];
-    this.lastBid = 0;   // last bid points
+    this.lastBid = '-';   // last bid points, -: no bid yet, pass: not bid, number means bid point
     this.points = 0;    // points collected (before contractor's partner appears)
     this.contracts = 0; // contract times
+
+    this.toJson = function (seat) {
+        return {
+            seat: seat,
+            rank: this.currentRank,
+            bid: this.lastBid,
+            points: this.points,
+            contracts: this.contracts
+        };
+    };
 }

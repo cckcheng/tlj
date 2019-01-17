@@ -28,7 +28,7 @@ table.players.forEach(function (p) {
 //    console.log(p.showHand());
 //    p.matchInfo.currentRank = game_rank;
     console.log(p.showHand());
-    console.log('Hand Strongth: ' + p.handStrongth);
+    console.log('minBid: ' + p.minBid);
 });
 
 if(true) return;
@@ -43,7 +43,7 @@ players.forEach(function (p) {
 //    p.matchInfo.currentRank = game_rank;
     console.log(p.showHand());
     p.evaluate();
-    console.log('Hand Strongth: ' + p.handStrongth);
+    console.log('minBid: ' + p.minBid);
 });
 
 if(true) return;
