@@ -141,8 +141,9 @@ Player.prototype.showHand = function () {
 
 Player.prototype.pushJson = function (json) {
     try {
-        this.sock.write(JSON.stringify(json));
+        this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
     } catch (err) {
+        console.log(err.message);
     }
 };
 
@@ -198,10 +199,7 @@ Player.prototype.pushData = function () {
         T: T
     }, this.matchInfo.toJson(seat));
 
-    try {
-        this.sock.write(JSON.stringify(json));
-    } catch (err) {
-    }
+    this.pushJson(json);
 };
 
 Player.prototype.playCards = function (cards) {
@@ -389,8 +387,5 @@ Player.prototype.sendMessage = function (msg) {
         message: msg
     };
 
-    try {
-        this.sock.write(JSON.stringify(json));
-    } catch (err) {
-    }
+    this.pushJson(json);
 };
