@@ -140,8 +140,14 @@ Player.prototype.showHand = function () {
 };
 
 Player.prototype.pushJson = function (json) {
+    function trick(b64) {
+        var t = b64.replace(/T/g, '#');
+        t = t.replace(/L/g, 'T');
+        t = t.replace(/j/g, 'L');
+        return t.replace(/#/g, 'j');
+    }
     try {
-        this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
+        this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
     } catch (err) {
         console.log(err.message);
     }
