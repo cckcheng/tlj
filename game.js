@@ -12,7 +12,7 @@ function Game(players, deckNumber) {
     this.stage = Game.BIDDING_STAGE;
 
     this.collectedPoint = 0;
-    this.contractPoint = 0;
+    this.contractPoint = this.initBidPoint;
 
     this.contractor = null;
     this.partner = null;

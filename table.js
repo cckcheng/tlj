@@ -8,7 +8,7 @@ var Deck = require('./deck');
 Table.Debugging = false;
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
-const TIMEOUT = Table.Debugging ? 5 : 30;     // default: 30 seconds
+
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
@@ -26,6 +26,8 @@ function Table(o) {
     this.deckNumber = o.deckNumber || DECK_NUMBER;
 
     this.games = [];
+	
+	this.TIMEOUT = Table.Debugging ? 5 : 30;     // default: 30 seconds
 }
 
 Table.MATCH_TYPE = {
@@ -113,17 +115,105 @@ Table.prototype.startGame = function () {
         p.evaluate();
         p.pushData();
     }
+
     this.actionPlayerIdx = 0;
-
     function nextTurn(t) {
-        t.actionPlayerIdx++;
-        if (t.actionPlayerIdx >= SEAT_NUMBER) t.actionPlayerIdx -= SEAT_NUMBER;
-//        console.log('nextTurn: ' + t.actionPlayerIdx);
-//        game.nextPlayer();
-        t.notifyPlayer(t.players[t.actionPlayerIdx], t.game.stage);
+		console.log('next, actionPlayerIdx: ' + t.actionPlayerIdx);
+		t.autoPlay(true);
     }
+    this.rotateTimer = setInterval(nextTurn, this.TIMEOUT * 1000, this);
 
-    this.rotateTimer = setInterval(nextTurn, TIMEOUT * 1000, this);
+	this.autoPlay(false);
+};
+
+Table.prototype.rotatePlayer = function() {
+	this.actionPlayerIdx++;
+	if (this.actionPlayerIdx >= SEAT_NUMBER) this.actionPlayerIdx -= SEAT_NUMBER;
+};
+
+Table.prototype.autoPlay = function(force) {
+	console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
+	var currentPlayer = this.players[this.actionPlayerIdx];
+	if(currentPlayer.sock != null && !force) {
+		return;
+	}
+	
+	if(this.game.stage === Game.BIDDING_STAGE) {
+		function findNextActivePlayer(t) {
+			currentPlayer = t.players[t.actionPlayerIdx];
+			var count = SEAT_NUMBER;
+			while(count>0 && currentPlayer.matchInfo.lastBid === 'pass') {
+				t.rotatePlayer();
+				currentPlayer = t.players[t.actionPlayerIdx];
+				count--;
+			}
+			if(count === 0) {
+				// all pass, force first player to be a contractor
+				t.game.contractor = t.players[0];
+				t.game.stage = Game.PLAYING_STAGE;
+				currentPlayer = t.players[0];
+			}
+		}
+
+		findNextActivePlayer(this);
+		if(this.game.stage === Game.PLAYING_STAGE) {
+			this.broadcastGameInfo({
+				seat: 1,
+				action: 'bid',
+				point: this.game.contractPoint,
+				nextActionSeat: 1
+			});
+			this.enterPlayingStage();
+			return;
+		}
+
+		setTimeout(function(t) {
+			t.rotateTimer.refresh();
+
+			currentPlayer = t.players[t.actionPlayerIdx];
+			if(currentPlayer.canBid && currentPlayer.minBid < t.game.contractPoint) {
+				console.log('minBid=' + currentPlayer.minBid +',contractPoint'+  t.game.contractPoint);
+				t.game.contractPoint -= 5;
+				currentPlayer.matchInfo.lastBid = t.game.contractPoint;
+				t.game.contractor = currentPlayer;
+			} else {
+				currentPlayer.matchInfo.lastBid = 'pass';
+			}
+			
+			var actionSeat = t.actionPlayerIdx+1;
+			var lastBid = currentPlayer.matchInfo.lastBid;
+			t.rotatePlayer();
+			findNextActivePlayer(t);
+			t.broadcastGameInfo({
+				action: 'bid',
+				seat: actionSeat,
+				bid: lastBid,
+				nextActionSeat: t.actionPlayerIdx+1
+			});
+			
+			if(t.players[t.actionPlayerIdx] !== t.game.contractor) {
+				console.log('bidding');
+				t.autoPlay(false);
+			} else {
+				console.log('bid over');
+				//bidding over
+				t.game.stage = Game.PLAYING_STAGE;
+				t.enterPlayingStage();
+			}
+		}, 1000, this);
+	} else {
+		console.log('playing');
+		this.rotatePlayer();
+	}
+};
+
+Table.prototype.enterPlayingStage = function () {
+};
+
+Table.prototype.broadcastGameInfo = function (json) {
+	this.players.forEach(function(p) {
+		p.pushJson(json);
+	});
 };
 
 Table.prototype.notifyPlayer = function (player, stage) {
@@ -141,12 +231,13 @@ Table.prototype.notifyPlayer = function (player, stage) {
 };
 
 Table.prototype.processPlayerAction = function (player, json) {
-    if (player != this.players[this.actionPlayerIdx]) return;    // late response
+    if (player !== this.players[this.actionPlayerIdx]) return;    // late response
     if (json.game != this.games.length) teturn;  // not current game
 
     console.log('playerId: ' + player.id);
-    this.actionPlayerIdx++;
     this.rotateTimer.refresh();
+	this.rotatePlayer();
+	this.autoPlay(false);
 };
 
 Table.prototype.getSeat = function (player) {

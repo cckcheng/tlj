@@ -140,6 +140,8 @@ Player.prototype.showHand = function () {
 };
 
 Player.prototype.pushJson = function (json) {
+	if(this.sock == null) return;
+	
     function trick(b64) {
         var t = b64.replace(/T/g, '#');
         t = t.replace(/L/g, 'T');
@@ -147,7 +149,11 @@ Player.prototype.pushJson = function (json) {
         return t.replace(/#/g, 'j');
     }
     try {
-        this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
+		if(Table.Debugging) {
+			this.sock.write(JSON.stringify(json) + '\n');
+		} else {
+			this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
+		}
     } catch (err) {
         console.log(err.message);
     }
@@ -389,6 +395,7 @@ Player.prototype.evaluate = function () {
 };
 
 Player.prototype.sendMessage = function (msg) {
+	if (this.sock == null) return;
     var json = {
         message: msg
     };
