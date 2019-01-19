@@ -99,10 +99,10 @@ Card.prototype.trumpRank = function (trump_suite, game_rank) {
     }
 
     if (this.rank === Card.RANK.BigJoker) {
-        return trump_suite == null ? 16 : 17;
+        return trump_suite === Card.SUITE.JOKER ? 16 : 17;
     }
     if (this.rank === Card.RANK.SmallJoker) {
-        return trump_suite == null ? 15 : 16;
+        return trump_suite === Card.SUITE.JOKER ? 15 : 16;
     }
 
     return this.rank < game_rank ? this.rank : this.rank - 1;
@@ -133,6 +133,43 @@ Card.getRanks = function (cards) {
     }
 
     return s;
+};
+
+Card.cardsToJson = function(cards) {
+    if(cards == null || cards.length<1) return {};
+    var S = [];
+    var H = [];
+    var D = [];
+    var C = [];
+    var T = [];
+    
+    cards.forEach(function(c){
+        switch (c.suite) {
+            case Card.SUITE.SPADE:
+                S.push(c.rank);
+                break;
+            case Card.SUITE.HEART:
+                H.push(c.rank);
+                break;
+            case Card.SUITE.CLUB:
+                C.push(c.rank);
+                break;
+            case Card.SUITE.DIAMOND:
+                D.push(c.rank);
+                break;
+            default:
+                T.push(c.rank);
+                break;
+        }
+    });
+    
+    return {
+        S: S,
+        H: H,
+        D: D,
+        C: C,
+        T: T        
+    };
 };
 
 Card.showCards = function (cards) {

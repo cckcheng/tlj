@@ -543,13 +543,13 @@ Game.prototype.setPartner = function (player) {
     this.partner = player;
 };
 
-Game.prototype.setTrump = function (card) {
+Game.prototype.setTrump = function (suite) {
     for (var x = 0, c; c = this.deck.remains[x]; x++) {
         this.contractor.addCard(c);
     }
     this.contractor.sortHand();
 
-    if (card.suite !== Card.SUITE.JOKER) this.trump = card.suite;
+    this.trump = suite;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.resortCards(this.trump, this.rank);
     }

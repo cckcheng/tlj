@@ -1,6 +1,7 @@
 var Card = require('./card');
 var HandStat = require('./stat');
 var Table = require('./table');
+var Game = require('./game');
 
 module.exports = Player;
 
@@ -56,6 +57,15 @@ Player.prototype.addCard = function (card) {
     }
 };
 
+Player.prototype.addCards = function (cards) {
+    if (cards == null || cards.length < 1)
+        return;
+    var p = this;
+    cards.forEach(function (c) {
+        p.addCard(c);
+    });
+};
+
 Player.prototype.removeCard = function (card) {
     var x = this.trumps.indexOf(card);
     if (x >= 0) {
@@ -65,19 +75,23 @@ Player.prototype.removeCard = function (card) {
     switch (card.suite) {
         case Card.SUITE.SPADE:
             x = this.spades.indexOf(card);
-            if (x >= 0) this.spades.splice(x, 1);
+            if (x >= 0)
+                this.spades.splice(x, 1);
             break;
         case Card.SUITE.CLUB:
             x = this.clubs.indexOf(card);
-            if (x >= 0) this.clubs.splice(x, 1);
+            if (x >= 0)
+                this.clubs.splice(x, 1);
             break;
         case Card.SUITE.HEART:
             x = this.hearts.indexOf(card);
-            if (x >= 0) this.hearts.splice(x, 1);
+            if (x >= 0)
+                this.hearts.splice(x, 1);
             break;
         case Card.SUITE.DIAMOND:
             x = this.diamonds.indexOf(card);
-            if (x >= 0) this.diamonds.splice(x, 1);
+            if (x >= 0)
+                this.diamonds.splice(x, 1);
             break;
     }
 };
@@ -108,7 +122,8 @@ Player.prototype.resortCards = function (trump_suite, game_rank) {
     this.trumps.sort(function (a, b) {
         var aRank = a.trumpRank(trump_suite, game_rank);
         var bRank = b.trumpRank(trump_suite, game_rank);
-        if (aRank === bRank) return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
+        if (aRank === bRank)
+            return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
         return aRank > bRank ? 1 : -1;
     });
 };
@@ -140,8 +155,9 @@ Player.prototype.showHand = function () {
 };
 
 Player.prototype.pushJson = function (json) {
-	if(this.sock == null) return;
-	
+    if (this.sock == null)
+        return;
+
     function trick(b64) {
         var t = b64.replace(/T/g, '#');
         t = t.replace(/L/g, 'T');
@@ -149,18 +165,20 @@ Player.prototype.pushJson = function (json) {
         return t.replace(/#/g, 'j');
     }
     try {
-		if(Table.Debugging) {
-			this.sock.write(JSON.stringify(json) + '\n');
-		} else {
-			this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
-		}
+        if (Table.Debugging) {
+//			this.sock.write(JSON.stringify(json) + '\n');
+            this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
+        } else {
+            this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
+        }
     } catch (err) {
         console.log(err.message);
     }
 };
 
 Player.prototype.pushData = function () {
-    if (this.sock == null) return;
+    if (this.sock == null)
+        return;
 
     var S = Card.getRanks(this.spades);
     var H = Card.getRanks(this.hearts);
@@ -192,7 +210,8 @@ Player.prototype.pushData = function () {
     var playerInfo = [];
     var totalPlayer = this.currentTable.players.length;
     for (var count = totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
-        if (x >= totalPlayer) x -= totalPlayer;
+        if (x >= totalPlayer)
+            x -= totalPlayer;
         p = this.currentTable.players[x];
         playerInfo.push(p.matchInfo.toJson(x + 1));
     }
@@ -200,9 +219,7 @@ Player.prototype.pushData = function () {
     var json = Object.assign({
         action: 'init',
         game: this.currentTable.games.length,
-        iTrump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
-        initBid: this.currentTable.game.initBidPoint,
-        minBid: Table.Debugging ? this.minBid : -1,
+        actionSeat: this.currentTable.actionPlayerIdx + 1,
         players: playerInfo,
         S: S,
         H: H,
@@ -211,6 +228,19 @@ Player.prototype.pushData = function () {
         T: T
     }, this.matchInfo.toJson(seat));
 
+    if (this.currentTable.game.stage === Game.BIDDING_STAGE) {
+        json = Object.assign({
+            iTrump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
+            minBid: Table.Debugging ? this.minBid : -1,
+            bid: this.currentTable.game.contractPoint
+        }, json);
+    } else {
+        json = Object.assign({
+            trump: this.currentTable.game.trump,
+            points: this.currentTable.game.collectedPoint,
+            contractPoint: this.currentTable.game.contractPoint
+        }, json);
+    }
     this.pushJson(json);
 };
 
@@ -240,7 +270,8 @@ Player.prototype.evaluate = function () {
     function totalGameRankCard(suite) {
         var n = 0;
         for (var x = 0, c; c = suite[x]; x++) {
-            if (c.rank === currentGameRank) n++;
+            if (c.rank === currentGameRank)
+                n++;
         }
         return n;
     }
@@ -249,17 +280,24 @@ Player.prototype.evaluate = function () {
         // evaluate the trump strongth for a given suite
         var iTrumps = p.trumps.slice(0);
         for (var x = 0, c; c = p.spades[x]; x++) {
-            if (c.suite === cSuite || c.rank === currentGameRank) iTrumps.push(c);
+            if (c.suite === cSuite || c.rank === currentGameRank)
+                iTrumps.push(c);
         }
         for (var x = 0, c; c = p.hearts[x]; x++) {
-            if (c.suite === cSuite || c.rank === currentGameRank) iTrumps.push(c);
+            if (c.suite === cSuite || c.rank === currentGameRank)
+                iTrumps.push(c);
         }
         for (var x = 0, c; c = p.diamonds[x]; x++) {
-            if (c.suite === cSuite || c.rank === currentGameRank) iTrumps.push(c);
+            if (c.suite === cSuite || c.rank === currentGameRank)
+                iTrumps.push(c);
         }
         for (var x = 0, c; c = p.clubs[x]; x++) {
-            if (c.suite === cSuite || c.rank === currentGameRank) iTrumps.push(c);
+            if (c.suite === cSuite || c.rank === currentGameRank)
+                iTrumps.push(c);
         }
+
+        if (iTrumps.length <= 8)
+            return 0;
 
         var point = iTrumps.length / 3.0; // length point
         if (iTrumps.length > 14) {
@@ -276,9 +314,9 @@ Player.prototype.evaluate = function () {
 //        });
 //        console.log(Card.showCards(iTrumps));
         var stat = new HandStat(iTrumps, cSuite, currentGameRank);
-        point += stat.totalPairs;
+        point += stat.totalPairs * 2;
         point += stat.totalTrips;
-        point += stat.totalQuads * 2;
+        point += stat.totalQuads * 3;
         if (stat.totalPairs > 0) {
             var arr = stat.sortedRanks(2);
             for (var x = 0, rnk, lRnk = -1, addon = 2; rnk = arr[x]; x++) {
@@ -287,7 +325,6 @@ Player.prototype.evaluate = function () {
                     addon++;
                 } else {
                     addon = 2;
-                    if (rnk > 13) point += 2;
                 }
                 lRnk = rnk;
             }
@@ -305,36 +342,48 @@ Player.prototype.evaluate = function () {
 
     var handStrongth = honorPoints;
     this.canBid = honorPoints > 0;
-    if (!this.canBid) return;
+    if (!this.canBid)
+        return;
 
+    this.intendTrumpSuite = Card.SUITE.JOKER;
     if (totalGameCardNum > 0) {
-        this.intendTrumpSuite = Card.SUITE.SPADE;
-        var maxTrumpPoint = (gameCardNumSpade === 0 ? -1 : trumpPoint(this, Card.SUITE.SPADE));
-        var trumpPointHeart = (gameCardNumHeart === 0 ? -1 : trumpPoint(this, Card.SUITE.HEART));
-        if (trumpPointHeart > maxTrumpPoint) {
-            maxTrumpPoint = trumpPointHeart;
-            this.intendTrumpSuite = Card.SUITE.HEART;
-        }
-        var trumpPointDiamond = (gameCardNumDiamond === 0 ? -1 : trumpPoint(this, Card.SUITE.DIAMOND));
-        if (trumpPointDiamond > maxTrumpPoint) {
-            maxTrumpPoint = trumpPointDiamond;
-            this.intendTrumpSuite = Card.SUITE.DIAMOND;
-        }
-        var trumpPointClub = (gameCardNumClub === 0 ? -1 : trumpPoint(this, Card.SUITE.CLUB));
-        if (trumpPointClub > maxTrumpPoint) {
-            maxTrumpPoint = trumpPointClub;
-            this.intendTrumpSuite = Card.SUITE.CLUB;
-        }
+        var maxTrumpPoint = 0;
 
+        if(gameCardNumSpade >0 ){
+            var trumpPointSpade = trumpPoint(this, Card.SUITE.SPADE);
+            if (trumpPointSpade > maxTrumpPoint) {
+                maxTrumpPoint = trumpPointHeart;
+                this.intendTrumpSuite = Card.SUITE.SPADE;
+            }
+        }
+        if(gameCardNumHeart >0 ){
+            var trumpPointHeart = trumpPoint(this, Card.SUITE.HEART);
+            if (trumpPointHeart > maxTrumpPoint) {
+                maxTrumpPoint = trumpPointHeart;
+                this.intendTrumpSuite = Card.SUITE.HEART;
+            }
+        }
+        if(gameCardNumDiamond > 0) {
+            var trumpPointDiamond = trumpPoint(this, Card.SUITE.DIAMOND);
+            if (trumpPointDiamond > maxTrumpPoint) {
+                maxTrumpPoint = trumpPointDiamond;
+                this.intendTrumpSuite = Card.SUITE.DIAMOND;
+            }
+        }
+        if(gameCardNumClub > 0) {
+            var trumpPointClub = trumpPoint(this, Card.SUITE.CLUB);
+            if (trumpPointClub > maxTrumpPoint) {
+                maxTrumpPoint = trumpPointClub;
+                this.intendTrumpSuite = Card.SUITE.CLUB;
+            }
+        }
         handStrongth += maxTrumpPoint;
-    } else {
-        this.intendTrumpSuite = Card.SUITE.JOKER;
     }
 
     var totalPairs = 0;
     var totalTrips = 0;
     var totalQuads = 0;
-    
+
     var tractorPoints = 0;
     var additionPoints = 0;
 
@@ -343,15 +392,15 @@ Player.prototype.evaluate = function () {
         totalPairs += stat.totalPairs;
         totalTrips += stat.totalTrips;
         totalQuads += stat.totalQuads;
-        
-        if(stat.totalTrips > 0) {
+
+        if (stat.totalTrips > 0) {
             var arr = stat.sortedRanks(3);
             for (var x = 0, rnk, lRnk = -1, addon = 3; rnk = arr[x]; x++) {
-                if(rnk === 14) {
+                if (rnk === 14) {
                     // the special card, card rank equals to players's current game rank
                     continue;
                 }
-                if(rnk === lRnk+1) {
+                if (rnk === lRnk + 1) {
                     tractorPoints += addon;
                     addon++;
                 } else {
@@ -360,16 +409,17 @@ Player.prototype.evaluate = function () {
                 lRnk = rnk;
             }
         }
-        if(stat.totalPairs > 0) {
+        if (stat.totalPairs > 0) {
             var arr = stat.sortedRanks(2);
             for (var x = 0, rnk, lRnk = -1, addon = 2; rnk = arr[x]; x++) {
-                if(rnk === 14) {
+                if (rnk === 14) {
                     // the special card, card rank equals to players's current game rank
                     continue;
                 }
-                if(rnk === lRnk+1) {
+                if (rnk === lRnk + 1) {
                     tractorPoints += addon + (rnk >= 10 ? 1 : 0);
-                    if (rnk === 13) tractorPoints++;
+                    if (rnk === 13)
+                        tractorPoints++;
                     addon++;
                 } else {
                     addon = 2;
@@ -378,12 +428,16 @@ Player.prototype.evaluate = function () {
             }
         }
     }
-    
-    if (this.intendTrumpSuite !== Card.SUITE.SPADE) evalSuiteStrongth(this.spades);
-    if (this.intendTrumpSuite !== Card.SUITE.HEART) evalSuiteStrongth(this.hearts);
-    if (this.intendTrumpSuite !== Card.SUITE.DIAMOND) evalSuiteStrongth(this.diamonds);
-    if (this.intendTrumpSuite !== Card.SUITE.CLUB) evalSuiteStrongth(this.clubs);
-    
+
+    if (this.intendTrumpSuite !== Card.SUITE.SPADE)
+        evalSuiteStrongth(this.spades);
+    if (this.intendTrumpSuite !== Card.SUITE.HEART)
+        evalSuiteStrongth(this.hearts);
+    if (this.intendTrumpSuite !== Card.SUITE.DIAMOND)
+        evalSuiteStrongth(this.diamonds);
+    if (this.intendTrumpSuite !== Card.SUITE.CLUB)
+        evalSuiteStrongth(this.clubs);
+
     handStrongth += totalPairs * 2;
     handStrongth += totalTrips;
     handStrongth += totalQuads * 3;
@@ -391,11 +445,13 @@ Player.prototype.evaluate = function () {
     handStrongth += additionPoints;
 
     this.minBid = 200 + Math.round((30 - handStrongth) * 2 / 3) * 5;
-    if (Table.Debugging) console.log('minBid: ' + this.minBid + "\n");
+    if (Table.Debugging)
+        console.log('minBid: ' + this.minBid + "\n");
 };
 
 Player.prototype.sendMessage = function (msg) {
-	if (this.sock == null) return;
+    if (this.sock == null)
+        return;
     var json = {
         message: msg
     };

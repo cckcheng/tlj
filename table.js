@@ -163,6 +163,7 @@ Table.prototype.autoPlay = function(force) {
 				point: this.game.contractPoint,
 				nextActionSeat: 1
 			});
+                        this.actionPlayerIdx = 0;
 			this.enterPlayingStage();
 			return;
 		}
@@ -202,12 +203,34 @@ Table.prototype.autoPlay = function(force) {
 			}
 		}, 1000, this);
 	} else {
-		console.log('playing');
-		this.rotatePlayer();
+            console.log('playing');
+            if(this.game.trump == null) {
+                var contractor = this.game.contracor;
+                this.game.setTrump(contracor.intendTrumpSuite);
+                contractor.pushJson(Object.assign({
+                    action: 'add_remains'
+                }, Card.cardsToJson(this.game.deck.remains)));
+                this.broadcastGameInfo({
+                    action: 'set_trump',
+                    trump: this.game.trump
+                });
+            } else {
+                this.rotatePlayer();
+            }
 	}
 };
 
 Table.prototype.enterPlayingStage = function () {
+    var contractor = this.game.contractor;
+    
+    if(contractor.sock != null) {
+        this.rotateTimer.unref();
+        setTimeout(function(t){
+            t.rotateTimer.ref();
+        }, 180*1000, this);
+    } else {
+        
+    }
 };
 
 Table.prototype.broadcastGameInfo = function (json) {
