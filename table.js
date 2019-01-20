@@ -206,7 +206,7 @@ Table.prototype.autoPlay = function(force) {
             console.log('playing');
             if(this.game.trump == null) {
                 var contractor = this.game.contracor;
-                this.game.setTrump(contracor.intendTrumpSuite);
+                this.game.setTrump(contractor.intendTrumpSuite);
                 contractor.pushJson(Object.assign({
                     action: 'add_remains'
                 }, Card.cardsToJson(this.game.deck.remains)));

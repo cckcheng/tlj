@@ -166,7 +166,7 @@ Player.prototype.pushJson = function (json) {
     }
     try {
         if (Table.Debugging) {
-//			this.sock.write(JSON.stringify(json) + '\n');
+//            this.sock.write(JSON.stringify(json) + '\n');
             this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
         } else {
             this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
@@ -313,6 +313,7 @@ Player.prototype.evaluate = function () {
 //            return aRank > bRank ? 1 : -1;
 //        });
 //        console.log(Card.showCards(iTrumps));
+
         var stat = new HandStat(iTrumps, cSuite, currentGameRank);
         point += stat.totalPairs * 2;
         point += stat.totalTrips;
@@ -329,6 +330,7 @@ Player.prototype.evaluate = function () {
                 lRnk = rnk;
             }
         }
+//        console.log(point);
         return point;
     }
 
@@ -352,7 +354,7 @@ Player.prototype.evaluate = function () {
         if(gameCardNumSpade >0 ){
             var trumpPointSpade = trumpPoint(this, Card.SUITE.SPADE);
             if (trumpPointSpade > maxTrumpPoint) {
-                maxTrumpPoint = trumpPointHeart;
+                maxTrumpPoint = trumpPointSpade;
                 this.intendTrumpSuite = Card.SUITE.SPADE;
             }
         }
