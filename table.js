@@ -76,7 +76,10 @@ Table.prototype.dismiss = function () {
             continue;
         p.currentTable = null;
     }
-    clearInterval(this.rotateTimer);
+
+    console.log('dismiss table');
+    if(this.rotateTimer != null) clearInterval(this.rotateTimer);
+    if(this.autoTimer != null) clearInterval(this.autoTimer);
 };
 
 Table.prototype.addPlayer = function (player) {
@@ -175,7 +178,7 @@ Table.prototype.autoPlay = function (force) {
             return;
         }
 
-        setTimeout(function (t) {
+        this.autoTimer = setTimeout(function (t) {
             t.rotateTimer.refresh();
 
             currentPlayer = t.players[t.actionPlayerIdx];
