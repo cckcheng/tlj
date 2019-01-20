@@ -26,8 +26,8 @@ function Table(o) {
     this.deckNumber = o.deckNumber || DECK_NUMBER;
 
     this.games = [];
-	
-	this.TIMEOUT = Table.Debugging ? 5 : 30;     // default: 30 seconds
+
+    this.TIMEOUT = Table.Debugging ? 5 : 30;     // default: 30 seconds
 }
 
 Table.MATCH_TYPE = {
@@ -45,7 +45,7 @@ Table.MATCH_TYPE = {
     },
     FREE: {
         title: 'Free(2->5)',
-        ranks: [2,3,4,5]
+        ranks: [2, 3, 4, 5]
     },
     EXPRESS: {
         title: 'Express(10->A)',
@@ -60,8 +60,10 @@ Table.prototype.seatAvailable = function () {
 Table.prototype.allRobots = function () {
     for (var x = 0, p; x < SEAT_NUMBER; x++) {
         p = this.players[x];
-        if (p == null) continue;
-        if (p.sock != null) return false;
+        if (p == null)
+            continue;
+        if (p.sock != null)
+            return false;
     }
 
     return true;
@@ -70,7 +72,8 @@ Table.prototype.allRobots = function () {
 Table.prototype.dismiss = function () {
     for (var x = 0, p; x < this.players.length; x++) {
         p = this.players[x];
-        if (p == null) continue;
+        if (p == null)
+            continue;
         p.currentTable = null;
     }
     clearInterval(this.rotateTimer);
@@ -118,125 +121,130 @@ Table.prototype.startGame = function () {
 
     this.actionPlayerIdx = 0;
     function nextTurn(t) {
-		console.log('next, actionPlayerIdx: ' + t.actionPlayerIdx);
-		t.autoPlay(true);
+        console.log('next, actionPlayerIdx: ' + t.actionPlayerIdx);
+        t.autoPlay(true);
     }
     this.rotateTimer = setInterval(nextTurn, this.TIMEOUT * 1000, this);
 
-	this.autoPlay(false);
+    this.autoPlay(false);
 };
 
-Table.prototype.rotatePlayer = function() {
-	this.actionPlayerIdx++;
-	if (this.actionPlayerIdx >= SEAT_NUMBER) this.actionPlayerIdx -= SEAT_NUMBER;
+Table.prototype.rotatePlayer = function () {
+    this.actionPlayerIdx++;
+    if (this.actionPlayerIdx >= SEAT_NUMBER)
+        this.actionPlayerIdx -= SEAT_NUMBER;
 };
 
-Table.prototype.autoPlay = function(force) {
-	console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
-	var currentPlayer = this.players[this.actionPlayerIdx];
-	if(currentPlayer.sock != null && !force) {
-		return;
-	}
-	
-	if(this.game.stage === Game.BIDDING_STAGE) {
-		function findNextActivePlayer(t) {
-			currentPlayer = t.players[t.actionPlayerIdx];
-			var count = SEAT_NUMBER;
-			while(count>0 && currentPlayer.matchInfo.lastBid === 'pass') {
-				t.rotatePlayer();
-				currentPlayer = t.players[t.actionPlayerIdx];
-				count--;
-			}
-			if(count === 0) {
-				// all pass, force first player to be a contractor
-				t.game.contractor = t.players[0];
-				t.game.stage = Game.PLAYING_STAGE;
-				currentPlayer = t.players[0];
-			}
-		}
+Table.prototype.autoPlay = function (force) {
+    console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
+    var currentPlayer = this.players[this.actionPlayerIdx];
+    if (currentPlayer.sock != null && !force) {
+        return;
+    }
 
-		findNextActivePlayer(this);
-		if(this.game.stage === Game.PLAYING_STAGE) {
-			this.broadcastGameInfo({
-				seat: 1,
-				action: 'bid',
-				point: this.game.contractPoint,
-				nextActionSeat: 1
-			});
-                        this.actionPlayerIdx = 0;
-			this.enterPlayingStage();
-			return;
-		}
-
-		setTimeout(function(t) {
-			t.rotateTimer.refresh();
-
-			currentPlayer = t.players[t.actionPlayerIdx];
-			if(currentPlayer.canBid && currentPlayer.minBid < t.game.contractPoint) {
-				console.log('minBid=' + currentPlayer.minBid +',contractPoint'+  t.game.contractPoint);
-				t.game.contractPoint -= 5;
-				currentPlayer.matchInfo.lastBid = t.game.contractPoint;
-				t.game.contractor = currentPlayer;
-			} else {
-				currentPlayer.matchInfo.lastBid = 'pass';
-			}
-			
-			var actionSeat = t.actionPlayerIdx+1;
-			var lastBid = currentPlayer.matchInfo.lastBid;
-			t.rotatePlayer();
-			findNextActivePlayer(t);
-			t.broadcastGameInfo({
-				action: 'bid',
-				seat: actionSeat,
-				bid: lastBid,
-				nextActionSeat: t.actionPlayerIdx+1
-			});
-			
-			if(t.players[t.actionPlayerIdx] !== t.game.contractor) {
-				console.log('bidding');
-				t.autoPlay(false);
-			} else {
-				console.log('bid over');
-				//bidding over
-				t.game.stage = Game.PLAYING_STAGE;
-				t.enterPlayingStage();
-			}
-		}, 1000, this);
-	} else {
-            console.log('playing');
-            if(this.game.trump == null) {
-                var contractor = this.game.contracor;
-                this.game.setTrump(contractor.intendTrumpSuite);
-                contractor.pushJson(Object.assign({
-                    action: 'add_remains'
-                }, Card.cardsToJson(this.game.deck.remains)));
-                this.broadcastGameInfo({
-                    action: 'set_trump',
-                    trump: this.game.trump
-                });
-            } else {
-                this.rotatePlayer();
+    if (this.game.stage === Game.BIDDING_STAGE) {
+        function findNextActivePlayer(t) {
+            currentPlayer = t.players[t.actionPlayerIdx];
+            var count = SEAT_NUMBER;
+            while (count > 0 && currentPlayer.matchInfo.lastBid === 'pass') {
+                t.rotatePlayer();
+                currentPlayer = t.players[t.actionPlayerIdx];
+                count--;
             }
-	}
+            if (count === 0) {
+                // all pass, force first canBid player to be a contractor
+                for(var x=0,p; p=t.players[x];x++) {
+                    if(p.canBid){
+                        t.actionPlayerIdx = x;
+                        break;
+                    }
+                }
+            }
+        }
+
+        findNextActivePlayer(this);
+        if (this.game.stage === Game.PLAYING_STAGE) {
+            this.broadcastGameInfo({
+                seat: 1,
+                action: 'bid',
+                point: this.game.contractPoint,
+                nextActionSeat: 1
+            });
+            this.actionPlayerIdx = 0;
+            this.enterPlayingStage();
+            return;
+        }
+
+        setTimeout(function (t) {
+            t.rotateTimer.refresh();
+
+            currentPlayer = t.players[t.actionPlayerIdx];
+            if (currentPlayer.canBid && currentPlayer.minBid < t.game.contractPoint) {
+                console.log('minBid=' + currentPlayer.minBid + ',contractPoint' + t.game.contractPoint);
+                t.game.contractPoint -= 5;
+                currentPlayer.matchInfo.lastBid = t.game.contractPoint;
+                t.game.contractor = currentPlayer;
+            } else {
+                currentPlayer.matchInfo.lastBid = 'pass';
+            }
+
+            var actionSeat = t.actionPlayerIdx + 1;
+            var lastBid = currentPlayer.matchInfo.lastBid;
+            t.rotatePlayer();
+            findNextActivePlayer(t);
+            t.broadcastGameInfo({
+                action: 'bid',
+                seat: actionSeat,
+                bid: lastBid,
+                nextActionSeat: t.actionPlayerIdx + 1
+            });
+
+            if (t.players[t.actionPlayerIdx] !== t.game.contractor) {
+                console.log('bidding');
+                t.autoPlay(false);
+            } else {
+                console.log('bid over');
+                //bidding over
+                t.enterPlayingStage();
+            }
+        }, 1000, this);
+    } else {
+        console.log('playing');
+        if (this.game.trump == null) {
+            debugger;
+            var contractor = this.game.contractor;
+            this.game.setTrump(contractor.intendTrumpSuite);
+            contractor.pushJson(Object.assign({
+                action: 'add_remains'
+            }, Card.cardsToJson(this.game.deck.remains)));
+            this.broadcastGameInfo({
+                action: 'set_trump',
+                trump: this.game.trump
+            });
+        } else {
+            this.rotatePlayer();
+        }
+    }
 };
 
 Table.prototype.enterPlayingStage = function () {
+    this.game.stage = Game.PLAYING_STAGE;
     var contractor = this.game.contractor;
-    
-    if(contractor.sock != null) {
+
+    if (contractor.sock != null) {
         this.rotateTimer.unref();
-        setTimeout(function(t){
+        setTimeout(function (t) {
             t.rotateTimer.ref();
-        }, 180*1000, this);
+        }, 180 * 1000, this);
     } else {
-        
+
     }
 };
 
 Table.prototype.broadcastGameInfo = function (json) {
-	this.players.forEach(function(p) {
-		p.pushJson(json);
-	});
+    this.players.forEach(function (p) {
+        p.pushJson(json);
+    });
 };
 
 Table.prototype.notifyPlayer = function (player, stage) {
@@ -254,13 +262,15 @@ Table.prototype.notifyPlayer = function (player, stage) {
 };
 
 Table.prototype.processPlayerAction = function (player, json) {
-    if (player !== this.players[this.actionPlayerIdx]) return;    // late response
-    if (json.game != this.games.length) teturn;  // not current game
+    if (player !== this.players[this.actionPlayerIdx])
+        return;    // late response
+    if (json.game != this.games.length)
+        teturn;  // not current game
 
     console.log('playerId: ' + player.id);
     this.rotateTimer.refresh();
-	this.rotatePlayer();
-	this.autoPlay(false);
+    this.rotatePlayer();
+    this.autoPlay(false);
 };
 
 Table.prototype.getSeat = function (player) {
@@ -270,9 +280,11 @@ Table.prototype.getSeat = function (player) {
 Table.prototype.getNextRank = function (rank, delta) {
     var idx = this.matchType.ranks.indexOf(rank);
     var maxIdx = this.matchType.ranks.length - 1;
-    if (idx < 0) return -1;
+    if (idx < 0)
+        return -1;
     var nextIdx = idx + delta;
-    if (nextIdx < 0) nextIdx = 0;
+    if (nextIdx < 0)
+        nextIdx = 0;
     if (nextIdx > maxIdx) {
         return this.matchType.ranks[maxIdx] + nextIdx - maxIdx;
     }
@@ -281,10 +293,12 @@ Table.prototype.getNextRank = function (rank, delta) {
 };
 
 function shuffleArray(arr) {
-    if (arr == null) return;
+    if (arr == null)
+        return;
     for (var x = 0; x < arr.length; x++) {
         var idx = Math.floor(Math.round(arr.length));
-        if (idx === x) continue;
+        if (idx === x)
+            continue;
         var tmp = arr[x];
         arr[x] = arr[idx];
         arr[idx] = tmp;

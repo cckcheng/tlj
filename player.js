@@ -166,8 +166,8 @@ Player.prototype.pushJson = function (json) {
     }
     try {
         if (Table.Debugging) {
-//            this.sock.write(JSON.stringify(json) + '\n');
-            this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
+            this.sock.write(JSON.stringify(json) + '\n');
+//            this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
         } else {
             this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
         }
@@ -276,6 +276,19 @@ Player.prototype.evaluate = function () {
         return n;
     }
 
+    var gameCardNumSpade = totalGameRankCard(this.spades);
+    var gameCardNumHeart = totalGameRankCard(this.hearts);
+    var gameCardNumDiamond = totalGameRankCard(this.diamonds);
+    var gameCardNumClub = totalGameRankCard(this.clubs);
+
+    var totalGameCardNum = gameCardNumSpade + gameCardNumHeart + gameCardNumDiamond + gameCardNumClub;
+    honorPoints += totalGameCardNum;
+
+    var handStrongth = honorPoints;
+    this.canBid = honorPoints > 0;
+    if (!this.canBid)
+        return;
+
     function trumpPoint(p, cSuite) {
         // evaluate the trump strongth for a given suite
         var iTrumps = p.trumps.slice(0);
@@ -333,19 +346,6 @@ Player.prototype.evaluate = function () {
 //        console.log(point);
         return point;
     }
-
-    var gameCardNumSpade = totalGameRankCard(this.spades);
-    var gameCardNumHeart = totalGameRankCard(this.hearts);
-    var gameCardNumDiamond = totalGameRankCard(this.diamonds);
-    var gameCardNumClub = totalGameRankCard(this.clubs);
-
-    var totalGameCardNum = gameCardNumSpade + gameCardNumHeart + gameCardNumDiamond + gameCardNumClub;
-    honorPoints += totalGameCardNum;
-
-    var handStrongth = honorPoints;
-    this.canBid = honorPoints > 0;
-    if (!this.canBid)
-        return;
 
     this.intendTrumpSuite = Card.SUITE.JOKER;
     if (totalGameCardNum > 0) {
