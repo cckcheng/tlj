@@ -164,16 +164,29 @@ Player.prototype.pushJson = function (json) {
         t = t.replace(/j/g, 'L');
         return t.replace(/#/g, 'j');
     }
-    try {
-        if (Table.Debugging) {
-            this.sock.write(JSON.stringify(json) + '\n');
-//            this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
-        } else {
-            this.sock.write(trick(Buffer.from(JSON.stringify(json)).toString('base64')));
+
+    setImmediate(function (p) {
+        // this seems no differents
+        try {
+            if (Table.Debugging) {
+                p.sock.write(JSON.stringify(json) + '\n');
+            } else {
+                p.sock.write(trick(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
+            }
+        } catch (err) {
+            console.log(err.message);
         }
-    } catch (err) {
-        console.log(err.message);
-    }
+    }, this);
+//    try {
+//        if (Table.Debugging) {
+//            this.sock.write(JSON.stringify(json) + '\n');
+////            this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
+//        } else {
+//            this.sock.write(trick(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
+//        }
+//    } catch (err) {
+//        console.log(err.message);
+//    }
 };
 
 Player.prototype.pushData = function () {
@@ -230,13 +243,13 @@ Player.prototype.pushData = function () {
 
     if (this.currentTable.game.stage === Game.BIDDING_STAGE) {
         json = Object.assign({
-            iTrump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
+            trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
             minBid: Table.Debugging ? this.minBid : -1,
             bid: this.currentTable.game.contractPoint
         }, json);
     } else {
         json = Object.assign({
-            trump: this.currentTable.game.trump,
+            trump: this.currentTable.game.trump ? this.currentTable.game.trump : '',
             points: this.currentTable.game.collectedPoint,
             contractPoint: this.currentTable.game.contractPoint
         }, json);
