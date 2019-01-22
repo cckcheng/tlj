@@ -73,6 +73,12 @@ function handleClose(sock, hadError) {
 }
 
 function handleData(sock, data) {
+    if (data.length < 2)
+        return;
+
+    if (data.charAt(0) !== '{') {
+        data = Buffer.from(Player.confusedData(data), 'base64').toString();
+    }
 
     console.log(sock.remoteAddress + ':' + data);
 //    sock.write('reveived\n');

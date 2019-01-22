@@ -154,16 +154,16 @@ Player.prototype.showHand = function () {
     return s;
 };
 
+Player.confusedData = function (data) {
+    var t = data.replace(/T/g, '#');
+    t = t.replace(/L/g, 'T');
+    t = t.replace(/j/g, 'L');
+    return t.replace(/#/g, 'j');
+};
+
 Player.prototype.pushJson = function (json) {
     if (this.sock == null)
         return;
-
-    function trick(b64) {
-        var t = b64.replace(/T/g, '#');
-        t = t.replace(/L/g, 'T');
-        t = t.replace(/j/g, 'L');
-        return t.replace(/#/g, 'j');
-    }
 
     setImmediate(function (p) {
         // this seems no differents
@@ -171,7 +171,7 @@ Player.prototype.pushJson = function (json) {
             if (Table.Debugging) {
                 p.sock.write(JSON.stringify(json) + '\n');
             } else {
-                p.sock.write(trick(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
+                p.sock.write(Player.confusedData(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
             }
         } catch (err) {
             console.log(err.message);
@@ -182,7 +182,7 @@ Player.prototype.pushJson = function (json) {
 //            this.sock.write(JSON.stringify(json) + '\n');
 ////            this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
 //        } else {
-//            this.sock.write(trick(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
+//            this.sock.write(Player.confusedData(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
 //        }
 //    } catch (err) {
 //        console.log(err.message);
