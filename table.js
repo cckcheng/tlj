@@ -69,7 +69,30 @@ Table.prototype.allRobots = function () {
     return true;
 };
 
-Table.prototype.dismiss = function () {
+Table.prototype.dismiss = function (activePlayers, playerId) {
+    if(this.autoTimer != null) {
+        clearTimeout(this.autoTimer);
+        this.autoTimer = null;
+    }
+    if(this.rotateTimer != null) {
+        clearInterval(this.rotateTimer);
+        this.rotateTimer = null;
+    }
+    var pauseMinutes = Table.Debugging ? 5 : 30;  // 5 minutes, set to 30 minutes when release
+    this.pauseTimer = setTimeout(function(t){
+        for (var x = 0, p; x < t.players.length; x++) {
+            p = t.players[x];
+            if (p == null)
+                continue;
+            p.currentTable = null;
+        }
+    
+        console.log('dismiss table');
+        t.dismissed = true;
+        delete activePlayers[playerId];
+    }, pauseMinutes * 60000, this);
+
+    /*
     for (var x = 0, p; x < this.players.length; x++) {
         p = this.players[x];
         if (p == null)
@@ -80,6 +103,23 @@ Table.prototype.dismiss = function () {
     console.log('dismiss table');
     if(this.rotateTimer != null) clearInterval(this.rotateTimer);
     if(this.autoTimer != null) clearInterval(this.autoTimer);
+    */
+};
+
+Table.prototype.resume = function () {
+    if(this.pauseTimer != null) {
+        clearTimeout(this.pauseTimer);
+        this.pauseTimer = null;
+    }
+    
+    if(this.rotateTimer == null) {
+        function nextTurn(t) {
+            console.log('next, actionPlayerIdx: ' + t.actionPlayerIdx);
+            t.autoPlay(true);
+        }
+        this.rotateTimer = setInterval(nextTurn, this.TIMEOUT * 1000, this);
+        this.autoPlay(false);
+    }
 };
 
 Table.prototype.addPlayer = function (player) {

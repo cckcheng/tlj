@@ -64,11 +64,11 @@ function handleClose(sock, hadError) {
 
     player.toRobot();
     if (table.allRobots()) {
-        table.dismiss();
-        runningTables.splice(runningTables.indexOf(table), 1);
-        if (player.id != null) {
-            delete activePlayers[player.id];
-        }
+        table.dismiss(activePlayers, player.id);
+//        runningTables.splice(runningTables.indexOf(table), 1);
+//        if (player.id != null) {
+//            delete activePlayers[player.id];
+//        }
     }
 }
 
@@ -111,6 +111,7 @@ function handleData(sock, data) {
             if (currentTable != null) {
                 console.log('exist table.');
                 player.pushData();
+                currentTable.resume();
             } else {
                 var robot = null;
                 while (robots.length > 0) {
@@ -125,6 +126,7 @@ function handleData(sock, data) {
                     robot.replaceRobot(player.id, player.sock);
                     onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
                     player.pushData();
+                    player.currentTable.resume();
                 }
             }
             break;

@@ -357,7 +357,7 @@ Player.prototype.evaluate = function () {
             }
         }
 //        console.log(point);
-        return point;
+        return point * 1.5;
     }
 
     this.intendTrumpSuite = Card.SUITE.JOKER;
@@ -459,7 +459,7 @@ Player.prototype.evaluate = function () {
     handStrongth += tractorPoints;
     handStrongth += additionPoints;
 
-    this.minBid = 200 + Math.round((30 - handStrongth) * 2 / 3) * 5;
+    this.minBid = 200 + Math.round((40 - handStrongth) * 0.5) * 5;
     if (Table.Debugging)
         console.log('minBid: ' + this.minBid + "\n");
 };
