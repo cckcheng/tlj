@@ -73,6 +73,7 @@ function handleClose(sock, hadError) {
 }
 
 function handleData(sock, data) {
+    data = data.toString();
     if (data.length < 2)
         return;
 
