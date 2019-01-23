@@ -24,6 +24,7 @@ function Game(players, deckNumber) {
     this.deck.deal(this.players);
     console.log('remains:' + this.deck.remains.length);
 
+    this.holeCards = [];
     this.rounds = [];
 }
 

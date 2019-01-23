@@ -232,6 +232,7 @@ Player.prototype.pushData = function () {
     var json = Object.assign({
         action: 'init',
         game: this.currentTable.games.length,
+        stage: this.currentTable.game.stage,
         actionSeat: this.currentTable.actionPlayerIdx + 1,
         players: playerInfo,
         S: S,
@@ -262,6 +263,10 @@ Player.prototype.playCards = function (cards) {
     for (var x = 0, c; c = cards[x]; x++) {
         this.removeCard(c);
     }
+};
+
+Player.prototype.buryCards = function () {
+    // To Do ...
 };
 
 Player.prototype.promote = function (delta) {
