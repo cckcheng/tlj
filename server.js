@@ -145,6 +145,11 @@ function handleData(sock, data) {
     }
 
     function createNewTable(player) {
+        runningTables.forEach((t, idx, obj) => {
+            if (t.dismissed)
+                obj.splice(idx, 1);
+        });
+
         if (runningTables.length >= MAX_TABLES) {
             player.sendMessage("No table available. Please wait...");
             return;
