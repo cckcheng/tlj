@@ -234,6 +234,7 @@ Player.prototype.pushData = function () {
         game: this.currentTable.games.length,
         stage: this.currentTable.game.stage,
         actionSeat: this.currentTable.actionPlayerIdx + 1,
+        contractPoint: this.currentTable.game.contractPoint,
         players: playerInfo,
         S: S,
         H: H,
@@ -245,14 +246,12 @@ Player.prototype.pushData = function () {
     if (this.currentTable.game.stage === Game.BIDDING_STAGE) {
         json = Object.assign({
             trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
-            minBid: Table.Debugging ? this.minBid : -1,
-            bid: this.currentTable.game.contractPoint
+            minBid: Table.Debugging ? this.minBid : -1
         }, json);
     } else {
         json = Object.assign({
             trump: this.currentTable.game.trump ? this.currentTable.game.trump : '',
-            points: this.currentTable.game.collectedPoint,
-            contractPoint: this.currentTable.game.contractPoint
+            points: this.currentTable.game.collectedPoint
         }, json);
     }
     this.pushJson(json);
