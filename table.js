@@ -145,12 +145,13 @@ Table.prototype.startGame = function () {
             p.matchInfo.points = 0;
         }
     }
+
+    this.actionPlayerIdx = 0;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.evaluate();
         p.pushData();
     }
 
-    this.actionPlayerIdx = 0;
     this.autoPlay();
 };
 

@@ -236,6 +236,7 @@ Player.prototype.pushData = function () {
         actionSeat: this.currentTable.actionPlayerIdx + 1,
         contractPoint: this.currentTable.game.contractPoint,
         players: playerInfo,
+        timeout: this.currentTable.TIMEOUT_SECONDS, // default timeout
         S: S,
         H: H,
         D: D,
