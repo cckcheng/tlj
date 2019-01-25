@@ -8,7 +8,8 @@ var Deck = require('./deck');
 Table.Debugging = false;
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
-const ADD_SECONDS = 3;
+const ADD_SECONDS = 2;
+const ROBOT_SECONDS = 1;
 
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
@@ -28,7 +29,7 @@ function Table(o) {
 
     this.games = [];
 
-    this.TIMEOUT_SECONDS = Table.Debugging ? 5 : 30;     // default: 33 seconds (30s for client side + 3s)
+    this.TIMEOUT_SECONDS = Table.Debugging ? 8 : 30;     // default: 32 seconds (30s for client side + 2s)
 }
 
 Table.MATCH_TYPE = {
@@ -189,7 +190,7 @@ function findNextActivePlayer(t) {
 Table.prototype.autoPlay = function () {
     console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
     var player = this.players[this.actionPlayerIdx];
-    var waitSeconds = 2;
+    var waitSeconds = ROBOT_SECONDS;
     if (player.sock != null) {
         waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
     }
@@ -265,7 +266,7 @@ Table.prototype.enterPlayingStage = function () {
 
 Table.prototype.declareTrump = function () {
     var player = this.game.contractor;
-    var waitSeconds = 2;
+    var waitSeconds = ROBOT_SECONDS;
     if (player.sock != null) {
         waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
     }
@@ -289,7 +290,7 @@ Table.prototype.declareTrump = function () {
 
 Table.prototype.buryCards = function () {
     var player = this.game.contractor;
-    var waitSeconds = 2;
+    var waitSeconds = ROBOT_SECONDS;
     if (player.sock != null) {
         waitSeconds = this.TIMEOUT_SECONDS * 6 + ADD_SECONDS;
     }
