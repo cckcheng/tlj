@@ -535,9 +535,9 @@ function Round(players, trump, gameRank) {
     };
 }
 
-Game.prototype.setContractor = function (player) {
-    this.contractor = player;
-    this.rank = player.matchInfo.currentRank;
+Game.prototype.enterPlayStage = function () {
+    this.stage = Game.PLAYING_STAGE;
+    this.rank = this.contractor.matchInfo.currentRank;
 };
 
 Game.prototype.setPartner = function (player) {

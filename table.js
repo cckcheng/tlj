@@ -252,7 +252,7 @@ Table.prototype.autoPlay = function () {
 };
 
 Table.prototype.enterPlayingStage = function () {
-    this.game.stage = Game.PLAYING_STAGE;
+    this.game.enterPlayStage();
     var player = this.game.contractor;
 
     this.autoTimer = setTimeout(function (t) {
@@ -277,6 +277,9 @@ Table.prototype.declareTrump = function () {
         }, Card.cardsToJson(t.game.deck.remains)));
         t.broadcastGameInfo({
             action: 'set_trump',
+            seat: t.actionPlayerIdx + 1,
+            gameRank: t.game.rank,
+            contractPoint: t.game.contractPoint,
             trump: t.game.trump
         });
 
@@ -390,6 +393,8 @@ Table.prototype.processPlayerAction = function (player, json) {
 };
 
 Table.prototype.getSeat = function (player) {
+    if (player == null)
+        return -1;
     return this.players.indexOf(player) + 1;    // 1->6
 };
 

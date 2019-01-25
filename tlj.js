@@ -48,8 +48,9 @@ players.forEach(function (p) {
 
 if(true) return;
 
-game.setContractor(players[4]);
-game.setTrump(new Card(trump_suite, 7));
+game.contractor = players[4];
+game.enterPlayStage();
+game.setTrump(trump_suite);
 //game.setTrump(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 n = 1;
 //players.forEach(function (p) {

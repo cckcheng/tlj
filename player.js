@@ -229,12 +229,14 @@ Player.prototype.pushData = function () {
         playerInfo.push(p.matchInfo.toJson(x + 1));
     }
 
+    var game = this.currentTable.game;
+
     var json = Object.assign({
         action: 'init',
         game: this.currentTable.games.length,
-        stage: this.currentTable.game.stage,
+        stage: game.stage,
         actionSeat: this.currentTable.actionPlayerIdx + 1,
-        contractPoint: this.currentTable.game.contractPoint,
+        contractPoint: game.contractPoint,
         players: playerInfo,
         timeout: this.currentTable.TIMEOUT_SECONDS, // default timeout
         S: S,
@@ -251,8 +253,11 @@ Player.prototype.pushData = function () {
         }, json);
     } else {
         json = Object.assign({
-            trump: this.currentTable.game.trump ? this.currentTable.game.trump : '',
-            points: this.currentTable.game.collectedPoint
+            seatContractor: this.currentTable.getSeat(game.contractor),
+            seatPartner: this.currentTable.getSeat(game.partner),
+            gameRank: game.rank,
+            trump: game.trump ? game.trump : '',
+            points: game.collectedPoint
         }, json);
     }
     this.pushJson(json);
