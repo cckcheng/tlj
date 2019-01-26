@@ -211,14 +211,20 @@ Table.prototype.autoPlay = function () {
             var lastBid = currentPlayer.matchInfo.lastBid;
             t.rotatePlayer();
             var suc = findNextActivePlayer(t);
-            t.broadcastGameInfo({
+            var obj = {
                 action: 'bid',
                 seat: actionSeat,
                 bid: lastBid,
+                bidOver: bidOver,
                 nextActionSeat: t.actionPlayerIdx + 1
-            });
+            };
+            var bidOver = t.players[t.actionPlayerIdx] === t.game.contractor;
+            if(bidOver) {
+                obj.bidOver = "yes";
+            }
+            t.broadcastGameInfo(obj);
 
-            if (t.players[t.actionPlayerIdx] !== t.game.contractor) {
+            if (!bidOver) {
                 console.log('bidding');
                 t.autoPlay();
             } else {
