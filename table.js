@@ -6,6 +6,7 @@ var Card = require('./card');
 var Deck = require('./deck');
 
 Table.Debugging = false;
+Table.FastMode = false;
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const ADD_SECONDS = 2;
@@ -29,7 +30,7 @@ function Table(o) {
 
     this.games = [];
 
-    this.TIMEOUT_SECONDS = Table.Debugging ? 8 : 30;     // default: 32 seconds (30s for client side + 2s)
+    this.TIMEOUT_SECONDS = Table.FastMode ? 8 : 30;     // default: 32 seconds (30s for client side + 2s)
 }
 
 Table.MATCH_TYPE = {
@@ -76,7 +77,7 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
     }
-    var pauseMinutes = Table.Debugging ? 5 : 30;  // 5 minutes, set to 30 minutes when release
+    var pauseMinutes = Table.FastMode ? 5 : 30;  // 5 minutes, set to 30 minutes when release
     this.pauseTimer = setTimeout(function(t){
         for (var x = 0, p; x < t.players.length; x++) {
             p = t.players[x];
