@@ -252,13 +252,23 @@ Player.prototype.pushData = function () {
             minBid: Table.Debugging ? this.minBid : -1
         }, json);
     } else {
-        json = Object.assign({
+        var obj = {
             seatContractor: this.currentTable.getSeat(game.contractor),
             seatPartner: this.currentTable.getSeat(game.partner),
             gameRank: game.rank,
-            trump: game.trump ? game.trump : '',
             points: game.collectedPoint
-        }, json);
+        };
+        if (game.trump == null) {
+            obj.trump = game.contractor.intendTrumpSuite;
+            obj.act = 'dim';    // declare trump
+        } else {
+            obj.trump = game.trump;
+            if (game.holeCards.length < 1) {
+                obj.act = 'bury';
+                obj.burytime = this.currentTable.TIMEOUT_SECONDS * 5;
+            }
+        }
+        json = Object.assign(obj, json);
     }
     this.pushJson(json);
 };

@@ -108,7 +108,17 @@ Table.prototype.resume = function () {
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
         this.pauseTimer = null;
-        this.autoPlay();
+        if (this.game.stage === Game.PLAYING_STAGE) {
+            if (this.game.trump == null) {
+                this.enterPlayingStage();
+            } else if (this.game.holeCards.length < 1) {
+                this.buryCards();
+            } else {
+                this.autoPlay();
+            }
+        } else {
+            this.autoPlay();
+        }
     }
 };
 
@@ -188,6 +198,49 @@ function findNextActivePlayer(t) {
     return true;
 }
 
+function procAfterBid(t) {
+    var actionSeat = t.actionPlayerIdx + 1;
+    var lastBid = t.players[t.actionPlayerIdx].matchInfo.lastBid;
+    t.rotatePlayer();
+    var suc = findNextActivePlayer(t);
+    var obj = {
+        action: 'bid',
+        seat: actionSeat,
+        bid: lastBid,
+        contractPoint: t.game.contractPoint,
+        nextActionSeat: t.actionPlayerIdx + 1
+    };
+    var bidOver = t.players[t.actionPlayerIdx] === t.game.contractor;
+    if (bidOver) {
+        obj.bidOver = "yes";
+    }
+    t.broadcastGameInfo(obj);
+
+    if (!bidOver) {
+        console.log('bidding');
+        t.autoPlay();
+    } else {
+        //bidding over
+        console.log('bid over');
+
+        if (!suc) {
+            //special case, all passes, force first canBid player to be contractor
+            setTimeout((t) => {
+                t.broadcastGameInfo({
+                    action: 'bid',
+                    seat: t.actionPlayerIdx + 1,
+                    bid: t.game.contractPoint,
+                    contractPoint: t.game.contractPoint,
+                    nextActionSeat: t.actionPlayerIdx + 1
+                });
+                t.enterPlayingStage();
+            }, 1000, t);
+        } else {
+            t.enterPlayingStage();
+        }
+    }
+}
+
 Table.prototype.autoPlay = function () {
     console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
     var player = this.players[this.actionPlayerIdx];
@@ -208,45 +261,7 @@ Table.prototype.autoPlay = function () {
                 currentPlayer.matchInfo.lastBid = 'pass';
             }
 
-            var actionSeat = t.actionPlayerIdx + 1;
-            var lastBid = currentPlayer.matchInfo.lastBid;
-            t.rotatePlayer();
-            var suc = findNextActivePlayer(t);
-            var obj = {
-                action: 'bid',
-                seat: actionSeat,
-                bid: lastBid,
-                bidOver: bidOver,
-                nextActionSeat: t.actionPlayerIdx + 1
-            };
-            var bidOver = t.players[t.actionPlayerIdx] === t.game.contractor;
-            if(bidOver) {
-                obj.bidOver = "yes";
-            }
-            t.broadcastGameInfo(obj);
-
-            if (!bidOver) {
-                console.log('bidding');
-                t.autoPlay();
-            } else {
-                //bidding over
-                console.log('bid over');
-
-                if (!suc) {
-                    //special case, all passes, force first canBid player to be contractor
-                    setTimeout((t) => {
-                        t.broadcastGameInfo({
-                            action: 'bid',
-                            seat: t.actionPlayerIdx + 1,
-                            bid: t.game.contractPoint,
-                            nextActionSeat: t.actionPlayerIdx + 1
-                        });
-                        t.enterPlayingStage();
-                    }, 1000, t);
-                } else {
-                    t.enterPlayingStage();
-                }
-            }
+            procAfterBid(t);
         } else {
             if (t.game.trump == null) {
                 t.enterPlayingStage();
@@ -261,14 +276,7 @@ Table.prototype.autoPlay = function () {
 
 Table.prototype.enterPlayingStage = function () {
     this.game.enterPlayStage();
-    var player = this.game.contractor;
-
-    this.autoTimer = setTimeout(function (t) {
-        player.pushJson({
-            action: 'declare'
-        });
-        t.declareTrump();
-    }, 1000, this);
+    this.declareTrump();
 };
 
 Table.prototype.declareTrump = function () {
@@ -338,7 +346,6 @@ Table.prototype.processPlayerAction = function (player, json) {
         case 'bid':
             if (this.game.stage !== Game.BIDDING_STAGE)
                 return;
-            var actionSeat = this.actionPlayerIdx + 1;
             var lastBid = json.bid;
             if (player.matchInfo.lastBid === 'pass') {
                 // this should never happen
@@ -359,37 +366,8 @@ Table.prototype.processPlayerAction = function (player, json) {
             }
             player.matchInfo.lastBid = lastBid;
 
-            this.rotatePlayer();
-            var suc = findNextActivePlayer(this);
-            this.broadcastGameInfo({
-                action: 'bid',
-                seat: actionSeat,
-                bid: lastBid,
-                nextActionSeat: this.actionPlayerIdx + 1
-            });
+            procAfterBid(this);
 
-            if (this.players[this.actionPlayerIdx] !== this.game.contractor) {
-                console.log('bidding');
-                this.autoPlay();
-            } else {
-                //bidding over
-                console.log('bid over');
-
-                if (!suc) {
-                    //special case, all passes, force first canBid player to be contractor
-                    setTimeout((t) => {
-                        t.broadcastGameInfo({
-                            action: 'bid',
-                            seat: t.actionPlayerIdx + 1,
-                            bid: t.game.contractPoint,
-                            nextActionSeat: t.actionPlayerIdx + 1
-                        });
-                        t.enterPlayingStage();
-                    }, 1000, this);
-                } else {
-                    this.enterPlayingStage();
-                }
-            }
             break;
 
         case 'play':
