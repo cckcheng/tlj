@@ -77,7 +77,7 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
     }
-    var pauseMinutes = Table.FastMode ? 5 : 30;  // 5 minutes, set to 30 minutes when release
+    var pauseMinutes = Table.Debugging ? 5 : 30;  // 5 minutes, set to 30 minutes when release
     this.pauseTimer = setTimeout(function(t){
         for (var x = 0, p; x < t.players.length; x++) {
             p = t.players[x];
