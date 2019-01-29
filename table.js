@@ -288,9 +288,6 @@ Table.prototype.declareTrump = function () {
 
     this.autoTimer = setTimeout(function (t) {
         t.game.setTrump(player.intendTrumpSuite);
-        player.pushJson(Object.assign({
-            action: 'add_remains'
-        }, Card.cardsToJson(t.game.deck.remains)));
         t.broadcastGameInfo({
             action: 'set_trump',
             seat: t.actionPlayerIdx + 1,
@@ -298,6 +295,11 @@ Table.prototype.declareTrump = function () {
             contractPoint: t.game.contractPoint,
             trump: t.game.trump
         });
+
+        player.pushJson(Object.assign({
+            action: 'add_remains',
+            buryTime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
+        }, Card.cardsToJson(t.game.deck.remains)));
 
         t.buryCards();
     }, waitSeconds * 1000, this);
@@ -307,7 +309,7 @@ Table.prototype.buryCards = function () {
     var player = this.game.contractor;
     var waitSeconds = ROBOT_SECONDS;
     if (player.sock != null) {
-        waitSeconds = this.TIMEOUT_SECONDS * 6 + ADD_SECONDS;
+        waitSeconds = this.TIMEOUT_SECONDS * 5 + ADD_SECONDS;
     }
 
     this.autoTimer = setTimeout(function (t) {
