@@ -268,7 +268,7 @@ Table.prototype.autoPlay = function () {
             } else if (t.game.holeCards.length < 1) {
                 t.buryCards();
             } else {
-                t.rotatePlayer();
+                procPlayCards(t);
             }
         }
     }, waitSeconds * 1000, this);
@@ -279,6 +279,42 @@ Table.prototype.enterPlayingStage = function () {
     this.declareTrump();
 };
 
+function procSetTrump(t, trump) {
+    t.game.setTrump(trump);
+    t.broadcastGameInfo({
+        action: 'set_trump',
+        seat: t.actionPlayerIdx + 1,
+        gameRank: t.game.rank,
+        contractPoint: t.game.contractPoint,
+        trump: t.game.trump
+    });
+
+    t.game.contractor.pushJson(Object.assign({
+        action: 'add_remains',
+        buryTime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
+    }, Card.cardsToJson(t.game.deck.remains)));
+
+    t.buryCards();
+}
+
+function procBuryCards(t, cards) {
+    t.game.contractor.buryCards(cards);
+    t.autoPlay();
+}
+
+function procPlayCards(t, cards) {
+    var player = t.players[t.actionPlayerIdx];
+    player.playCards(cards);
+    var seat = t.actionPlayerIdx + 1;
+    t.rotatePlayer();
+    t.broadcastGameInfo({
+        action: 'play_cards',
+        seat: seat,
+        cards: player.playedCards,
+        nextActionSeat: t.actionPlayerIdx + 1
+    });
+}
+
 Table.prototype.declareTrump = function () {
     var player = this.game.contractor;
     var waitSeconds = ROBOT_SECONDS;
@@ -287,21 +323,7 @@ Table.prototype.declareTrump = function () {
     }
 
     this.autoTimer = setTimeout(function (t) {
-        t.game.setTrump(player.intendTrumpSuite);
-        t.broadcastGameInfo({
-            action: 'set_trump',
-            seat: t.actionPlayerIdx + 1,
-            gameRank: t.game.rank,
-            contractPoint: t.game.contractPoint,
-            trump: t.game.trump
-        });
-
-        player.pushJson(Object.assign({
-            action: 'add_remains',
-            buryTime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
-        }, Card.cardsToJson(t.game.deck.remains)));
-
-        t.buryCards();
+        procSetTrump(t, player.intendTrumpSuite);
     }, waitSeconds * 1000, this);
 };
 
@@ -313,8 +335,7 @@ Table.prototype.buryCards = function () {
     }
 
     this.autoTimer = setTimeout(function (t) {
-        player.buryCards();
-        t.autoPlay();
+        procBuryCards(t);
     }, waitSeconds * 1000, this);
 };
 
@@ -370,6 +391,18 @@ Table.prototype.processPlayerAction = function (player, json) {
 
             procAfterBid(this);
 
+            break;
+
+        case 'trump':
+            if (player !== this.game.contractor)
+                return;
+            procSetTrump(this, json.trump);
+            break;
+
+        case 'bury':
+            if (player !== this.game.contractor)
+                return;
+            procBuryCards(this, json.cards);
             break;
 
         case 'play':
