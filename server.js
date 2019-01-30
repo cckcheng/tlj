@@ -119,7 +119,7 @@ function handleData(sock, data) {
             if (currentTable != null) {
                 console.log('exist table.');
                 player.pushData();
-                currentTable.resume();
+                currentTable.resume(player);
             } else {
                 var robot = null;
                 while (robots.length > 0) {

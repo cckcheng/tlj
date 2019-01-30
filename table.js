@@ -104,7 +104,7 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
     */
 };
 
-Table.prototype.resume = function () {
+Table.prototype.resume = function (player) {
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
         this.pauseTimer = null;
@@ -118,6 +118,12 @@ Table.prototype.resume = function () {
             }
         } else {
             this.autoPlay();
+        }
+    } else {
+        if (player && player === this.players[this.actionPlayerIdx]) {
+            if (this.autoTimer != null) {
+                this.autoTimer.refresh();
+            }
         }
     }
 };
