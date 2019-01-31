@@ -292,12 +292,13 @@ function procSetTrump(t, trump) {
         seat: t.actionPlayerIdx + 1,
         gameRank: t.game.rank,
         contractPoint: t.game.contractPoint,
+        burytime: t.TIMEOUT_SECONDS * 5,
         trump: t.game.trump
     });
 
     t.game.contractor.pushJson(Object.assign({
         action: 'add_remains',
-        buryTime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
+        burytime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
     }, Card.cardsToJson(t.game.deck.remains)));
 
     t.buryCards();
