@@ -19,6 +19,8 @@ function Player(o) {
     this.currentTable = null;
     this.matchInfo = null;
 
+    this.timeoutTimes = 0;
+
     this.replaceRobot = function (id, sock) {
         this.id = id;
         this.sock = sock;
@@ -26,6 +28,10 @@ function Player(o) {
 
     this.toRobot = function () {
         this.sock = null;
+    };
+
+    this.isOut = function () {
+        return this.timeoutTimes >= 2;
     };
 }
 
@@ -265,7 +271,7 @@ Player.prototype.pushData = function () {
             obj.trump = game.trump;
             if (game.holeCards.length < 1) {
                 obj.act = 'bury';
-                obj.burytime = this.currentTable.TIMEOUT_SECONDS * 5;
+                obj.acttime = this.currentTable.TIMEOUT_SECONDS * 5;
             }
         }
         json = Object.assign(obj, json);

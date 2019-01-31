@@ -10,7 +10,6 @@ Table.FastMode = false;
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const ADD_SECONDS = 2;
-const ROBOT_SECONDS = 1;
 
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
@@ -31,6 +30,7 @@ function Table(o) {
     this.games = [];
 
     this.TIMEOUT_SECONDS = Table.FastMode ? 8 : 30;     // default: 32 seconds (30s for client side + 2s)
+    this.ROBOT_SECONDS = Table.FastMode ? 1 : 2;
 }
 
 Table.MATCH_TYPE = {
@@ -250,12 +250,18 @@ function procAfterBid(t) {
 Table.prototype.autoPlay = function () {
     console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
     var player = this.players[this.actionPlayerIdx];
-    var waitSeconds = ROBOT_SECONDS;
+    var waitSeconds = this.ROBOT_SECONDS;
     if (player.sock != null) {
-        waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+        if (player.isOut()) {
+            waitSeconds *= 2;
+        } else {
+            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+        }
     }
 
     this.autoTimer = setTimeout(function (t) {
+        if (waitSeconds > 5)
+            player.timeoutTimes++;
         if (t.game.stage === Game.BIDDING_STAGE) {
             var currentPlayer = t.players[t.actionPlayerIdx];
             if (currentPlayer.canBid && currentPlayer.minBid < t.game.contractPoint) {
@@ -292,13 +298,13 @@ function procSetTrump(t, trump) {
         seat: t.actionPlayerIdx + 1,
         gameRank: t.game.rank,
         contractPoint: t.game.contractPoint,
-        burytime: t.TIMEOUT_SECONDS * 5,
+        acttime: t.TIMEOUT_SECONDS * 5,
         trump: t.game.trump
     });
 
     t.game.contractor.pushJson(Object.assign({
         action: 'add_remains',
-        burytime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
+        acttime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
     }, Card.cardsToJson(t.game.deck.remains)));
 
     t.buryCards();
@@ -324,24 +330,36 @@ function procPlayCards(t, cards) {
 
 Table.prototype.declareTrump = function () {
     var player = this.game.contractor;
-    var waitSeconds = ROBOT_SECONDS;
+    var waitSeconds = this.ROBOT_SECONDS;
     if (player.sock != null) {
-        waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+        if (player.isOut()) {
+            waitSeconds *= 2;
+        } else {
+            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+        }
     }
 
     this.autoTimer = setTimeout(function (t) {
+        if (waitSeconds > 5)
+            player.timeoutTimes++;
         procSetTrump(t, player.intendTrumpSuite);
     }, waitSeconds * 1000, this);
 };
 
 Table.prototype.buryCards = function () {
     var player = this.game.contractor;
-    var waitSeconds = ROBOT_SECONDS;
+    var waitSeconds = this.ROBOT_SECONDS;
     if (player.sock != null) {
-        waitSeconds = this.TIMEOUT_SECONDS * 5 + ADD_SECONDS;
+        if (player.isOut()) {
+            waitSeconds *= 2;
+        } else {
+            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+        }
     }
 
     this.autoTimer = setTimeout(function (t) {
+        if (waitSeconds > 5)
+            player.timeoutTimes++;
         procBuryCards(t);
     }, waitSeconds * 1000, this);
 };

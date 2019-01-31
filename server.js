@@ -112,6 +112,7 @@ function handleData(sock, data) {
         console.log('exist user');
         player = onlinePlayers[sockId];
     }
+    player.timeoutTimes = 0;
 
     var currentTable = player.currentTable;
     switch (dt.action) {
