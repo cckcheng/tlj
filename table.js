@@ -312,6 +312,10 @@ function procSetTrump(t, trump) {
 
 function procBuryCards(t, cards) {
     t.game.contractor.buryCards(cards);
+    t.broadcastGameInfo({
+        action: 'play',
+        nextActionSeat: t.actionPlayerIdx + 1
+    });
     t.autoPlay();
 }
 
@@ -321,7 +325,7 @@ function procPlayCards(t, cards) {
     var seat = t.actionPlayerIdx + 1;
     t.rotatePlayer();
     t.broadcastGameInfo({
-        action: 'play_cards',
+        action: 'play',
         seat: seat,
         cards: player.playedCards,
         nextActionSeat: t.actionPlayerIdx + 1

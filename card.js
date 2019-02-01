@@ -93,7 +93,6 @@ Card.prototype.isTrump = function (trump_suite, game_rank) {
 };
 
 Card.prototype.trumpRank = function (trump_suite, game_rank) {
-//    debugger;
     if (this.rank === game_rank) {
         return this.suite === trump_suite ? 15 : 14;
     }
@@ -113,7 +112,17 @@ Card.prototype.equals = function (c) {
     return this.suite === c.suite && this.rank === c.rank;
 };
 
-Card.compare = function(a,b) {
+Card.prototype.indexOf = function (cards) {
+    for (var x = 0, c; c = cards[x]; x++) {
+        if (this.equals(c)) {
+            return x;
+        }
+    }
+
+    return -1;
+};
+
+Card.compare = function (a, b) {
 	if(a.suite === b.suite) {
 		return a.rank - b.rank;
 	}
@@ -135,7 +144,31 @@ Card.getRanks = function (cards) {
     return s;
 };
 
-Card.cardsToJson = function(cards) {
+Card.cardsToString = function (cards) {
+    if (cards == null || cards.length < 1)
+        return "";
+    var arr = [];
+    cards.forEach(function (c) {
+        arr.push(c.suite + c.rank);
+    });
+    return arr.join();
+};
+
+Card.stringToArray = function (strCards) {
+    if (strCards == null || strCards.length < 2)
+        return [];
+
+    var cards = [];
+    var ss = strCards.split(',');
+    ss.forEach(function (s) {
+        if (s.length < 2)
+            return;
+        cards.push(new Card(s.charAt(0), parseInt(s.substr(1))));
+    });
+    return cards;
+};
+
+Card.cardsToJson = function (cards) {
     if(cards == null || cards.length<1) return {};
     var S = [];
     var H = [];
@@ -195,7 +228,6 @@ Card.allConnected = function (card_keys) {
     // test if all ranks are connected
     if (!Array.isArray(card_keys) || card_keys.length < 1) return false;
 
-    debugger;
     var minRank = Number.parseInt(card_keys[0].substring(1));
     var maxRank = minRank;
     var ranks = [minRank];
@@ -224,7 +256,6 @@ Card.allSplit = function (card_keys) {
     }
     ranks.sort(Card.compareNumber);
 
-    debugger;
     var r0 = ranks[0];
     for (var x = 1, r1; r1 = ranks[x]; x++) {
         if (r1 - r0 === 1) return false;

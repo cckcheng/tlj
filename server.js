@@ -109,7 +109,7 @@ function handleData(sock, data) {
         }
         onlinePlayers[sockId] = player;
     } else {
-        console.log('exist user');
+//        console.log('exist user');
         player = onlinePlayers[sockId];
     }
     player.timeoutTimes = 0;

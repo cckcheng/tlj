@@ -198,7 +198,6 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
 };
 
 Hand.prototype.generateSubHands = function (stat) {
-//    debugger;
     var singles = [];
     var pairs = [];
     var trips = [];
@@ -381,8 +380,8 @@ function Round(players, trump, gameRank) {
 
     function findHighers(cards, hand_type, minRank) {
         console.log(Card.showCards(cards));
-        debugger;
-        if (cards == null || cards.length < 1) return false;
+        if (cards == null || cards.length < 1)
+            return false;
         if (hand_type.cat === Hand.COMBINATION.SINGLE) {
             var c = cards[cards.length - 1];
             return c.trumpRank(trump, gameRank) > minRank;

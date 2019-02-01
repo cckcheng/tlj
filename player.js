@@ -73,29 +73,30 @@ Player.prototype.addCards = function (cards) {
 };
 
 Player.prototype.removeCard = function (card) {
-    var x = this.trumps.indexOf(card);
+    debugger;
+    var x = card.indexOf(this.trumps);
     if (x >= 0) {
         this.trumps.splice(x, 1);
         return;
     }
     switch (card.suite) {
         case Card.SUITE.SPADE:
-            x = this.spades.indexOf(card);
+            x = card.indexOf(this.spades);
             if (x >= 0)
                 this.spades.splice(x, 1);
             break;
         case Card.SUITE.CLUB:
-            x = this.clubs.indexOf(card);
+            x = card.indexOf(this.clubs);
             if (x >= 0)
                 this.clubs.splice(x, 1);
             break;
         case Card.SUITE.HEART:
-            x = this.hearts.indexOf(card);
+            x = card.indexOf(this.hearts);
             if (x >= 0)
                 this.hearts.splice(x, 1);
             break;
         case Card.SUITE.DIAMOND:
-            x = this.diamonds.indexOf(card);
+            x = card.indexOf(this.diamonds);
             if (x >= 0)
                 this.diamonds.splice(x, 1);
             break;
@@ -279,15 +280,38 @@ Player.prototype.pushData = function () {
     this.pushJson(json);
 };
 
-Player.prototype.playCards = function (cards) {
-    this.playedCards = cards;
+Player.prototype.playCards = function (strCards) {
+    var cards = Card.stringToArray(strCards);
     for (var x = 0, c; c = cards[x]; x++) {
         this.removeCard(c);
     }
 };
 
-Player.prototype.buryCards = function () {
-    // To Do ...
+Player.prototype.buryCards = function (strCards) {
+    if (Table.Debugging)
+        console.log(strCards);
+    debugger;
+    var game = this.currentTable.game;
+    if (game.holeCards.length > 0)
+        return;
+
+    if (Table.Debugging)
+        console.log("01");
+    var cards = Card.stringToArray(strCards);
+    var len = game.deck.remains.length;
+    if (Table.Debugging)
+        console.log("02-" + cards);
+
+    if (cards.length !== len) {
+
+    }
+
+    for (var x = 0, c; c = cards[x]; x++) {
+        this.removeCard(c);
+    }
+    game.holeCards.push(cards);
+    if (Table.Debugging)
+        console.log("99: " + game.holeCards);
 };
 
 Player.prototype.promote = function (delta) {
@@ -295,7 +319,6 @@ Player.prototype.promote = function (delta) {
 };
 
 Player.prototype.evaluate = function () {
-    debugger;
     var currentGameRank = this.matchInfo.currentRank;
     var honorPoints = 0;
     for (var x = 0, c; c = this.trumps[x]; x++) {
