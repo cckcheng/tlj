@@ -356,16 +356,16 @@ Player.prototype.buryCards = function (strCards) {
         });
         
         debugger;
+
         var i=0;
         do{
             sCount = arr[i];
             var maxLen = len - cards.length;
-            if(i === 0) {
-                var sLen = sCount.cardsToBury.length;
-                if(sCount.lenPoint === 0 && sLen <= maxLen ) {
-                    maxLen = sLen-1;
-                }
+            var sLen = sCount.cardsToBury.length;
+            if(i === 0 && sCount.lenPoint === 0) {
+                sLen--;
             }
+            if(sLen < maxLen) maxLen = sLen;
 
             for(var x=0; x<maxLen; x++) {
                 cards.push(sCount.cardsToBury[x]);
