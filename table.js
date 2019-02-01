@@ -312,6 +312,7 @@ function procSetTrump(t, trump) {
 
 function procBuryCards(t, cards) {
     t.game.contractor.buryCards(cards);
+    
     t.broadcastGameInfo({
         action: 'play',
         nextActionSeat: t.actionPlayerIdx + 1
@@ -357,7 +358,7 @@ Table.prototype.buryCards = function () {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
-            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+            waitSeconds = this.TIMEOUT_SECONDS * 5 + ADD_SECONDS;
         }
     }
 

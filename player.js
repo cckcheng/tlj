@@ -287,31 +287,97 @@ Player.prototype.playCards = function (strCards) {
     }
 };
 
+function SuiteCount(suite, gameRank) {
+    this.suite = suite;
+    this.length = suite.length;
+    if(this.length <1) return;
+    var honorRank = 14;
+    if(gameRank === 14) honorRank = 13;
+    var viceRank = 13;
+    if(gameRank >= 13) viceRank = 12;
+    
+    this.lenPoint = 0;    // total point catds except K
+    this.lenBury = 0;   // total cards can be buried
+    this.lenHonor = 0;   // total cards of Aces and Kings
+    
+    this.cardsToBury = [];
+    for(var x=0,c; c=suite[x]; x++){
+        if(c.rank === honorRank || c.rank ===viceRank) {
+            this.lenHonor++;
+        } else if(c.getPoint()>0) {
+            this.lenPoint++;
+        } else {
+            this.lenBury++;
+            this.cardsToBury.push(c);
+        }
+    }
+}
+
 Player.prototype.buryCards = function (strCards) {
-    if (Table.Debugging)
-        console.log(strCards);
-    debugger;
     var game = this.currentTable.game;
     if (game.holeCards.length > 0)
-        return;
+        return ;
 
-    if (Table.Debugging)
-        console.log("01");
     var cards = Card.stringToArray(strCards);
     var len = game.deck.remains.length;
-    if (Table.Debugging)
-        console.log("02-" + cards);
 
     if (cards.length !== len) {
+        cards = [];
+        var arr = [];
+        var sCount = new SuiteCount(this.spades);
+        if(sCount.length>0) arr.push(sCount);
+        sCount = new SuiteCount(this.hearts);
+        if(sCount.length>0) arr.push(sCount);
+        sCount = new SuiteCount(this.diamonds);
+        if(sCount.length>0) arr.push(sCount);
+        sCount = new SuiteCount(this.clubs);
+        if(sCount.length>0) arr.push(sCount);
+        
+        arr.sort(function(a,b) {
+            if(a.lenBury > b.lenBury) return 1;
+            if(a.lenBury < b.lenBury) return -1;
+            if(a.lenPoint !== b.lenPoint) {
+                if(a.lenPoint === 1) return -1;
+                if(b.lenPoint === 1) return 1;
+                return a.lenPoint - b.lenPoint;
+            }
+            if(a.lenHonor > b.lenHonor) return 1;
+            if(a.lenHonor < b.lenHonor) return -1;
+            return a.length - b.length;
+        });
+        
+        var i=0;
+        do{
+            sCount = arr[i];
+            var maxLen = len - cards.length;
+            if(i === 0) {
+                var sLen = sCount.cardsToBury.length;
+                if(sCount.lenPoint === 0 && sLen <= maxLen ) {
+                    maxLen = sLen-1;
+                }
+            }
 
+            for(var x=0; x<maxLen; x++) {
+                cards.push(sCount.cardsToBury[x]);
+            }
+            i++;
+        } while (cards.length<len);
     }
 
     for (var x = 0, c; c = cards[x]; x++) {
         this.removeCard(c);
     }
-    game.holeCards.push(cards);
+    game.holeCards = cards;
+    
     if (Table.Debugging)
-        console.log("99: " + game.holeCards);
+        console.log("hole cards[] " + cards.join());
+    strCards = Card.cardsToString(cards);
+    if (Table.Debugging)
+        console.log("hole cards: " + strCards);
+    this.pushJson({
+        action: 'bury',
+        cards: strCards
+    });
 };
 
 Player.prototype.promote = function (delta) {
