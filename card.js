@@ -5,6 +5,12 @@ function Card(suite, rank) {
     this.rank = rank;
 }
 
+Card.prototype.getPoint = function () {
+    if(this.rank === 5 || this.rank === 10) return this.rank;
+    if(this.rank === 13) return 10;
+    return 0;
+};
+
 Card.prototype.display = function () {
     var s = '';
     switch (this.suite) {
