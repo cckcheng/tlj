@@ -298,13 +298,57 @@ function SuiteCount(suite, gameRank) {
     this.lenPoint = 0;    // total point catds except K
     this.lenBury = 0;   // total cards can be buried
     this.lenHonor = 0;   // total cards of Aces and Kings
-    
+
+    var reserved = [];  // reserve quads, trips, and tractors
+    var stat = new HandStat(suite, Card.SUITE.JOKER, gameRank);
+    if (stat.totalQuads > 0) {
+        var rnks = stat.sortedRanks(4);
+        for (var x = 0, rnk; rnk = rnks[x]; x++) {
+            reserved.push(rnk < gameRank ? rnk : rnk + 1);
+            this.lenHonor += 4;
+        }
+    }
+    if (stat.totalTrips > 0) {
+        var rnks = stat.sortedRanks(3);
+        for (var x = 0, rnk; rnk = rnks[x]; x++) {
+            if (rnk >= gameRank)
+                rnk++;
+            if (reserved.indexOf(rnk) < 0) {
+                reserved.push(rnk);
+                this.lenHonor += 3;
+            }
+        }
+    }
+    if (stat.totalPairs > 1) {
+        var rnks = stat.sortedRanks(2);
+        for (var x = 0, rnk, prev = 0; rnk = rnks[x]; x++) {
+            if (rnk === prev + 1) {
+                var orgPrev = prev < gameRank ? prev : prev + 1;
+                var orgRnk = rnk < gameRank ? rnk : rnk + 1;
+                if (reserved.indexOf(orgPrev) < 0) {
+                    reserved.push(orgPrev);
+                    this.lenHonor += 2;
+                }
+                if (reserved.indexOf(orgRnk) < 0) {
+                    reserved.push(orgRnk);
+                    this.lenHonor += 2;
+                }
+            }
+            prev = rnk;
+        }
+    }
+
     this.cardsToBury = [];
+    this.cardsPoint = [];
     for(var x=0,c; c=suite[x]; x++){
-        if(c.rank === honorRank || c.rank ===viceRank) {
+        if (reserved.indexOf(c.rank) >= 0) {
+            continue;
+        }
+        if (c.rank === honorRank || c.rank === viceRank) {
             this.lenHonor++;
-        } else if(c.getPoint()>0) {
+        } else if (c.getPoint() > 0) {
             this.lenPoint++;
+            this.cardsPoint.push(c);
         } else {
             this.lenBury++;
             this.cardsToBury.push(c);
@@ -323,16 +367,20 @@ Player.prototype.buryCards = function (strCards) {
     if (cards.length !== len) {
         cards = [];
         var arr = [];
-        var sCount = new SuiteCount(this.spades);
+        var sCount = new SuiteCount(this.spades, this.matchInfo.currentRank);
         if(sCount.length>0) arr.push(sCount);
-        sCount = new SuiteCount(this.hearts);
+        sCount = new SuiteCount(this.hearts, this.matchInfo.currentRank);
         if(sCount.length>0) arr.push(sCount);
-        sCount = new SuiteCount(this.diamonds);
+        sCount = new SuiteCount(this.diamonds, this.matchInfo.currentRank);
         if(sCount.length>0) arr.push(sCount);
-        sCount = new SuiteCount(this.clubs);
+        sCount = new SuiteCount(this.clubs, this.matchInfo.currentRank);
         if(sCount.length>0) arr.push(sCount);
         
-        arr.sort(function(a,b) {
+        arr.sort(function (a, b) {
+            if (a.lenHonor > 3 || b.lenHonor > 3) {
+                return a.lenHonor != b.lenHonor ? a.lenHonor - b.lenHonor : b.lenBury - a.lenBury;
+            }
+
             var lenA = a.lenBury + a.lenPoint;
             var lenB = b.lenBury + b.lenPoint;
             if(lenA <= len+1 && lenB <= len+1) {
@@ -371,7 +419,34 @@ Player.prototype.buryCards = function (strCards) {
                 cards.push(sCount.cardsToBury[x]);
             }
             i++;
-        } while (cards.length<len);
+        } while (cards.length < len && i < arr.length);
+
+        if (cards.length < len) {
+            // should be very rare
+            console.log('AUTO-BURY: BURY POINT!');
+            i = 0;
+            do {
+                sCount = arr[i];
+                var maxLen = len - cards.length;
+                var sLen = sCount.cardsPoint.length;
+                if (sLen < maxLen)
+                    maxLen = sLen;
+
+                for (var x = 0; x < maxLen; x++) {
+                    cards.push(sCount.cardsPoint[x]);
+                }
+                i++;
+            } while (cards.length < len && i < arr.length);
+
+            if (cards.length < len) {
+                // not likely to be here
+                console.log('AUTO-BURY: BURY TRUMP!!!');
+                var maxLen = len - cards.length;
+                for (var x = 0; x < maxLen; x++) {
+                    cards.push(this.trumps[x]);
+                }
+            }
+        }
     }
 
     for (var x = 0, c; c = cards[x]; x++) {
@@ -379,8 +454,6 @@ Player.prototype.buryCards = function (strCards) {
     }
     game.holeCards = cards;
     
-    if (Table.Debugging)
-        console.log("hole cards[] " + cards.join());
     strCards = Card.cardsToString(cards);
     if (Table.Debugging)
         console.log("hole cards: " + strCards);
