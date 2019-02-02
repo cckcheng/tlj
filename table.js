@@ -302,10 +302,11 @@ function procSetTrump(t, trump) {
         trump: t.game.trump
     });
 
-    t.game.contractor.pushJson(Object.assign({
+    t.game.contractor.pushJson({
         action: 'add_remains',
+        cards: Card.cardsToString(t.game.deck.remains),
         acttime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
-    }, Card.cardsToJson(t.game.deck.remains)));
+    });
 
     t.buryCards();
 }
