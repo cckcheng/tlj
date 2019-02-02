@@ -213,8 +213,8 @@ function procAfterBid(t) {
         action: 'bid',
         seat: actionSeat,
         bid: lastBid,
-        contractPoint: t.game.contractPoint,
-        nextActionSeat: t.actionPlayerIdx + 1
+        contract: t.game.contractPoint,
+        next: t.actionPlayerIdx + 1
     };
     var bidOver = t.players[t.actionPlayerIdx] === t.game.contractor;
     if (bidOver) {
@@ -236,8 +236,8 @@ function procAfterBid(t) {
                     action: 'bid',
                     seat: t.actionPlayerIdx + 1,
                     bid: t.game.contractPoint,
-                    contractPoint: t.game.contractPoint,
-                    nextActionSeat: t.actionPlayerIdx + 1
+                    contract: t.game.contractPoint,
+                    next: t.actionPlayerIdx + 1
                 });
                 t.enterPlayingStage();
             }, 1000, t);
@@ -297,7 +297,7 @@ function procSetTrump(t, trump) {
         action: 'set_trump',
         seat: t.actionPlayerIdx + 1,
         gameRank: t.game.rank,
-        contractPoint: t.game.contractPoint,
+        contract: t.game.contractPoint,
         acttime: t.TIMEOUT_SECONDS * 5,
         trump: t.game.trump
     });
@@ -316,22 +316,37 @@ function procBuryCards(t, cards) {
     
     t.broadcastGameInfo({
         action: 'play',
-        nextActionSeat: t.actionPlayerIdx + 1
+        next: t.actionPlayerIdx + 1
     });
     t.autoPlay();
 }
 
 function procPlayCards(t, cards) {
     var player = t.players[t.actionPlayerIdx];
-    player.playCards(cards);
+    var status = player.playCards(cards);
     var seat = t.actionPlayerIdx + 1;
-    t.rotatePlayer();
+    if(status === 'gameover') {
+        gameOver();
+        return;
+    }
+    
+    if(status === 'newround') {
+        t.actionPlayerIdx = t.players.indexOf(t.game.leadingPlayer);
+    }else {
+        t.rotatePlayer();
+    }
     t.broadcastGameInfo({
         action: 'play',
         seat: seat,
-        cards: player.playedCards,
-        nextActionSeat: t.actionPlayerIdx + 1
+        cards: player.matchInfo.playedCards,
+        next: t.actionPlayerIdx + 1
     });
+    
+    t.autoPlay();
+}
+
+function gameOver() {
+    
 }
 
 Table.prototype.declareTrump = function () {
@@ -374,20 +389,6 @@ Table.prototype.broadcastGameInfo = function (json) {
     this.players.forEach(function (p) {
         p.pushJson(json);
     });
-};
-
-Table.prototype.notifyPlayer = function (player, stage) {
-    var json = {};
-    switch (stage) {
-        case Game.BIDDING_STAGE:
-            json.action = 'bid';
-            break;
-        case Game.PLAYING_STAGE:
-            json.action = 'play';
-            break;
-    }
-
-    player.pushJson(json);
 };
 
 Table.prototype.processPlayerAction = function (player, json) {
@@ -439,7 +440,7 @@ Table.prototype.processPlayerAction = function (player, json) {
         case 'play':
             if (this.game.stage !== Game.PLAYING_STAGE)
                 return;
-
+            procPlayCards(this, json.cards);
             break;
     }
 };
@@ -485,6 +486,7 @@ function MatchInfo(t, player) {
     this.lastBid = '-';   // last bid points, -: no bid yet, pass: not bid, number means bid point
     this.points = 0;    // points collected (before contractor's partner appears)
     this.contracts = 0; // contract times
+    this.playedCards = ''; // cards played
 
     this.toJson = function (seat) {
         return {
@@ -492,6 +494,7 @@ function MatchInfo(t, player) {
             rank: this.currentRank,
             bid: this.lastBid,
             points: this.points,
+            cards: this.playedCards,
             contracts: this.contracts
         };
     };

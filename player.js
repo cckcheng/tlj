@@ -29,6 +29,14 @@ function Player(o) {
     this.toRobot = function () {
         this.sock = null;
     };
+    
+    this.isHandEmpty = function() {
+        return this.trumps.length === 0 &&
+                this.spades.length === 0 &&
+                this.hearts.length === 0 &&
+                this.diamonds.length === 0 &&
+                this.clubs.length === 0;
+    };
 
     this.isOut = function () {
         return this.timeoutTimes >= 2;
@@ -241,8 +249,8 @@ Player.prototype.pushData = function () {
         action: 'init',
         game: this.currentTable.games.length,
         stage: game.stage,
-        actionSeat: this.currentTable.actionPlayerIdx + 1,
-        contractPoint: game.contractPoint,
+        next: this.currentTable.actionPlayerIdx + 1,
+        contract: game.contractPoint,
         players: playerInfo,
         timeout: this.currentTable.TIMEOUT_SECONDS, // default timeout
         S: S,
@@ -280,10 +288,21 @@ Player.prototype.pushData = function () {
 };
 
 Player.prototype.playCards = function (strCards) {
+    this.matchInfo.playedCards = strCards;
     var cards = Card.stringToArray(strCards);
     for (var x = 0, c; c = cards[x]; x++) {
         this.removeCard(c);
     }
+    var game = this.currentTable.game;
+    if(game.currentRound.addHand(this, cards)) {
+        if(!this.isHandEmpty()){
+            game.startNewRound();
+            return 'newround';
+        }
+        
+        return 'gameover';
+    }
+    return '';
 };
 
 function SuiteCount(suite, gameRank) {

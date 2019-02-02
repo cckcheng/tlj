@@ -116,7 +116,7 @@ function handleData(sock, data) {
 
     var currentTable = player.currentTable;
     switch (dt.action) {
-        case 'join_table':
+        case 'join':
             if (currentTable != null) {
                 console.log('exist table.');
                 player.pushData();

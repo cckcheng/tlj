@@ -26,6 +26,7 @@ function Game(players, deckNumber) {
 
     this.holeCards = [];
     this.rounds = [];
+    this.currentRound = null;
 }
 
 Game.BIDDING_STAGE = 'bid';
@@ -527,6 +528,8 @@ function Round(players, trump, gameRank) {
             leadingHand = hand;
         }
         this.playList.push(hand);
+        
+        return this.playList.length === players.length;
     };
 
     this.getNextLeadingPlayer = function () {
@@ -537,6 +540,7 @@ function Round(players, trump, gameRank) {
 Game.prototype.enterPlayStage = function () {
     this.stage = Game.PLAYING_STAGE;
     this.rank = this.contractor.matchInfo.currentRank;
+    this.leadingPlayer = this.contractor;
 };
 
 Game.prototype.setPartner = function (player) {
@@ -553,6 +557,8 @@ Game.prototype.setTrump = function (suite) {
     for (var x = 0, p; p = this.players[x]; x++) {
         p.resortCards(this.trump, this.rank);
     }
+    
+    this.startNewRound();
 };
 
 Game.prototype.judge = function () {
@@ -564,9 +570,16 @@ Game.prototype.getHandType = function (player, cards) {
     return hand.type.cat + ':' + hand.type.len + ", max rank-" + hand.maxRank;
 };
 
+Game.prototype.startNewRound = function () {
+    if(this.currentRound != null) {
+        this.leadingPlayer = this.currentRound.getNextLeadingPlayer();
+    }
+    this.currentRound = new Round(this.players, this.trump, this.rank);
+    this.rounds.push(this.currentRound);
+};
+
 Game.prototype.isLeadingValid = function (player, cards) {
-    var round = new Round(this.players, this.trump, this.rank);
-    return round.isValidLeadingHand(player, cards);
+    return this.currentRound.isValidLeadingHand(player, cards);
 };
 
 Game.prototype.promote = function () {
