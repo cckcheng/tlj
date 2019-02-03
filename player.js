@@ -280,6 +280,8 @@ Player.prototype.pushData = function () {
             if (game.holeCards.length < 1) {
                 obj.act = 'bury';
                 obj.acttime = this.currentTable.TIMEOUT_SECONDS * 5;
+            } else if(game.partnerDef == null) {
+                obj.act = 'partner';
             }
         }
         json = Object.assign(obj, json);

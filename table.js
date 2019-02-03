@@ -113,6 +113,8 @@ Table.prototype.resume = function (player) {
                 this.enterPlayingStage();
             } else if (this.game.holeCards.length < 1) {
                 this.buryCards();
+            } else if (this.game.partnerDef == null) {
+                this.definePartner();
             } else {
                 this.autoPlay();
             }
@@ -405,7 +407,7 @@ Table.prototype.definePartner = function () {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
-            waitSeconds = this.TIMEOUT_SECONDS * 5 + ADD_SECONDS;
+            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
         }
     }
 
