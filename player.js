@@ -41,6 +41,10 @@ function Player(o) {
     this.isOut = function () {
         return this.timeoutTimes >= 2;
     };
+    
+    this.autoPartner = function() {
+        return 'SA0';   // TO BE MODIFY
+    };
 }
 
 Player.prototype.newHand = function () {
@@ -284,6 +288,7 @@ Player.prototype.pushData = function () {
                 obj.act = 'partner';
             } else {
                 obj.act = 'play';
+                obj.def = game.partnerDef.getDef();
             }
         }
         json = Object.assign(obj, json);

@@ -151,7 +151,7 @@ Table.prototype.addPlayer = function (player) {
 Table.prototype.startGame = function () {
     this.game = new Game(this.players, this.deckNumber);
     this.games.push(this.game);
-    debugger;
+//    debugger;
     if (this.games.length === 1) {
         // first game, init match info
         for (var x = 0, p; p = this.players[x]; x++) {
@@ -282,7 +282,7 @@ Table.prototype.autoPlay = function () {
             } else if (t.game.holeCards.length < 1) {
                 t.buryCards();
             } else if(t.game.partnerDef == null) {
-                t.definePartner();
+                procDefinePartner(t);
             } else {
                 procPlayCards(t);
             }
@@ -322,11 +322,11 @@ function procBuryCards(t, cards) {
         action: 'play',
         seat: t.actionPlayerIdx + 1
     }, t.game.contractor);
-    t.autoPlay();
+    t.definePartner();
 }
 
 function procDefinePartner(t, def) {
-    t.game.setPartnerDef(def);
+    def = t.game.setPartnerDef(def);
     t.broadcastGameInfo({
         action: 'partner',
         seat: t.actionPlayerIdx + 1,
@@ -400,6 +400,8 @@ Table.prototype.buryCards = function () {
 };
 
 Table.prototype.definePartner = function () {
+//    debugger;
+
     var player = this.game.contractor;
     var waitSeconds = this.ROBOT_SECONDS;
     if (player.sock != null) {
@@ -411,6 +413,7 @@ Table.prototype.definePartner = function () {
     }
 
     this.autoTimer = setTimeout(function (t) {
+        console.log('definePartner timeout');
         if (waitSeconds > 5)
             player.timeoutTimes++;
         procDefinePartner(t);

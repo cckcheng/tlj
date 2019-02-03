@@ -30,19 +30,22 @@ function Game(players, deckNumber) {
     this.partnerDef = null;
     
     this.setPartnerDef = function(def) {
-        if(def === '0') {
-            this.partnerDef = new PartnerDef('0', 0);
-        } else {
-            var card = def.charAt(0) + Card.StringToRank(def.charAt(1));
-            this.partnerDef = new PartnerDef(card, 1+parseInt(def.charAt(2)));
+        if(def == null) {
+            def = this.contractor.autoPartner();
         }
+
+        this.partnerDef = new PartnerDef(def);
+        return def;
     };
 }
 
-function PartnerDef(card, seq) {
-    this.noPartner = card === '0';
-    if(!this.noPartner) {
-        this.keyCard = Card.fromString(card);
+function PartnerDef(def) {
+    this.noPartner = def === '0';
+    var card = def.charAt(0);
+    var seq = 0;
+    if(!this.noParter) {
+        card += Card.StringToRank(def.charAt(1));
+        seq = 1 + parseInt(def.charAt(2));
     }
     
     this.keyCardCount = 0;
@@ -56,6 +59,10 @@ function PartnerDef(card, seq) {
             if(this.keyCardCount === seq) return true;
         }
         return false;
+    };
+    
+    this.getDef = function() {
+        return def;
     };
 }
 
