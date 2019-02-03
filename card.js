@@ -67,6 +67,21 @@ Card.RANK = {
     BigJoker: 98
 };
 
+Card.StringToRank = function (s) {
+    switch(s) {
+        case 'A':
+            return 14;
+        case 'K':
+            return 13;
+        case 'Q':
+            return 12;
+        case 'J':
+            return 11;
+    }
+    
+    return parseInt(s);
+};
+
 Card.RankToString = function (rank) {
     if (rank <= 10) return '' + rank;
     var s = '';

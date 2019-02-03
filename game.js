@@ -28,6 +28,15 @@ function Game(players, deckNumber) {
     this.rounds = [];
     this.currentRound = null;
     this.partnerDef = null;
+    
+    this.setPartnerDef = function(def) {
+        if(def === '0') {
+            this.partnerDef = new PartnerDef('0', 0);
+        } else {
+            var card = def.charAt(0) + Card.StringToRank(def.charAt(1));
+            this.partnerDef = new PartnerDef(card, 1+parseInt(def.charAt(2)));
+        }
+    };
 }
 
 function PartnerDef(card, seq) {

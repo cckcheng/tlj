@@ -326,8 +326,7 @@ function procBuryCards(t, cards) {
 }
 
 function procDefinePartner(t, def) {
-//    t.game.contractor.buryCards(cards);
-    
+    t.game.setPartnerDef(def);
     t.broadcastGameInfo({
         action: 'partner',
         seat: t.actionPlayerIdx + 1,

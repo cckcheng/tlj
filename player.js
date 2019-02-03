@@ -282,6 +282,8 @@ Player.prototype.pushData = function () {
                 obj.acttime = this.currentTable.TIMEOUT_SECONDS * 5;
             } else if(game.partnerDef == null) {
                 obj.act = 'partner';
+            } else {
+                obj.act = 'play';
             }
         }
         json = Object.assign(obj, json);
