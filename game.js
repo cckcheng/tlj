@@ -27,6 +27,27 @@ function Game(players, deckNumber) {
     this.holeCards = [];
     this.rounds = [];
     this.currentRound = null;
+    this.partnerDef = null;
+}
+
+function PartnerDef(card, seq) {
+    this.noPartner = card === '0';
+    if(!this.noPartner) {
+        this.keyCard = Card.fromString(card);
+    }
+    
+    this.keyCardCount = 0;
+    this.partnerMatch = function(cards) {
+        if(this.noParter) return false;
+        var idx = -1;
+        while(true) {
+            idx = cards.indexOf(card, idx+1);
+            if(idx<0) break;
+            this.keyCardCount++;
+            if(this.keyCardCount === seq) return true;
+        }
+        return false;
+    };
 }
 
 Game.BIDDING_STAGE = 'bid';

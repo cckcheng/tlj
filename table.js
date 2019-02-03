@@ -279,6 +279,8 @@ Table.prototype.autoPlay = function () {
                 t.enterPlayingStage();
             } else if (t.game.holeCards.length < 1) {
                 t.buryCards();
+            } else if(t.game.partnerDef == null) {
+                t.definePartner();
             } else {
                 procPlayCards(t);
             }
@@ -316,7 +318,18 @@ function procBuryCards(t, cards) {
     
     t.broadcastGameInfo({
         action: 'play',
-        next: t.actionPlayerIdx + 1
+        seat: t.actionPlayerIdx + 1
+    }, t.game.contractor);
+    t.autoPlay();
+}
+
+function procDefinePartner(t, def) {
+//    t.game.contractor.buryCards(cards);
+    
+    t.broadcastGameInfo({
+        action: 'partner',
+        seat: t.actionPlayerIdx + 1,
+        def: def
     });
     t.autoPlay();
 }
@@ -385,8 +398,27 @@ Table.prototype.buryCards = function () {
     }, waitSeconds * 1000, this);
 };
 
-Table.prototype.broadcastGameInfo = function (json) {
+Table.prototype.definePartner = function () {
+    var player = this.game.contractor;
+    var waitSeconds = this.ROBOT_SECONDS;
+    if (player.sock != null) {
+        if (player.isOut()) {
+            waitSeconds *= 2;
+        } else {
+            waitSeconds = this.TIMEOUT_SECONDS * 5 + ADD_SECONDS;
+        }
+    }
+
+    this.autoTimer = setTimeout(function (t) {
+        if (waitSeconds > 5)
+            player.timeoutTimes++;
+        procDefinePartner(t);
+    }, waitSeconds * 1000, this);
+};
+
+Table.prototype.broadcastGameInfo = function (json, exceptPlayer) {
     this.players.forEach(function (p) {
+        if(p === exceptPlayer) return; 
         p.pushJson(json);
     });
 };
@@ -435,6 +467,12 @@ Table.prototype.processPlayerAction = function (player, json) {
             if (player !== this.game.contractor)
                 return;
             procBuryCards(this, json.cards);
+            break;
+
+        case 'partner':
+            if (player !== this.game.contractor)
+                return;
+            procDefinePartner(this, json.def);
             break;
 
         case 'play':

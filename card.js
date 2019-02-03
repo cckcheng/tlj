@@ -160,6 +160,11 @@ Card.cardsToString = function (cards) {
     return arr.join();
 };
 
+Card.fromString = function(s){
+    if(s == null || s.length<2) return null;
+    return new Card(s.charAt(0), parseInt(s.substr(1)));
+};
+
 Card.stringToArray = function (strCards) {
     if (strCards == null || strCards.length < 2)
         return [];
