@@ -43,7 +43,29 @@ function Player(o) {
     };
     
     this.autoPartner = function() {
-        return 'SA0';   // TO BE MODIFY
+        var arr = [];
+        var gameRank = this.matchInfo.currentRank;
+        var sCount = new SuiteCount(this.spades, gameRank);
+        if (sCount.length > 0) arr.push(sCount);
+        sCount = new SuiteCount(this.hearts, gameRank);
+        if (sCount.length > 0) arr.push(sCount);
+        sCount = new SuiteCount(this.diamonds, gameRank);
+        if (sCount.length > 0) arr.push(sCount);
+        sCount = new SuiteCount(this.clubs, gameRank);
+        if (sCount.length > 0) arr.push(sCount);
+
+        arr.sort(function (a, b) {
+            if (a.lenHonor > 3 || b.lenHonor > 3) {
+                return a.lenHonor != b.lenHonor ? a.lenHonor - b.lenHonor : a.lenPoint - b.lenPoint;
+            }
+            if (a.lenPoint === 1) return b.lenPoint === 1 ? a.length - b.length : -1;
+            if (b.lenPoint === 1) return 1;
+            if (a.lenPoint > b.lenPoint) return 1;
+            if (a.lenPoint < b.lenPoint) return -1;
+            return a.length - b.length;
+        });
+
+        return arr[0].getPartnerDef();
     };
 }
 
@@ -326,6 +348,7 @@ function SuiteCount(suite, gameRank) {
     this.lenPoint = 0;    // total point catds except K
     this.lenBury = 0;   // total cards can be buried
     this.lenHonor = 0;   // total cards of Aces and Kings
+    this.lenTop = 0;   // total cards of top card (Ace, or King if gameRank is A)
 
     var reserved = [];  // reserve quads, trips, and tractors
     var stat = new HandStat(suite, Card.SUITE.JOKER, gameRank);
@@ -368,7 +391,8 @@ function SuiteCount(suite, gameRank) {
 
     this.cardsToBury = [];
     this.cardsPoint = [];
-    for(var x=0,c; c=suite[x]; x++){
+    for (var x = 0, c; c = suite[x]; x++) {
+        if (c.rank === honorRank) this.lenTop++;
         if (reserved.indexOf(c.rank) >= 0) {
             continue;
         }
@@ -382,6 +406,10 @@ function SuiteCount(suite, gameRank) {
             this.cardsToBury.push(c);
         }
     }
+
+    this.getPartnerDef = function () {
+        return suite[0].suite + (honorRank === 14 ? 'A' : 'K') + this.lenTop;
+    };
 }
 
 Player.prototype.buryCards = function (strCards) {
@@ -403,7 +431,7 @@ Player.prototype.buryCards = function (strCards) {
         if(sCount.length>0) arr.push(sCount);
         sCount = new SuiteCount(this.clubs, this.matchInfo.currentRank);
         if(sCount.length>0) arr.push(sCount);
-        
+
         arr.sort(function (a, b) {
             if (a.lenHonor > 3 || b.lenHonor > 3) {
                 return a.lenHonor != b.lenHonor ? a.lenHonor - b.lenHonor : b.lenBury - a.lenBury;
@@ -411,29 +439,27 @@ Player.prototype.buryCards = function (strCards) {
 
             var lenA = a.lenBury + a.lenPoint;
             var lenB = b.lenBury + b.lenPoint;
-            if(lenA <= len+1 && lenB <= len+1) {
-                if(a.lenPoint !== b.lenPoint) {
-                    if(a.lenPoint === 1) return -1;
-                    if(b.lenPoint === 1) return 1;
+            if (lenA <= len + 1 && lenB <= len + 1) {
+                if (a.lenPoint !== b.lenPoint) {
+                    if (a.lenPoint === 1) return -1;
+                    if (b.lenPoint === 1) return 1;
                     return a.lenPoint - b.lenPoint;
                 }
-                return a.lenBury != b.lenBury ? a.lenBury-b.lenBury : a.lenHonor - b.lenHonor;
-            } else if(lenA <= len+1) {
+                return a.lenBury != b.lenBury ? a.lenBury - b.lenBury : a.lenHonor - b.lenHonor;
+            } else if (lenA <= len + 1) {
                 return -1;
-            } else if(lenB <= len+1) {
+            } else if (lenB <= len + 1) {
                 return 1;
             }
-            
-            if(lenA > lenB) return 1;
-            if(lenA < lenB) return -1;
-            if(a.lenPoint > b.lenPoint) return 1;
-            if(a.lenPoint < b.lenPoint) return -1;
+
+            if (lenA > lenB) return 1;
+            if (lenA < lenB) return -1;
+            if (a.lenPoint > b.lenPoint) return 1;
+            if (a.lenPoint < b.lenPoint) return -1;
             return a.lenHonor - b.lenHonor;
         });
         
-        debugger;
-
-        var i=0;
+        var i = 0;
         do{
             sCount = arr[i];
             var maxLen = len - cards.length;
