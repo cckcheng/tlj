@@ -275,7 +275,6 @@ Player.prototype.pushData = function () {
         action: 'init',
         game: this.currentTable.games.length,
         stage: game.stage,
-        next: this.currentTable.actionPlayerIdx + 1,
         contract: game.contractPoint,
         players: playerInfo,
         timeout: this.currentTable.TIMEOUT_SECONDS, // default timeout
@@ -285,6 +284,10 @@ Player.prototype.pushData = function () {
         C: C,
         T: T
     }, this.matchInfo.toJson(seat));
+
+    if (this.currentTable.actionPlayerIdx >= 0) {
+        json.next = this.currentTable.actionPlayerIdx + 1;
+    }
 
     if (this.currentTable.game.stage === Game.BIDDING_STAGE) {
         json = Object.assign({
@@ -319,11 +322,15 @@ Player.prototype.pushData = function () {
 };
 
 Player.prototype.playCards = function (strCards) {
-    this.matchInfo.playedCards = strCards;
-    var cards = Card.stringToArray(strCards);
-    for (var x = 0, c; c = cards[x]; x++) {
-        this.removeCard(c);
+    if (strCards != null) {
+        var cards = Card.stringToArray(strCards);
+        for (var x = 0, c; c = cards[x]; x++) {
+            this.removeCard(c);
+        }
+    } else {
+        strCards = "H6";    // TO BE MODIFY
     }
+    this.matchInfo.playedCards = strCards;
     var game = this.currentTable.game;
     if(game.currentRound.addHand(this, cards)) {
         if(!this.isHandEmpty()){

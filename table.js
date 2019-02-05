@@ -10,6 +10,8 @@ Table.FastMode = false;
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const ADD_SECONDS = 2;
+const PENDING_SECONDS = 5;
+const PAUSE_SECONDS_BETWEEN_GAME = 300;
 
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
@@ -77,8 +79,9 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
     }
-    var pauseMinutes = Table.Debugging ? 5 : 30;  // 5 minutes, set to 30 minutes when release
-    this.pauseTimer = setTimeout(function(t){
+    var pauseMinutes = Table.Debugging ? (Table.FastMode ? 2 : 5) : 30;  // 5(or 2) minutes, set to 30 minutes when release
+    this.pauseTimer = setTimeout(function (t) {
+        t.pauseTimer = null;
         for (var x = 0, p; x < t.players.length; x++) {
             p = t.players[x];
             if (p == null)
@@ -90,18 +93,6 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
         t.dismissed = true;
         delete activePlayers[playerId];
     }, pauseMinutes * 60000, this);
-
-    /*
-    for (var x = 0, p; x < this.players.length; x++) {
-        p = this.players[x];
-        if (p == null)
-            continue;
-        p.currentTable = null;
-    }
-
-    console.log('dismiss table');
-    if(this.autoTimer != null) clearTimeout(this.autoTimer);
-    */
 };
 
 Table.prototype.resume = function (player) {
@@ -250,6 +241,12 @@ function procAfterBid(t) {
 }
 
 Table.prototype.autoPlay = function () {
+    if (this.autoTime != null) return;  // prevent multi timeout
+    if (this.actionPlayerIdx < 0) {
+        procAfterPause(this);
+        return;
+    }
+
     console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
     var player = this.players[this.actionPlayerIdx];
     var waitSeconds = this.ROBOT_SECONDS;
@@ -262,6 +259,7 @@ Table.prototype.autoPlay = function () {
     }
 
     this.autoTimer = setTimeout(function (t) {
+        t.autoTimer = null;
         if (waitSeconds > 5)
             player.timeoutTimes++;
         if (t.game.stage === Game.BIDDING_STAGE) {
@@ -320,7 +318,7 @@ function procBuryCards(t, cards) {
     
     t.broadcastGameInfo({
         action: 'play',
-        seat: t.actionPlayerIdx + 1
+        next: t.actionPlayerIdx + 1
     }, t.game.contractor);
     t.definePartner();
 }
@@ -340,28 +338,64 @@ function procPlayCards(t, cards) {
     var status = player.playCards(cards);
     var seat = t.actionPlayerIdx + 1;
     if(status === 'gameover') {
-        gameOver();
+        gameOver(t);
         return;
     }
     
     if(status === 'newround') {
-        t.actionPlayerIdx = t.players.indexOf(t.game.leadingPlayer);
-    }else {
+        t.actionPlayerIdx = -1;
+        t.broadcastGameInfo({
+            action: 'play',
+            seat: seat,
+            cards: player.matchInfo.playedCards
+        });
+
+        t.pause(PENDING_SECONDS);
+    } else {
         t.rotatePlayer();
+        t.broadcastGameInfo({
+            action: 'play',
+            seat: seat,
+            cards: player.matchInfo.playedCards,
+            next: t.actionPlayerIdx + 1
+        });
+        t.autoPlay();
     }
-    t.broadcastGameInfo({
-        action: 'play',
-        seat: seat,
-        cards: player.matchInfo.playedCards,
-        next: t.actionPlayerIdx + 1
-    });
-    
-    t.autoPlay();
 }
 
-function gameOver() {
-    
+function gameOver(t) {
+    t.game = null;
+    t.pause(PAUSE_SECONDS_BETWEEN_GAME);
 }
+
+function procAfterPause(t) {
+    t.onPause = false;
+    if (t.game != null) {
+        if (t.game.stage === Game.PLAYING_STAGE) {
+            t.actionPlayerIdx = t.players.indexOf(t.game.leadingPlayer);
+            t.players.forEach(function (p) {
+                p.matchInfo.playedCards = '';
+            });
+            t.broadcastGameInfo({
+                action: 'play',
+                next: t.actionPlayerIdx + 1
+            });
+        } else {
+            t.actionPlayerIdx = 0;
+        }
+        t.autoPlay();
+    } else {
+        t.startGame();
+    }
+}
+
+Table.prototype.pause = function (seconds) {
+    this.onPause = true;
+    this.autoTimer = setTimeout(function (t) {
+        t.autoTimer = null;
+        procAfterPause(t);
+    }, seconds * 1000, this);
+};
 
 Table.prototype.declareTrump = function () {
     var player = this.game.contractor;
@@ -375,6 +409,7 @@ Table.prototype.declareTrump = function () {
     }
 
     this.autoTimer = setTimeout(function (t) {
+        t.autoTimer = null;
         if (waitSeconds > 5)
             player.timeoutTimes++;
         procSetTrump(t, player.intendTrumpSuite);
@@ -393,6 +428,7 @@ Table.prototype.buryCards = function () {
     }
 
     this.autoTimer = setTimeout(function (t) {
+        t.autoTimer = null;
         if (waitSeconds > 5)
             player.timeoutTimes++;
         procBuryCards(t);
@@ -413,7 +449,7 @@ Table.prototype.definePartner = function () {
     }
 
     this.autoTimer = setTimeout(function (t) {
-        console.log('definePartner timeout');
+        t.autoTimer = null;
         if (waitSeconds > 5)
             player.timeoutTimes++;
         procDefinePartner(t);
@@ -432,6 +468,7 @@ Table.prototype.processPlayerAction = function (player, json) {
         return;    // late response
 
     clearTimeout(this.autoTimer);
+    this.autoTimer = null;
 
     switch (json.action) {
         case 'bid':
@@ -531,13 +568,20 @@ function MatchInfo(t, player) {
     this.playedCards = ''; // cards played
 
     this.toJson = function (seat) {
-        return {
+        var json = {
             seat: seat,
             rank: this.currentRank,
-            bid: this.lastBid,
-            points: this.points,
-            cards: this.playedCards,
             contracts: this.contracts
         };
+
+        if (t.game != null) {
+            if (t.game.stage === Game.PLAYING_STAGE) {
+                json.cards = this.playedCards;
+                json.points = this.points;
+            } else {
+                json.bid = this.lastBid;
+            }
+        }
+        return json;
     };
 }
