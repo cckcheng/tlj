@@ -565,7 +565,7 @@ function Round(players, trump, gameRank) {
             leadingHand = hand;
         }
         this.playList.push(hand);
-        
+
         return this.playList.length === players.length;
     };
 

@@ -299,7 +299,7 @@ Player.prototype.pushData = function () {
             seatContractor: this.currentTable.getSeat(game.contractor),
             seatPartner: this.currentTable.getSeat(game.partner),
             gameRank: game.rank,
-            points: game.collectedPoint
+            pt0: game.collectedPoint
         };
         if (game.trump == null) {
             obj.trump = game.contractor.intendTrumpSuite;
@@ -330,8 +330,10 @@ Player.prototype.playCards = function (strCards) {
     } else {
         strCards = "H6";    // TO BE MODIFY
     }
+
     this.matchInfo.playedCards = strCards;
     var game = this.currentTable.game;
+
     if(game.currentRound.addHand(this, cards)) {
         if(!this.isHandEmpty()){
             game.startNewRound();

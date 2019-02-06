@@ -337,28 +337,37 @@ function procPlayCards(t, cards) {
     var player = t.players[t.actionPlayerIdx];
     var status = player.playCards(cards);
     var seat = t.actionPlayerIdx + 1;
-    if(status === 'gameover') {
+
+    var strCards = player.matchInfo.playedCards;
+    var json = {
+        action: 'play',
+        seat: seat,
+        cards: strCards
+    };
+
+    var game = t.game;
+    if (game.partner == null) {
+        if (game.partnerDef.partnerMatch(strCards)) {
+            game.partner = player;
+            json.isPartner = 'yes';
+        }
+    }
+
+    if (status === 'gameover') {
+        t.broadcastGameInfo(json);
         gameOver(t);
         return;
     }
     
     if(status === 'newround') {
         t.actionPlayerIdx = -1;
-        t.broadcastGameInfo({
-            action: 'play',
-            seat: seat,
-            cards: player.matchInfo.playedCards
-        });
+        t.broadcastGameInfo(json);
 
         t.pause(PENDING_SECONDS);
     } else {
         t.rotatePlayer();
-        t.broadcastGameInfo({
-            action: 'play',
-            seat: seat,
-            cards: player.matchInfo.playedCards,
-            next: t.actionPlayerIdx + 1
-        });
+        json.next = t.actionPlayerIdx + 1
+        t.broadcastGameInfo(json);
         t.autoPlay();
     }
 }
@@ -577,7 +586,7 @@ function MatchInfo(t, player) {
         if (t.game != null) {
             if (t.game.stage === Game.PLAYING_STAGE) {
                 json.cards = this.playedCards;
-                json.points = this.points;
+                json.pt1 = this.points;
             } else {
                 json.bid = this.lastBid;
             }
