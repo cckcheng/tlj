@@ -1,9 +1,8 @@
 module.exports = Table;
 
 var Player = require('./player');
-var Game = require('./game');
 var Card = require('./card');
-var Deck = require('./deck');
+const {Game, Hand} = require('./game');
 
 Table.Debugging = false;
 Table.FastMode = false;
@@ -139,7 +138,7 @@ Table.prototype.addPlayer = function (player) {
     return true;
 };
 
-Table.prototype.startGame = function () {
+Table.prototype.startGame = function (testOnly) {
     this.game = new Game(this.players, this.deckNumber);
     this.games.push(this.game);
 //    debugger;
@@ -163,7 +162,7 @@ Table.prototype.startGame = function () {
         p.pushData();
     }
 
-    this.autoPlay();
+    if (testOnly == null) this.autoPlay();
 };
 
 Table.prototype.rotatePlayer = function () {

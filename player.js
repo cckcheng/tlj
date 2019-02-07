@@ -1,7 +1,7 @@
 var Card = require('./card');
 var HandStat = require('./stat');
 var Table = require('./table');
-var Game = require('./game');
+const {Game, Hand} = require('./game');
 
 module.exports = Player;
 
@@ -321,10 +321,73 @@ Player.prototype.pushData = function () {
     this.pushJson(json);
 };
 
+Player.prototype.autoPlayCards = function (isLeading) {
+
+};
+
+Player.prototype.allValid = function (cards) {
+    var cardCount = {};
+    for (var x = 0, c; c = cards[x]; x++) {
+        var k = c.suite + c.rank;
+        if (cardCount[k]) {
+            cardCount[k]++;
+        } else {
+            cardCount[k] = 1;
+        }
+    }
+
+    debugger;
+    for (var k in cardCount) {
+        if (Card.getTotalCardNumber(this.trumps, k) >= cardCount[k]) continue;
+        switch (k.charAt(0)) {
+            case Card.SUITE.SPADE:
+                if (Card.getTotalCardNumber(this.spades, k) < cardCount[k]) return false;
+                break;
+            case Card.SUITE.HEART:
+                if (Card.getTotalCardNumber(this.hearts, k) < cardCount[k]) return false;
+                break;
+            case Card.SUITE.CLUB:
+                if (Card.getTotalCardNumber(this.clubs, k) < cardCount[k]) return false;
+                break;
+            case Card.SUITE.DIAMOND:
+                if (Card.getTotalCardNumber(this.diamonds, k) < cardCount[k]) return false;
+                break;
+            default:
+                return false;
+        }
+    }
+
+    return true;
+};
+
 Player.prototype.playCards = function (strCards) {
-    var cards;
+    var cards = [];
+    var hand = null;
     var game = this.currentTable.game;
     var isLeading = this === game.leadingPlayer;
+
+    if (strCards != null) {
+        cards = Card.stringToArray(strCards, game.trump, game.rank);
+        if (cards.length > 0 && !this.allValid(cards)) { // bad play
+            cards = [];
+        }
+    }
+
+    if (isLeading) {
+        if (cards.length > 0) {
+            hand = new Hand(this, cards, game.trump, game.rank);
+            if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) {
+                cards = this.autoPlayCards(true);
+            } else {
+                if (!game.isLeadingHandValid(hand)) {
+
+                }
+            }
+        } else {
+            cards = this.autoLeading(true);
+        }
+    }
+
     if (strCards != null) {
         cards = Card.stringToArray(strCards, game.trump, game.rank);
         debugger;
@@ -341,7 +404,7 @@ Player.prototype.playCards = function (strCards) {
 
     this.matchInfo.playedCards = strCards;
 
-    if(game.currentRound.addHand(this, cards)) {
+    if (game.currentRound.addHand(this, cards, hand)) {
         if(!this.isHandEmpty()){
             game.startNewRound();
             return 'newround';

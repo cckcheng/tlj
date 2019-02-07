@@ -303,3 +303,13 @@ Card.allSplit = function (card_keys) {
 
     return true;
 };
+
+Card.getTotalCardNumber = function (cards, k) {
+    if (cards == null || cards.length < 1) return 0;
+    var num = 0;
+    for (var x = 0, c; c = cards[x]; x++) {
+        if (c.suite + c.rank === k) num++;
+    }
+
+    return num;
+};

@@ -1,4 +1,4 @@
-module.exports = Game;
+module.exports = {Game, Hand};
 
 var Card = require('./card');
 var Deck = require('./deck');
@@ -575,9 +575,28 @@ function Round(players, trump, gameRank) {
         return true;
     };
 
-    this.addHand = function (player, cards) {
-        if (cards == null || cards.length < 1) return false;
-        var hand = new Hand(player, cards, trump, gameRank);
+    this.isValidLeading = function (hand) {
+        if (hand == null) return false;
+        if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) return false;
+        if (!hand.isFlop) return true;
+
+//        debugger;
+        if (hand.subHands == null) {
+            return !hasHigherHand(hand.player, hand, cards[0].suite);
+        }
+
+        for (var x = 0, sHand; sHand = hand.subHands[x]; x++) {
+            if (hasHigherHand(hand.player, sHand, cards[0].suite)) return false;
+        }
+
+        return true;
+    };
+
+    this.addHand = function (player, cards, hand) {
+        if (hand == null) {
+            if (cards == null || cards.length < 1) return false;
+            hand = new Hand(player, cards, trump, gameRank);
+        }
         if (firstHand == null) firstHand = hand;
         if (leadingHand == null || hand.compareTo(leadingHand) > 0) {
             leadingHand = hand;
@@ -635,8 +654,12 @@ Game.prototype.startNewRound = function () {
     this.rounds.push(this.currentRound);
 };
 
-Game.prototype.isLeadingValid = function (player, cards) {
+Game.prototype.isLeadingCardsValid = function (player, cards) {
     return this.currentRound.isValidLeadingHand(player, cards);
+};
+
+Game.prototype.isLeadingHandValid = function (hand) {
+    return this.currentRound.isValidLeading(hand);
 };
 
 Game.prototype.promote = function () {
