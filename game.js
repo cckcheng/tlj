@@ -43,11 +43,13 @@ function PartnerDef(def) {
     this.noPartner = def === '0';
     var card = def.charAt(0);
     var seq = 0;
-    if(!this.noParter) {
+    if (!this.noParter) {
+        var rnk = Card.StringToRank(def.charAt(1));
+        this.keyCard = new Card(card, rnk);
         card += Card.StringToRank(def.charAt(1));
         seq = 1 + parseInt(def.charAt(2));
     }
-    
+
     this.keyCardCount = 0;
     this.partnerMatch = function(cards) {
         if(this.noParter) return false;
@@ -116,15 +118,10 @@ function Hand(player, cards, trump, rank) {
 }
 
 Hand.prototype.doAnalysis = function (cards, trump, rank) {
-    if (cards == null || (Array.isArray(cards) && cards.length < 1)) return;
+    // cards - must be an array, even only one card
+    if (cards == null || cards.length < 1) return;
     var stat = {};
-    if (!Array.isArray(cards)) {
-        this.cardNumber = 1;
-        this.type.cat = Hand.COMBINATION.SINGLE;
-        this.type.len = this.cardNumber;
-        this.isTrump = cards.isTrump(trump, rank);
-        this.minRank = this.maxRank = cards.rank;
-    } else if (cards.length == 1) {
+    if (cards.length == 1) {
         this.cardNumber = 1;
         this.type.cat = Hand.COMBINATION.SINGLE;
         this.type.len = this.cardNumber;
@@ -401,6 +398,23 @@ function SimpleHand(handType, minRank, isTrump) {
     this.display = function () {
         return '{' + this.type.cat + ':' + this.type.len + '}, ' + this.minRank;
     };
+
+    this.makeCards = function (suite, game_rank) {
+        var cards = [];
+        switch (this.type.cat) {
+            case Hand.COMBINATION.QUADS:
+            case Hand.COMBINATION.TRIPS:
+            case Hand.COMBINATION.PAIR:
+            case Hand.COMBINATION.SIMGLE:
+                var rnk = this.minRank < game_rank ? this.minRank : this.minRank + 1;
+                for (var x = 0; x < this.type.len; x++) {
+                    cards.push(new Card(suite, rnk))
+                }
+                break;
+        }
+
+        return cards;
+    };
 }
 
 SimpleHand.compare = function (a, b) {
@@ -533,7 +547,10 @@ function Round(players, trump, gameRank) {
             }
         }
 
-        if(ret) player.mustLead = simple_hand;
+        if (ret) {
+            player.mustLead = simple_hand;
+
+        }
         return ret;
     }
 
@@ -546,7 +563,7 @@ function Round(players, trump, gameRank) {
         if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) return false;
         if (!hand.isFlop) return true;
 
-        debugger;
+//        debugger;
         if (hand.subHands == null) {
             return !hasHigherHand(player, hand, cards[0].suite);
         }
@@ -559,6 +576,7 @@ function Round(players, trump, gameRank) {
     };
 
     this.addHand = function (player, cards) {
+        if (cards == null || cards.length < 1) return false;
         var hand = new Hand(player, cards, trump, gameRank);
         if (firstHand == null) firstHand = hand;
         if (leadingHand == null || hand.compareTo(leadingHand) > 0) {
@@ -594,7 +612,7 @@ Game.prototype.setTrump = function (suite) {
     for (var x = 0, p; p = this.players[x]; x++) {
         p.resortCards(this.trump, this.rank);
     }
-    
+
     this.startNewRound();
 };
 
@@ -610,6 +628,8 @@ Game.prototype.getHandType = function (player, cards) {
 Game.prototype.startNewRound = function () {
     if(this.currentRound != null) {
         this.leadingPlayer = this.currentRound.getNextLeadingPlayer();
+    } else {
+        this.leadingPlayer = this.contractor;
     }
     this.currentRound = new Round(this.players, this.trump, this.rank);
     this.rounds.push(this.currentRound);

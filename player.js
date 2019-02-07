@@ -322,8 +322,16 @@ Player.prototype.pushData = function () {
 };
 
 Player.prototype.playCards = function (strCards) {
+    var cards;
+    var game = this.currentTable.game;
+    var isLeading = this === game.leadingPlayer;
     if (strCards != null) {
-        var cards = Card.stringToArray(strCards);
+        cards = Card.stringToArray(strCards, game.trump, game.rank);
+        debugger;
+        if (isLeading && !game.isLeadingValid(this, cards)) {
+            var penalty = (cards.length - this.mustLead.length) * 10;
+            cards = this.mustLead.makeCards(cards[0].suite, game.rank);
+        }
         for (var x = 0, c; c = cards[x]; x++) {
             this.removeCard(c);
         }
@@ -332,7 +340,6 @@ Player.prototype.playCards = function (strCards) {
     }
 
     this.matchInfo.playedCards = strCards;
-    var game = this.currentTable.game;
 
     if(game.currentRound.addHand(this, cards)) {
         if(!this.isHandEmpty()){

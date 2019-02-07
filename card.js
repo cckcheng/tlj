@@ -180,7 +180,7 @@ Card.fromString = function(s){
     return new Card(s.charAt(0), parseInt(s.substr(1)));
 };
 
-Card.stringToArray = function (strCards) {
+Card.stringToArray = function (strCards, trump_suite, game_rank) {
     if (strCards == null || strCards.length < 2)
         return [];
 
@@ -190,6 +190,19 @@ Card.stringToArray = function (strCards) {
         if (s.length < 2)
             return;
         cards.push(new Card(s.charAt(0), parseInt(s.substr(1))));
+    });
+
+    cards.sort(function (a, b) {
+        var aTrump = a.isTrump(trump_suite, game_rank);
+        var bTrump = b.isTrump(trump_suite, game_rank);
+        if (!aTrump && !bTrump) return Card.compare(a, b);
+
+        var aRank = a.trumpRank(trump_suite, game_rank);
+        var bRank = b.trumpRank(trump_suite, game_rank);
+        if (aTrump && bTrump) {
+            return aRank != bRank ? aRank - bRank : a.suite - b.suite;
+        }
+        return aTrump ? 1 : -1;
     });
     return cards;
 };
