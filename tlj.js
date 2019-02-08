@@ -34,7 +34,9 @@ var trump_suite = Card.SUITE.CLUB;
 var game_rank = 7;
 
 var game = table.game;
-game.contractor = players[4];
+var p = players[0];
+
+game.contractor = p;
 game.enterPlayStage();
 game.setTrump(trump_suite);
 //game.setTrump(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
@@ -61,7 +63,7 @@ var cards = [];
 //cards.push(new Card(Card.SUITE.CLUB, 8));
 //cards.push(new Card(Card.SUITE.CLUB, 7));
 //cards.push(new Card(Card.SUITE.CLUB, 4));
-cards.push(new Card(Card.SUITE.CLUB, 2));
+//cards.push(new Card(Card.SUITE.CLUB, 2));
 //cards.push(new Card(Card.SUITE.HEART, 7));
 //cards.push(new Card(Card.SUITE.HEART, 8));
 //cards.push(new Card(Card.SUITE.CLUB, 15));
@@ -72,7 +74,7 @@ cards.push(new Card(Card.SUITE.CLUB, 2));
 //cards.push(new Card(Card.SUITE.HEART, 11));
 //cards.push(new Card(Card.SUITE.HEART, 13));
 //cards.push(new Card(Card.SUITE.HEART, 12));
-//cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 
@@ -83,9 +85,16 @@ cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 
 Card.sortCards(cards, trump_suite, game_rank);
 
-console.log("----------------");
-console.log(players[0].showHand());
-console.log('valid cards: ' + players[0].allValid(cards));
+console.log("\n----------------");
+console.log(p.showHand());
+//console.log('valid cards: ' + p.allValid(cards));
+
+var pcards = p.trumps.slice(p.trumps.length - 2, p.trumps.length);
+//var pcards = p.spades.slice(p.spades.length - 3, p.spades.length);
+var strCards = Card.cardsToString(pcards);
+console.log('try play: ' + strCards);
+p.playCards(strCards);
+console.log('played: ' + p.matchInfo.playedCards);
 
 //console.log('Can Lead: ' + game.isLeadingValid(players[0], cards));
 //if (players[0].mustLead != null) console.log('Must Lead: ' + players[0].mustLead.display());

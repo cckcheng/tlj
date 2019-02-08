@@ -194,7 +194,7 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
         }
 
         if (values.length === 1 || Card.allSplit(cardKeys)) {
-            this.isFlop = true;
+            this.isFlop = values.length > 1;
             switch (values[0]) {
                 case 2:
                     this.type.cat = Hand.COMBINATION.PAIR;
@@ -369,6 +369,7 @@ Hand.prototype.generateSubHands = function (stat) {
 };
 
 Hand.isMixed = function (values) {
+    if (values.length < 2) return false;
     var v0 = values[0];
     for (var x = 1, val; val = values[x]; x++) {
         if (val !== v0) return true;
@@ -389,6 +390,59 @@ Hand.COMBINATION = {
     MIXED: 111
 };
 
+Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {
+    function findCard(cc, rnk) {
+        for (var x = 0, c; c = cc[x]; x++) {
+            if (rnk === c.trumpRank(trump_suite, game_rank)) return c;
+        }
+    }
+    var cards = [];
+    var card;
+    var sRank = simHand.minRank;
+    switch (simHand.type.cat) {
+        case Hand.COMBINATION.QUADS:
+        case Hand.COMBINATION.TRIPS:
+        case Hand.COMBINATION.PAIR:
+        case Hand.COMBINATION.SINGLE:
+            card = findCard(orgCards, sRank);
+            for (var x = 0; x < simHand.type.len; x++) {
+                cards.push(card);
+            }
+            break;
+        case Hand.COMBINATION.TRACTOR2:
+            for (var x = 0; x < simHand.type.len; x += 2) {
+                card = findCard(orgCards, sRank);
+                for (var y = 0; y < 2; y++) {
+                    cards.push(card);
+                }
+                sRank++;
+            }
+            break;
+        case Hand.COMBINATION.TRACTOR3:
+            for (var x = 0; x < simHand.type.len; x += 3) {
+                card = findCard(orgCards, sRank);
+                for (var y = 0; y < 3; y++) {
+                    cards.push(card);
+                }
+                sRank++;
+            }
+            break;
+        case Hand.COMBINATION.TRACTOR4:
+            for (var x = 0; x < simHand.type.len; x += 4) {
+                card = findCard(orgCards, sRank);
+                for (var y = 0; y < 4; y++) {
+                    cards.push(card);
+                }
+                sRank++;
+            }
+            break;
+        default:
+            break;
+    }
+
+    return cards;
+};
+
 function SimpleHand(handType, minRank, isTrump) {
     // for comparation purpose
     this.type = handType;   // object {cat:, len:}
@@ -397,23 +451,6 @@ function SimpleHand(handType, minRank, isTrump) {
 
     this.display = function () {
         return '{' + this.type.cat + ':' + this.type.len + '}, ' + this.minRank;
-    };
-
-    this.makeCards = function (suite, game_rank) {
-        var cards = [];
-        switch (this.type.cat) {
-            case Hand.COMBINATION.QUADS:
-            case Hand.COMBINATION.TRIPS:
-            case Hand.COMBINATION.PAIR:
-            case Hand.COMBINATION.SIMGLE:
-                var rnk = this.minRank < game_rank ? this.minRank : this.minRank + 1;
-                for (var x = 0; x < this.type.len; x++) {
-                    cards.push(new Card(suite, rnk))
-                }
-                break;
-        }
-
-        return cards;
     };
 }
 
@@ -431,7 +468,7 @@ function Round(players, trump, gameRank) {
     var firstHand = null;
 
     function findHighers(cards, hand_type, minRank) {
-        console.log(Card.showCards(cards));
+//        console.log(Card.showCards(cards));
         if (cards == null || cards.length < 1)
             return false;
         if (hand_type.cat === Hand.COMBINATION.SINGLE) {
@@ -490,7 +527,7 @@ function Round(players, trump, gameRank) {
                 return false;
         }
 
-        console.log(sortedRanks);
+//        console.log(sortedRanks);
         if (sortedRanks.length * unit < hand_type.len) return false;
         var preRnk = 0;
         var count = unit;
@@ -582,11 +619,11 @@ function Round(players, trump, gameRank) {
 
 //        debugger;
         if (hand.subHands == null) {
-            return !hasHigherHand(hand.player, hand, cards[0].suite);
+            return !hasHigherHand(hand.player, hand, hand.cards[0].suite);
         }
 
         for (var x = 0, sHand; sHand = hand.subHands[x]; x++) {
-            if (hasHigherHand(hand.player, sHand, cards[0].suite)) return false;
+            if (hasHigherHand(hand.player, sHand, hand.cards[0].suite)) return false;
         }
 
         return true;

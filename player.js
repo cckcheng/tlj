@@ -376,33 +376,30 @@ Player.prototype.playCards = function (strCards) {
     if (isLeading) {
         if (cards.length > 0) {
             hand = new Hand(this, cards, game.trump, game.rank);
+//            console.log('hand type: ' + hand.type.cat);
+//            console.log('is flop: ' + hand.isFlop);
             if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) {
-                cards = this.autoPlayCards(true);
+                cards = this.autoPlayCards(isLeading);
             } else {
                 if (!game.isLeadingHandValid(hand)) {
-
+                    console.log('invalid leading: ' + strCards);
+                    var orgLen = cards.length;
+                    cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
+                    this.matchInfo.penalty = (cards.length - orgLen) * 10;
+                    this.addPoints(this.matchInfo.penalty);
                 }
             }
         } else {
-            cards = this.autoLeading(true);
-        }
-    }
-
-    if (strCards != null) {
-        cards = Card.stringToArray(strCards, game.trump, game.rank);
-        debugger;
-        if (isLeading && !game.isLeadingValid(this, cards)) {
-            var penalty = (cards.length - this.mustLead.length) * 10;
-            cards = this.mustLead.makeCards(cards[0].suite, game.rank);
-        }
-        for (var x = 0, c; c = cards[x]; x++) {
-            this.removeCard(c);
+            cards = this.autoPlayCards(isLeading);
         }
     } else {
-        strCards = "H6";    // TO BE MODIFY
+        if (cards.length > 0) {
+        } else {
+            cards = this.autoPlayCards(isLeading);
+        }
     }
 
-    this.matchInfo.playedCards = strCards;
+    this.matchInfo.playedCards = Card.cardsToString(cards);
 
     if (game.currentRound.addHand(this, cards, hand)) {
         if(!this.isHandEmpty()){
@@ -413,6 +410,19 @@ Player.prototype.playCards = function (strCards) {
         return 'gameover';
     }
     return '';
+};
+
+Player.prototype.addPoints = function (points) {
+    var game = this.currentTable.game;
+    if (this === game.contractor || this === game.partner) {
+        if (points < 0) {
+            game.collectedPoint -= points;
+        }
+    } else if (game.partner == null) {
+        this.matchInfo.points += points;
+    } else {
+        game.collectedPoint += points;
+    }
 };
 
 function SuiteCount(suite, gameRank) {

@@ -586,6 +586,7 @@ function MatchInfo(t, player) {
             if (t.game.stage === Game.PLAYING_STAGE) {
                 json.cards = this.playedCards;
                 json.pt1 = this.points;
+                if (this.penalty != null) json.penalty = this.penalty;
             } else {
                 json.bid = this.lastBid;
             }

@@ -287,7 +287,7 @@ Card.allConnected = function (card_keys) {
 
 Card.allSplit = function (card_keys) {
     // test if all ranks are split
-    if (!Array.isArray(card_keys) || card_keys.length < 1) return false;
+    if (!Array.isArray(card_keys) || card_keys.length < 2) return false;
 
     var ranks = [];
     for (var x = 0, ck; ck = card_keys[x]; x++) {
