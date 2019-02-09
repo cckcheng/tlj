@@ -660,7 +660,7 @@ function Round(players, trump, gameRank) {
         points += Card.getTotalPoints(hand.cards);
         var isLastHand = this.playList.length === players.length;
         if (isLastHand) {
-            leadingHand.player.addPoint(points);
+            leadingHand.player.addPoints(points);
         }
 
         return isLastHand;
