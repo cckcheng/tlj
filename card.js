@@ -304,6 +304,19 @@ Card.allSplit = function (card_keys) {
     return true;
 };
 
+
+Card.getTotalPoints = function (cards) {
+    if (cards == null || cards.length < 1) return 0;
+    var points = 0;
+    cards.forEach(function (c) {
+        points += c.getPoint();
+    });
+
+    return points;
+};
+
+// total number of specific card in an array
+// k: e.g. 'S10', 'H6', 'V97' ...
 Card.getTotalCardNumber = function (cards, k) {
     if (cards == null || cards.length < 1) return 0;
     var num = 0;

@@ -35,7 +35,27 @@ function Game(players, deckNumber) {
         }
 
         this.partnerDef = new PartnerDef(def);
+        if (this.partnerDef.noPartner) {
+            this.partner = this.contractor;
+        }
         return def;
+    };
+
+    this.isSameSide = function (player1, player2) {
+        if (player1 === this.contractor || player1 === this.partner) {
+            return player2 === this.contractor || player2 === this.partner;
+        }
+
+        return !(player2 === this.contractor || player2 === this.partner);
+    };
+
+    this.sumPoints = function (exPlayer) {
+        var sum = this.collectedPoint;
+        for (var x = 0, p; p = players[x]; x++) {
+            if (p === exPlayer) continue;
+            sum += p.matchInfo.points;
+        }
+        return sum;
     };
 }
 
@@ -65,6 +85,17 @@ function PartnerDef(def) {
     
     this.getDef = function() {
         return def;
+    };
+
+    this.getDefCard = function () {
+        return Card.fromString(card);
+    };
+
+    this.getViceCard = function (gameRank) {
+        var defCard = this.getDefCard();
+        var rnk = defCard.rank - 1;
+        if (rnk === gameRank) rnk--;
+        return new Card(defCard.suite, rnk);
     };
 }
 
@@ -121,17 +152,18 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
     // cards - must be an array, even only one card
     if (cards == null || cards.length < 1) return;
     var stat = {};
+    var c0 = cards[0];
+    this.suite = c0.suite;
     if (cards.length == 1) {
         this.cardNumber = 1;
         this.type.cat = Hand.COMBINATION.SINGLE;
         this.type.len = this.cardNumber;
-        this.isTrump = cards[0].isTrump(trump, rank);
+        this.isTrump = c0.isTrump(trump, rank);
         this.minRank = this.maxRank = cards[0].rank;
     } else {
         // >= 2 cards
         this.cardNumber = cards.length;
         this.type.len = this.cardNumber;
-        var c0 = cards[0];
         var tRank = c0.trumpRank(trump, rank);
         this.minRank = this.maxRank = tRank;
         this.isTrump = c0.isTrump(trump, rank);
@@ -379,13 +411,13 @@ Hand.isMixed = function (values) {
 
 Hand.COMBINATION = {
     SINGLE: 1,
-    PAIR: 2,
-    TRIPS: 3, // 3 of kind
-    QUADS: 4, // 4 of kind
+    PAIR: 20,
+    TRIPS: 30, // 3 of kind
+    QUADS: 40, // 4 of kind
 
-    TRACTOR2: 20, // connected pair
-    TRACTOR3: 30, // connected 3 of a kind
-    TRACTOR4: 40, // connected 4 of a kind (4x2)
+    TRACTOR2: 28, // connected pair
+    TRACTOR3: 38, // connected 3 of a kind
+    TRACTOR4: 48, // connected 4 of a kind (4x2)
     MIX_SUITE: -1,
     MIXED: 111
 };
@@ -466,6 +498,7 @@ function Round(players, trump, gameRank) {
     this.playList = [];
     var leadingHand = null;
     var firstHand = null;
+    var points = 0;
 
     function findHighers(cards, hand_type, minRank) {
 //        console.log(Card.showCards(cards));
@@ -556,22 +589,7 @@ function Round(players, trump, gameRank) {
             return findHighers(player.trumps, hand_type, minRank);
         }
 
-        switch (suite) {
-            case Card.SUITE.SPADE:
-                if (findHighers(player.spades, hand_type, minRank)) return true;
-                break;
-            case Card.SUITE.HEART:
-                if (findHighers(player.hearts, hand_type, minRank)) return true;
-                break;
-            case Card.SUITE.CLUB:
-                if (findHighers(player.clubs, hand_type, minRank)) return true;
-                break;
-            case Card.SUITE.DIAMOND:
-                if (findHighers(player.diamonds, hand_type, minRank)) return true;
-                break;
-        }
-
-        return false;
+        return findHighers(player.getCardsBySuite(suite), hand_type, minRank);
     }
 
     function hasHigherHand(player, simple_hand, suite) {
@@ -602,11 +620,11 @@ function Round(players, trump, gameRank) {
 
 //        debugger;
         if (hand.subHands == null) {
-            return !hasHigherHand(player, hand, cards[0].suite);
+            return !hasHigherHand(player, hand, hand.suite);
         }
 
         for (var x = 0, sHand; sHand = hand.subHands[x]; x++) {
-            if (hasHigherHand(player, sHand, cards[0].suite)) return false;
+            if (hasHigherHand(player, sHand, hand.suite)) return false;
         }
 
         return true;
@@ -619,11 +637,11 @@ function Round(players, trump, gameRank) {
 
 //        debugger;
         if (hand.subHands == null) {
-            return !hasHigherHand(hand.player, hand, hand.cards[0].suite);
+            return !hasHigherHand(hand.player, hand, hand.suite);
         }
 
         for (var x = 0, sHand; sHand = hand.subHands[x]; x++) {
-            if (hasHigherHand(hand.player, sHand, hand.cards[0].suite)) return false;
+            if (hasHigherHand(hand.player, sHand, hand.suite)) return false;
         }
 
         return true;
@@ -639,12 +657,103 @@ function Round(players, trump, gameRank) {
             leadingHand = hand;
         }
         this.playList.push(hand);
+        points += Card.getTotalPoints(hand.cards);
+        var isLastHand = this.playList.length === players.length;
+        if (isLastHand) {
+            leadingHand.player.addPoint(points);
+        }
 
-        return this.playList.length === players.length;
+        return isLastHand;
     };
 
     this.getNextLeadingPlayer = function () {
         return leadingHand.player;
+    };
+
+    this.getFirstHand = function () {
+        return firstHand;
+    };
+
+    this.getLeadingHand = function () {
+        return leadingHand;
+    };
+
+    function countHigherCards(cards, maxRank) {
+        if (cards == null || cards.length < 1) return 0;
+        var n = 0;
+        cards.forEach(function (c) {
+            if (c.trumpRank(trump, gameRank) > maxRank) n++;
+        });
+        return n;
+    }
+
+    function hasPossibleHighers(hand, exPlayer) {
+        switch (hand.type.cat) {
+            case Hand.COMBINATION.TRACTOR4:
+            case Hand.COMBINATION.TRACTOR3:
+            case Hand.COMBINATION.TRACTOR2:
+            case Hand.COMBINATION.QUADS:
+            case Hand.COMBINATION.TRIPS:
+                return false;
+            case Hand.COMBINATION.SINGLE:
+            case Hand.COMBINATION.PAIR:
+                break;
+            default:
+                return true;
+
+        }
+
+        var count = 0;
+        for (var x = 0, p; p = players[x]; x++) {
+            if (p === exPlayer) continue;
+            if (hand.isTrump) {
+                count += countHigherCards(p.trumps, hand.maxRank);
+            } else {
+                count += countHigherCards(p.getCardsBySuite(hand.suite), hand.maxRank);
+            }
+            if (count >= hand.type.len) return true;
+        }
+
+        return false;
+    }
+
+    this.isWinning = function (exPlayer) {
+        if (firstHand.isFlop) return true;
+        return !hasPossibleHighers(leadingHand, exPlayer);
+    };
+
+    this.getFirstHandTypes = function () {
+        var types = [];
+        if (firstHand.subHands == null) {
+            types.push(firstHand.type);
+        } else {
+            for (var x = 0, sHand; sHand = firstHand.subHands[x]; x++) {
+                types.push(sHand.type);
+            }
+        }
+
+        if (types.length > 1) {
+            types.sort(function (a, b) {
+                // decending
+                if (a.cat === b.cat) return b.len - a.len;
+                return b.cat - a.cat;
+            });
+        }
+        return types;
+    };
+
+    this.maxSubHandLength = function () {
+        if (firstHand.subHands == null) {
+            return firstHand.type.len;
+        }
+
+        var mLen = 1;
+        for (var x = 0, sHand; sHand = firstHand.subHands[x]; x++) {
+            if (sHand.type.len > mLen) {
+                mLen = sHand.type.len;
+            }
+        }
+        return mLen;
     };
 }
 
@@ -700,9 +809,11 @@ Game.prototype.isLeadingHandValid = function (hand) {
 };
 
 Game.prototype.promote = function () {
+    var summary = '定约分:' + this.contractPoint + "\n";
+    summary += '闲家得分:' + this.collectedPoint + "\n";
     var delta = 1;
-    if (this.collectePoint >= this.contractPoint) {
-        var extroPoint = this.collectePoint - this.contractPoint;
+    if (this.collectedPoint >= this.contractPoint) {
+        var extroPoint = this.collectedPoint - this.contractPoint;
         var p0 = this.deckNumber * 20;
         if (extroPoint > p0) {
             delta += Math.floor(extroPoint / p0);
@@ -712,14 +823,34 @@ Game.prototype.promote = function () {
             if (p === this.contractor || p === this.partner) continue;
             p.promote(delta);
         }
+
+        summary += '庄垮,闲家升' + delta + '级';
     } else {
-        if (this.collectePoint <= 0) {
+        if (this.collectedPoint <= 0) {
             delta = 3;
-        } else if (this.collectePoint < Math.floor(this.contractPoint / 2)) {
+        } else if (this.collectedPoint < Math.floor(this.contractPoint / 2)) {
             delta = 2;
         }
 
+        if (this.partnerDef.noPartner) {
+            delta *= 2;
+        }
+
         this.contractor.promote(delta);
-        if (this.partner) this.partner.promote(delta);
+        if (this.partner && this.contractor !== this.partner) this.partner.promote(delta);
+        summary += '庄成,';
+        if (delta === 2) {
+            summary += '小光,';
+        } else if (delta === 3) {
+            summary += '大光,';
+        }
+
+        if (this.partnerDef.noPartner) {
+            summary += '庄家一打五升' + delta + '级';
+        } else {
+            summary += '庄家及帮手升' + delta + '级';
+        }
     }
+
+    return summary;
 };

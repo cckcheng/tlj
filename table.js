@@ -6,6 +6,8 @@ const {Game, Hand} = require('./game');
 
 Table.Debugging = false;
 Table.FastMode = false;
+Table.HOLE_POINT_TIMES = 4;
+
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const ADD_SECONDS = 2;
@@ -349,9 +351,23 @@ function procPlayCards(t, cards) {
         if (game.partnerDef.partnerMatch(strCards)) {
             game.partner = player;
             json.isPartner = 'yes';
+            for (var x = 0, p; p = t.players[x]; x++) {
+                if (p === game.contractor) continue;
+                if (p === game.partner) {
+                    if (p.matchInfo.points < 0) game.collectedPoints -= p.matchInfo.points;
+                } else {
+                    game.collectedPoints += p.matchInfo.points;
+                }
+                p.matchInfo.points = 0;
+            }
         }
     }
 
+    if (player.matchInfo.alert != null) {
+        json.alert = player.matchInfo.alert;
+    }
+    json.pt1 = player.matchInfo.points;
+    json.pt0 = game.collectedPoints;
     if (status === 'gameover') {
         t.broadcastGameInfo(json);
         gameOver(t);
@@ -362,7 +378,7 @@ function procPlayCards(t, cards) {
         t.actionPlayerIdx = -1;
         t.broadcastGameInfo(json);
 
-        t.pause(PENDING_SECONDS);
+        t.goPause(PENDING_SECONDS);
     } else {
         t.rotatePlayer();
         json.next = t.actionPlayerIdx + 1
@@ -372,8 +388,26 @@ function procPlayCards(t, cards) {
 }
 
 function gameOver(t) {
+    var summary = '';
+    var holeCardsPoint = Card.getTotalPoints(t.game.holeCards);
+    if (holeCardsPoint > 0) {
+        var leadPlayer = t.game.currentRound.getNextLeadingPlayer();
+        if (leadPlayer !== t.game.contractor && leadPlayer != t.game.partner) {
+            var times = Table.HOLE_POINT_TIMES * t.game.currentRound.maxSubHandLength();
+            var holePoints = holeCardsPoint * times;
+            leadPlayer.addPoints(holePoints);
+            summary += '闲家抠底，底分翻' + times + '倍,共' + holePoints + '\n\n';
+        }
+    }
+
+    summary += t.game.promote();
+    t.broadcastGameInfo({
+        action: 'gameover',
+        hole: Card.cardsToString(t.game.holeCards),
+        summary: summary
+    });
     t.game = null;
-    t.pause(PAUSE_SECONDS_BETWEEN_GAME);
+    t.goPause(PAUSE_SECONDS_BETWEEN_GAME);
 }
 
 function procAfterPause(t) {
@@ -397,7 +431,7 @@ function procAfterPause(t) {
     }
 }
 
-Table.prototype.pause = function (seconds) {
+Table.prototype.goPause = function (seconds) {
     this.onPause = true;
     this.autoTimer = setTimeout(function (t) {
         t.autoTimer = null;

@@ -41,6 +41,21 @@ function Player(o) {
     this.isOut = function () {
         return this.timeoutTimes >= 2;
     };
+
+    this.getCardsBySuite = function (suite) {
+        switch (suite) {
+            case Card.SUITE.SPADE:
+                return this.spades;
+            case Card.SUITE.CLUB:
+                return this.clubs;
+            case Card.SUITE.HEART:
+                return this.hearts;
+            case Card.SUITE.DIAMOND:
+                return this.diamonds;
+        }
+
+        return this.trumps;
+    };
     
     this.autoPartner = function() {
         var arr = [];
@@ -321,8 +336,169 @@ Player.prototype.pushData = function () {
     this.pushJson(json);
 };
 
-Player.prototype.autoPlayCards = function (isLeading) {
+Player.prototype.duckCards = function (cards, pointFirst) {
+    return [];
+};
 
+Player.prototype.ruff = function (cards) {
+    return [];
+};
+
+Player.prototype.getStrongHands = function () {
+    return [];
+};
+
+// this is for the begining play of contractor
+Player.prototype.playPartnerCards = function (cards) {
+    var partnerDef = this.currentTable.game.partnerDef;
+    if (partnerDef.noPartner) return false;
+    var defCard = partnerDef.getDefCard();
+    var cardList = this.getCardsBySuite(defCard.suite);
+    if (cardList.length < 1) return false;
+    for (var x = 0, c; c = cardList[x]; x++) {
+        if (c.equals(defCard)) cards.push(c);
+    }
+
+    if (cards.length < 1) {
+        var viceCard = partnerDef.getViceCard(this.currentTable.game.rank);
+        for (var x = 0, c; c = cardList[x]; x++) {
+            if (c.equals(viceCard)) {
+                cards.push(c);
+                break;
+            }
+        }
+    }
+    return cards.length > 0;
+};
+
+Player.prototype.hasPartnerCard = function () {
+    var partnerDef = this.currentTable.game.partnerDef;
+    if (partnerDef.noPartner) return false;
+    var defCard = partnerDef.getDefCard();
+    var cardList = this.getCardsBySuite(defCard.suite);
+    if (cardList.length < 1) return false;
+    for (var x = 0, c; c = cardList[x]; x++) {
+        if (c.equals(defCard)) return true;
+    }
+
+    return false;
+};
+
+Player.prototype.passToPartner = function (cards) {
+
+};
+
+Player.prototype.getAllSuites = function () {
+    var arr = [];
+    if (this.spades.length > 0) arr.push(this.spades);
+    if (this.diamonds.length > 0) arr.push(this.diamonds);
+    if (this.clubs.length > 0) arr.push(this.clubs);
+    if (this.hearts.length > 0) arr.push(this.hearts);
+    if (this.trumps.length > 0) arr.push(this.trumps);
+};
+
+Player.prototype.randomPlay = function (cards) {
+    var arr = this.getAllSuites();
+    var x = Math.floor(Math.random() * (arr.length));
+    var y = Math.floor(Math.random() * (arr[x].length));
+    cards.push(arr[x][y]);
+};
+
+Player.prototype.tryBeatLeading = function (cards, leadingHand) {
+
+};
+
+Player.prototype.autoPlayCards = function (isLeading) {
+    var cards = [];
+    var game = this.currentTable.game;
+    var round = game.currentRound;
+    if (isLeading) {
+        if (this === game.contractor && game.partner == null) {
+            if (this.playPartnerCards(cards)) {
+                return cards;
+            }
+        }
+
+        var strongHands = this.getStrongHands();
+        if (strongHands.length > 0) {
+            cards = strongHands[0];
+        } else {
+            if (game.partner == null) {
+                if (this === game.contractor) {
+                    this.passToPartner(cards);
+                } else if (this.hasPartnerCard()) {
+                    if (game.sumPoints(this) < game.contractPoint / 2) {
+                        this.playPartnerCards(cards);
+                    } else {
+                        this.randomPlay(cards);
+                    }
+                } else {
+                    this.randomPlay(cards);
+                }
+            } else {
+                if (this === game.contractor || this === game.partner) {
+                    this.passToPartner(cards);
+                } else {
+                    this.randomPlay(cards);
+                }
+            }
+        }
+    } else {
+        var firstHand = round.getFirstHand();
+        var leadingHand = round.getLeadingHand();
+        var leadingPlayer = round.getNextLeadingPlayer();
+        var cardList;
+        if (firstHand.isTrump) {
+            cardList = this.trumps;
+        } else {
+            var suite = firstHand.suite;
+            cardList = this.getCardsBySuite(suite);
+        }
+
+        if (cardList.length > firstHand.cardNumber) {
+            if (game.isSameSide(this, leadingPlayer)) {
+                if (round.isWinning(this)) {
+                    this.duckCards(cards, true);
+                } else {
+                    this.tryBeatLeading(cards, leadingHand);
+                }
+            } else {
+                this.tryBeatLeading(cards, leadingHand);
+            }
+        } else if (cardList.length === 0) {
+            if (firstHand.isTrump) {
+                if (game.isSameSide(this, leadingPlayer)) {
+                    this.duckCards(cards, round.isWinning(this));
+                } else {
+                    this.duckCards(cards, false);
+                }
+            } else {
+                if (game.isSameSide(this, leadingPlayer)) {
+                    if (round.isWinning(this)) {
+                        this.duckCards(cards, true);
+                    } else {
+                        this.ruff(cards);
+                    }
+                } else {
+                    this.ruff(cards);
+                }
+            }
+        } else {
+            cardList.forEach(function (c) {
+                cards.push(c);
+            });
+
+            if (cards.length < firstHand.cardNumber) {
+                if (game.isSameSide(this, leadingPlayer)) {
+                    this.duckCards(cards, true);
+                } else {
+                    this.duckCards(cards, false);
+                }
+            }
+        }
+    }
+
+    return cards;
 };
 
 Player.prototype.allValid = function (cards) {
@@ -386,6 +562,7 @@ Player.prototype.playCards = function (strCards) {
                     var orgLen = cards.length;
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
+                    this.matchInfo.alert = '甩牌失败' + strCards + ',罚' + (-this.matchInfo.penalty);
                     this.addPoints(this.matchInfo.penalty);
                 }
             }
@@ -400,13 +577,16 @@ Player.prototype.playCards = function (strCards) {
     }
 
     this.matchInfo.playedCards = Card.cardsToString(cards);
+    for (var x = 0, c; c = cards[x]; x++) {
+        this.removeCard(c);
+    }
 
     if (game.currentRound.addHand(this, cards, hand)) {
         if(!this.isHandEmpty()){
             game.startNewRound();
             return 'newround';
         }
-        
+
         return 'gameover';
     }
     return '';
