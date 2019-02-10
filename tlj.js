@@ -2,8 +2,17 @@ var Deck = require('./deck.js');
 var Card = require('./card');
 var Player = require('./player');
 var Table = require('./table');
-const {Game, Hand} = require('./game');
+const {Game, Hand, SimpleHand} = require('./game');
 
+var a = [];
+a.push(new Card('S', 2));
+var b = [];
+b.push(new Card('H', 5));
+
+a.concat(b);
+console.log(a.concat(b).length);
+
+if (true) return ;
 var table = new Table({
 //    matchType: Table.MATCH_TYPE.HALF
 //    matchType: Table.MATCH_TYPE.POINTS

@@ -1,9 +1,9 @@
+module.exports = Player;
+
 var Card = require('./card');
 var HandStat = require('./stat');
 var Table = require('./table');
-const {Game, Hand} = require('./game');
-
-module.exports = Player;
+const {Game, Hand, SimpleHand} = require('./game');
 
 function Player(o) {
     if (o) {
@@ -29,7 +29,7 @@ function Player(o) {
     this.toRobot = function () {
         this.sock = null;
     };
-    
+
     this.isHandEmpty = function() {
         return this.trumps.length === 0 &&
                 this.spades.length === 0 &&
@@ -56,7 +56,7 @@ function Player(o) {
 
         return this.trumps;
     };
-    
+
     this.autoPartner = function() {
         var arr = [];
         var gameRank = this.matchInfo.currentRank;
@@ -336,8 +336,34 @@ Player.prototype.pushData = function () {
     this.pushJson(json);
 };
 
-Player.prototype.duckCards = function (cards, pointFirst) {
-    return [];
+Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
+    var allCards = [];
+    if (exSuite !== Card.SUITE.SPADE) {
+        allCards = allCards.concat(this.spades);
+    }
+    if (exSuite !== Card.SUITE.HEART) {
+        allCards = allCards.concat(this.hearts);
+    }
+    if (exSuite !== Card.SUITE.DIAMOND) {
+        allCards = allCards.concat(this.diamonds);
+    }
+    if (exSuite !== Card.SUITE.CLUB) {
+        allCards = allCards.concat(this.clubs);
+    }
+
+    if (allCards.length < num) {
+        allCards = allCards.concat(this.trumps);
+    }
+    allCards.sort(function (a, b) {
+        var aPoint = a.getPoint();
+        var bPoint = b.getPoint();
+        return aPoint === bPoint ? a.rank - b.rank :
+                (pointFirst ? bPoint - aPoint : aPoint - bPoint);
+    });
+
+    for (var x = 0, c; x < num; x++) {
+        cards.push(c);
+    }
 };
 
 Player.prototype.ruff = function (cards) {
@@ -345,11 +371,14 @@ Player.prototype.ruff = function (cards) {
 };
 
 Player.prototype.getStrongHands = function () {
+    var arr = this.getAllSuites( );
+
     return [];
 };
 
 // this is for the begining play of contractor
 Player.prototype.playPartnerCards = function (cards) {
+    if (this.noPartnerCards) return false;
     var partnerDef = this.currentTable.game.partnerDef;
     if (partnerDef.noPartner) return false;
     var defCard = partnerDef.getDefCard();
@@ -368,7 +397,9 @@ Player.prototype.playPartnerCards = function (cards) {
             }
         }
     }
-    return cards.length > 0;
+
+    this.noPartnerCards = cards.length < 1;
+    return !this.noPartnerCards;
 };
 
 Player.prototype.hasPartnerCard = function () {
@@ -395,17 +426,45 @@ Player.prototype.getAllSuites = function () {
     if (this.clubs.length > 0) arr.push(this.clubs);
     if (this.hearts.length > 0) arr.push(this.hearts);
     if (this.trumps.length > 0) arr.push(this.trumps);
+    return arr;
 };
 
 Player.prototype.randomPlay = function (cards) {
     var arr = this.getAllSuites();
     var x = Math.floor(Math.random() * (arr.length));
     var y = Math.floor(Math.random() * (arr[x].length));
-    cards.push(arr[x][y]);
+
+    var card = arr[x][y];
+    for(var i=0,c;c=arr[x][i];i++){
+        if(card.equals(c)) cards.push(c);
+    }
 };
 
-Player.prototype.tryBeatLeading = function (cards, leadingHand) {
+Player.prototype.followPlay = function (cards, cardList, round, pointFirst) {
+    var game = this.currentTable.game;
+    var firstHand = round.getFirstHand();
+    switch(firstHand.type.cat) {
+        case Hand.COMBINATION.SINGLE:
+            Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, 1);
+            break;
+        case Hand.COMBINATION.PAIR:
+        case Hand.COMBINATION.TRIPS:
+        case Hand.COMBINATION.QUADS:
+            Card.selectSimpleHandByPoint(firstHand.type, cards, cardList, pointFirst, game.trump, game.rank);
+            break;
+        case Hand.COMBINATION.TRACTOR2:
+        case Hand.COMBINATION.TRACTOR3:
+        case Hand.COMBINATION.TRACTOR4:
+            Card.selectSimpleHand(firstHand.type, cards, cardList, game.trump, game.rank);
+            break;
+        default:
 
+    }
+};
+
+Player.prototype.tryBeatLeading = function (cards, cardList, round) {
+    var leadingHand = round.getLeadingHand();
+    this.followPlay(cards, cardList, round, false);
 };
 
 Player.prototype.autoPlayCards = function (isLeading) {
@@ -445,40 +504,34 @@ Player.prototype.autoPlayCards = function (isLeading) {
         }
     } else {
         var firstHand = round.getFirstHand();
-        var leadingHand = round.getLeadingHand();
         var leadingPlayer = round.getNextLeadingPlayer();
         var cardList;
+        var suite = firstHand.suite;
         if (firstHand.isTrump) {
             cardList = this.trumps;
+            suite = Card.SUITE.JOKER;
         } else {
-            var suite = firstHand.suite;
             cardList = this.getCardsBySuite(suite);
         }
 
         if (cardList.length > firstHand.cardNumber) {
             if (game.isSameSide(this, leadingPlayer)) {
                 if (round.isWinning(this)) {
-                    this.duckCards(cards, true);
+                    this.followPlay(cards, cardList, round, true);
                 } else {
-                    this.tryBeatLeading(cards, leadingHand);
+                    this.tryBeatLeading(cards, cardList, round);
                 }
             } else {
-                this.tryBeatLeading(cards, leadingHand);
+                this.tryBeatLeading(cards, cardList, round);
             }
         } else if (cardList.length === 0) {
             if (firstHand.isTrump) {
-                if (game.isSameSide(this, leadingPlayer)) {
-                    this.duckCards(cards, round.isWinning(this));
-                } else {
-                    this.duckCards(cards, false);
-                }
+                this.duckCards(cards, suite,
+                        game.isSameSide(this, leadingPlayer) && round.isWinning(this),
+                        firstHand.cardNumber);
             } else {
-                if (game.isSameSide(this, leadingPlayer)) {
-                    if (round.isWinning(this)) {
-                        this.duckCards(cards, true);
-                    } else {
-                        this.ruff(cards);
-                    }
+                if (game.isSameSide(this, leadingPlayer) && round.isWinning(this)) {
+                    this.duckCards(cards, suite, true, firstHand.cardNumber);
                 } else {
                     this.ruff(cards);
                 }
@@ -489,11 +542,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
             });
 
             if (cards.length < firstHand.cardNumber) {
-                if (game.isSameSide(this, leadingPlayer)) {
-                    this.duckCards(cards, true);
-                } else {
-                    this.duckCards(cards, false);
-                }
+                this.duckCards(cards, suite,
+                        game.isSameSide(this, leadingPlayer) && round.isWinning(this),
+                        firstHand.cardNumber - cards.length);
             }
         }
     }
@@ -560,9 +611,10 @@ Player.prototype.playCards = function (strCards) {
                 if (!game.isLeadingHandValid(hand)) {
                     console.log('invalid leading: ' + strCards);
                     var orgLen = cards.length;
+                    var orgCards = Card.showCards(cards);
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
-                    this.matchInfo.alert = '甩牌失败' + strCards + ',罚' + (-this.matchInfo.penalty);
+                    this.matchInfo.alert = '甩牌失败' + orgCards + ',罚' + (-this.matchInfo.penalty);
                     this.addPoints(this.matchInfo.penalty);
                 }
             }
@@ -575,6 +627,8 @@ Player.prototype.playCards = function (strCards) {
             cards = this.autoPlayCards(isLeading);
         }
     }
+
+    if (cards.length < 1) this.randomPlay(cards);
 
     this.matchInfo.playedCards = Card.cardsToString(cards);
     for (var x = 0, c; c = cards[x]; x++) {
@@ -613,7 +667,7 @@ function SuiteCount(suite, gameRank) {
     if(gameRank === 14) honorRank = 13;
     var viceRank = 13;
     if(gameRank >= 13) viceRank = 12;
-    
+
     this.lenPoint = 0;    // total point catds except K
     this.lenBury = 0;   // total cards can be buried
     this.lenHonor = 0;   // total cards of Aces and Kings
@@ -727,7 +781,7 @@ Player.prototype.buryCards = function (strCards) {
             if (a.lenPoint < b.lenPoint) return -1;
             return a.lenHonor - b.lenHonor;
         });
-        
+
         var i = 0;
         do{
             sCount = arr[i];
@@ -776,7 +830,7 @@ Player.prototype.buryCards = function (strCards) {
         this.removeCard(c);
     }
     game.holeCards = cards;
-    
+
     strCards = Card.cardsToString(cards);
     if (Table.Debugging)
         console.log("hole cards: " + strCards);

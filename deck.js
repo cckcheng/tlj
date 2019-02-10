@@ -1,7 +1,6 @@
 module.exports = Deck;
 
 var Card = require('./card');
-var Player = require('./player');
 
 function Deck(decks) {
 	this.deckNumber = decks;

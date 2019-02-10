@@ -1,4 +1,4 @@
-module.exports = {Game, Hand};
+module.exports = {Game, Hand, SimpleHand};
 
 var Card = require('./card');
 var Deck = require('./deck');
@@ -28,7 +28,7 @@ function Game(players, deckNumber) {
     this.rounds = [];
     this.currentRound = null;
     this.partnerDef = null;
-    
+
     this.setPartnerDef = function(def) {
         if(def == null) {
             def = this.contractor.autoPartner();
@@ -82,7 +82,7 @@ function PartnerDef(def) {
         }
         return false;
     };
-    
+
     this.getDef = function() {
         return def;
     };

@@ -2,7 +2,7 @@ module.exports = Table;
 
 var Player = require('./player');
 var Card = require('./card');
-const {Game, Hand} = require('./game');
+const {Game, Hand, SimpleHand} = require('./game');
 
 Table.Debugging = false;
 Table.FastMode = false;
@@ -89,7 +89,7 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
                 continue;
             p.currentTable = null;
         }
-    
+
         console.log('table dismissed');
         t.dismissed = true;
         delete activePlayers[playerId];
@@ -316,7 +316,7 @@ function procSetTrump(t, trump) {
 
 function procBuryCards(t, cards) {
     t.game.contractor.buryCards(cards);
-    
+
     t.broadcastGameInfo({
         action: 'play',
         next: t.actionPlayerIdx + 1
@@ -367,13 +367,13 @@ function procPlayCards(t, cards) {
         json.alert = player.matchInfo.alert;
     }
     json.pt1 = player.matchInfo.points;
-    json.pt0 = game.collectedPoints;
+    json.pt0 = game.collectedPoint;
     if (status === 'gameover') {
         t.broadcastGameInfo(json);
         gameOver(t);
         return;
     }
-    
+
     if(status === 'newround') {
         t.actionPlayerIdx = -1;
         t.broadcastGameInfo(json);
@@ -500,7 +500,7 @@ Table.prototype.definePartner = function () {
 
 Table.prototype.broadcastGameInfo = function (json, exceptPlayer) {
     this.players.forEach(function (p) {
-        if(p === exceptPlayer) return; 
+        if(p === exceptPlayer) return;
         p.pushJson(json);
     });
 };

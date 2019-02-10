@@ -1,5 +1,8 @@
 module.exports = Card;
 
+var HandStat = require('./stat');
+const {Game, Hand, SimpleHand} = require('./game');
+
 function Card(suite, rank) {
 	this.suite = suite;
     this.rank = rank;
@@ -78,7 +81,7 @@ Card.StringToRank = function (s) {
         case 'J':
             return 11;
     }
-    
+
     return parseInt(s);
 };
 
@@ -214,7 +217,7 @@ Card.cardsToJson = function (cards) {
     var D = [];
     var C = [];
     var T = [];
-    
+
     cards.forEach(function(c){
         switch (c.suite) {
             case Card.SUITE.SPADE:
@@ -234,13 +237,13 @@ Card.cardsToJson = function (cards) {
                 break;
         }
     });
-    
+
     return {
         S: S,
         H: H,
         D: D,
         C: C,
-        T: T        
+        T: T
     };
 };
 
@@ -251,6 +254,11 @@ Card.showCards = function (cards) {
         s += c.display();
     }
     return s;
+};
+
+Card.getPointCards = function(cards) {
+    var pCards = [];
+
 };
 
 Card.sortCards = function (cards, trump_suite, game_rank) {
@@ -325,4 +333,102 @@ Card.getTotalCardNumber = function (cards, k) {
     }
 
     return num;
+};
+
+Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank, num) {
+    var lst = cardList.slice();
+    lst.sort(function (a, b) {
+        var aPoint = a.getPoint();
+        var bPoint = b.getPoint();
+        if (aPoint === bPoint) return a.trumpRank(trump, gameRank) - b.trumpRank(trump, gameRank);
+        return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+    });
+    for (var x = 0; x < num; x++) {
+        cards.push(lst[x]);
+    }
+};
+
+// select pair, trips, quads
+Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, trump, gameRank) {
+    var stat = new HandStat(cardList, trump, gameRank);
+    if (stat.totalPairs < 1) {
+        Card.selectCardsByPoint(cards, cardList, pointFirst, trump, gameRank, handType.len);
+        return;
+    }
+
+    function sortByPoint(a, b) {
+        var aPoint = Card.getPointByTrumpRank(a, trump, gameRank);
+        var bPoint = Card.getPointByTrumpRank(b, trump, gameRank);
+        if (aPoint === bPoint) return a - b;
+        return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+    }
+
+    var isTrump = cardList[0].isTrump(trump, gameRank);
+    var rnks = stat.sortedRanks(handType.len);
+    if (rnks.length > 0) {
+        rnks.sort(sortByPoint);
+        var sHand = new SimpleHand(handType, rnks[0], isTrump);
+        var cc = Hand.makeCards(sHand, cardList, trump, gameRank);
+        cc.forEach(function (c) {
+            cards.push(c);
+        });
+    } else {
+        var tmpCards = cardList.slice();
+        if (handType.cat === Hand.COMBINATION.TRIPS) {
+            rnks = stat.sortedRanks(2);
+            rnks.sort(sortByPoint);
+            var sHand = new SimpleHand({cat: Hand.COMBINATION.PAIR, len: 2}, rnks[0], isTrump);
+            var cc = Hand.makeCards(sHand, cardList, trump, gameRank);
+            cc.forEach(function (c) {
+                cards.push(c);
+                tmpCards.splice(c.indexOf(tmpCards), 1);
+            });
+            Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 1);
+        } else if (handType.cat === Hand.COMBINATION.QUADS) {
+            rnks = stat.sortedRanks(3);
+            if (rnks.length > 0) {
+                rnks.sort(sortByPoint);
+                var sHand = new SimpleHand({cat: Hand.COMBINATION.TRIPS, len: 3}, rnks[0], isTrump);
+                var cc = Hand.makeCards(sHand, cardList, trump, gameRank);
+                cc.forEach(function (c) {
+                    cards.push(c);
+                    tmpCards.splice(c.indexOf(tmpCards), 1);
+                });
+                Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 1);
+            } else {
+                rnks = stat.sortedRanks(2);
+                rnks.sort(sortByPoint);
+                for (var x = 0, count = 0; x < rnks.length && count < 2; x++, count++) {
+                    var sHand = new SimpleHand({cat: Hand.COMBINATION.PAIR, len: 2}, rnks[x], isTrump);
+                    var cc = Hand.makeCards(sHand, tmpCards, trump, gameRank);
+                    cc.forEach(function (c) {
+                        cards.push(c);
+                        tmpCards.splice(c.indexOf(tmpCards), 1);
+                    });
+                }
+                if (cards.length < 4) {
+                    Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 4 - cards.length);
+                }
+            }
+        }
+    }
+};
+
+Card.getPointByTrumpRank = function (trumpRank, trump, gameRank) {
+    var orgRank = trumpRank < gameRank ? trumpRank : trumpRank + 1;
+    if (gameRank === 5 || gameRank === 10 || gameRank === 13) {
+        if (trump === Card.SUITE.JOKER) {
+            if (trumpRank === 14) return Card.rankToPoint(gameRank);
+        } else {
+            if (trumpRank === 14 || trumpRank === 15) return Card.rankToPoint(gameRank);
+        }
+    }
+
+    return Card.rankToPoint(orgRank);
+};
+
+Card.rankToPoint = function (rank) {
+    if (rank === 5 || rank === 10) return rank;
+    if (rank === 13) return 10;
+    return 0;
 };
