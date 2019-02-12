@@ -376,6 +376,10 @@ function procPlayCards(t, cards) {
 
     if(status === 'newround') {
         t.actionPlayerIdx = -1;
+        if (t.game.partner == null && t.game.leadingPlayer !== t.game.contractor) {
+            json.pseat = t.getSeat(t.game.leadingPlayer);
+            json.pt = t.game.leadingPlayer.matchInfo.points;
+        }
         t.broadcastGameInfo(json);
 
         t.goPause(PENDING_SECONDS);
