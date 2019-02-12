@@ -367,7 +367,19 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
 };
 
 Player.prototype.ruff = function (cards) {
-    return [];
+    var game = this.currentTable.game;
+    var firstHand = game.currentRound.getFirstHand();
+    if (this.trump.length < firstHand.cardNumber) {
+        this.duckCards(cards, firstHand.suite, false, firstHand.cardNumber);
+        return;
+    }
+
+    if (firstHand.cardNumber < 2) {
+        Card.selectCardsByPoint(cards, this.trumps, true, game.trump, game.rank, firstHand.cardNumber);
+        return;
+    }
+
+    this.followPlay(cards, this.trumps, true);
 };
 
 Player.prototype.getStrongHands = function () {
@@ -416,7 +428,21 @@ Player.prototype.hasPartnerCard = function () {
 };
 
 Player.prototype.passToPartner = function (cards) {
+    var game = this.currentTable.game;
+    var partnerDef = game.partnerDef;
+    if (partnerDef.noPartner) {
+        this.randomPlay(cards);
+        return false;
+    }
+    var defCard = partnerDef.getDefCard();
+    var cardList = this.getCardsBySuite(defCard.suite);
+    if (cardList.length < 1) {
+        this.randomPlay(cards);
+        return false;
+    }
 
+    Card.selectCardsByPoint(cards, cardList, true, game.trump, game.rank, 1);
+    return true;
 };
 
 Player.prototype.getAllSuites = function () {
@@ -440,9 +466,9 @@ Player.prototype.randomPlay = function (cards) {
     }
 };
 
-Player.prototype.followPlay = function (cards, cardList, round, pointFirst) {
+Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     var game = this.currentTable.game;
-    var firstHand = round.getFirstHand();
+    var firstHand = game.currentRound.getFirstHand();
     switch(firstHand.type.cat) {
         case Hand.COMBINATION.SINGLE:
             Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, 1);
@@ -453,18 +479,23 @@ Player.prototype.followPlay = function (cards, cardList, round, pointFirst) {
             Card.selectSimpleHandByPoint(firstHand.type, cards, cardList, pointFirst, game.trump, game.rank);
             break;
         case Hand.COMBINATION.TRACTOR2:
+            Card.selectTractor2(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank);
+            break;
         case Hand.COMBINATION.TRACTOR3:
+            Card.selectTractor3(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank);
+            break;
         case Hand.COMBINATION.TRACTOR4:
-            Card.selectSimpleHand(firstHand.type, cards, cardList, game.trump, game.rank);
+            Card.selectTractor4(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank);
             break;
         default:
 
     }
 };
 
-Player.prototype.tryBeatLeading = function (cards, cardList, round) {
-    var leadingHand = round.getLeadingHand();
-    this.followPlay(cards, cardList, round, false);
+Player.prototype.tryBeatLeading = function (cards, cardList) {
+    var game = this.currentTable.game;
+    var leadingHand = game.currentRound.getLeadingHand();
+    this.followPlay(cards, cardList, false);
 };
 
 Player.prototype.autoPlayCards = function (isLeading) {
@@ -517,12 +548,12 @@ Player.prototype.autoPlayCards = function (isLeading) {
         if (cardList.length > firstHand.cardNumber) {
             if (game.isSameSide(this, leadingPlayer)) {
                 if (round.isWinning(this)) {
-                    this.followPlay(cards, cardList, round, true);
+                    this.followPlay(cards, cardList, true);
                 } else {
-                    this.tryBeatLeading(cards, cardList, round);
+                    this.tryBeatLeading(cards, cardList);
                 }
             } else {
-                this.tryBeatLeading(cards, cardList, round);
+                this.tryBeatLeading(cards, cardList);
             }
         } else if (cardList.length === 0) {
             if (firstHand.isTrump) {
@@ -623,12 +654,17 @@ Player.prototype.playCards = function (strCards) {
         }
     } else {
         if (cards.length > 0) {
+            // TO DO: validate cards played to prevent illegal play
         } else {
             cards = this.autoPlayCards(isLeading);
         }
     }
 
-    if (cards.length < 1) this.randomPlay(cards);
+    if (cards.length < 1) {
+        // temp: to avoid exception, should not run to here if normal
+        console.log('Exception:  player.playCards(), isLeading: ' + isLeading);
+        this.randomPlay(cards);
+    }
 
     this.matchInfo.playedCards = Card.cardsToString(cards);
     for (var x = 0, c; c = cards[x]; x++) {

@@ -44,3 +44,8 @@ HandStat.prototype.sortedRanks = function (num) {
     });
     return arr;
 };
+
+// return all possible tractors, sLen: 2,3,4
+HandStat.prototype.getTractors = function (sLen) {
+    var arr = this.sortedRanks(sLen);
+};
