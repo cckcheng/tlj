@@ -361,8 +361,8 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
                 (pointFirst ? bPoint - aPoint : aPoint - bPoint);
     });
 
-    for (var x = 0, c; x < num; x++) {
-        cards.push(c);
+    for (var x = 0; x < num; x++) {
+        cards.push(allCards[x]);
     }
 };
 
