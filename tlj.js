@@ -7,8 +7,8 @@ const {Game, Hand, SimpleHand} = require('./game');
 
 var table = new Table({
 //    matchType: Table.MATCH_TYPE.HALF
-//    matchType: Table.MATCH_TYPE.POINTS
-    matchType: Table.MATCH_TYPE.FREE
+    matchType: Table.MATCH_TYPE.POINTS
+//    matchType: Table.MATCH_TYPE.FREE
 //    matchType: Table.MATCH_TYPE.EXPRESS
 });
 
@@ -24,10 +24,10 @@ while (players.length < 6) {
 table.startGame(true);
 
 //var game = new Game(players, 4);
-table.players.forEach(function (p) {
-    console.log(p.showHand());
-    console.log('minBid: ' + p.minBid);
-});
+//table.players.forEach(function (p) {
+//    console.log(p.showHand());
+//    console.log('minBid: ' + p.minBid);
+//});
 
 var n = 1;
 //var trump_suite = Card.SUITE.HEART;
@@ -47,11 +47,26 @@ n = 1;
 var cards = [];
 
 //cards.push(new Card(Card.SUITE.HEART, 2));
-//cards.push(new Card(Card.SUITE.HEART, 9));
-//cards.push(new Card(Card.SUITE.HEART, 9));
-//cards.push(new Card(Card.SUITE.HEART, 11));
-//cards.push(new Card(Card.SUITE.HEART, 13));
-//cards.push(new Card(Card.SUITE.HEART, 12));
+cards.push(new Card(Card.SUITE.HEART, 9));
+cards.push(new Card(Card.SUITE.HEART, 9));
+cards.push(new Card(Card.SUITE.HEART, 9));
+cards.push(new Card(Card.SUITE.HEART, 9));
+cards.push(new Card(Card.SUITE.HEART, 10));
+cards.push(new Card(Card.SUITE.HEART, 10));
+cards.push(new Card(Card.SUITE.HEART, 10));
+cards.push(new Card(Card.SUITE.HEART, 10));
+cards.push(new Card(Card.SUITE.SPADE, 10));
+cards.push(new Card(Card.SUITE.SPADE, 10));
+cards.push(new Card(Card.SUITE.SPADE, 10));
+cards.push(new Card(Card.SUITE.CLUB, 10));
+cards.push(new Card(Card.SUITE.CLUB, 10));
+cards.push(new Card(Card.SUITE.HEART, 11));
+cards.push(new Card(Card.SUITE.HEART, 11));
+cards.push(new Card(Card.SUITE.HEART, 13));
+cards.push(new Card(Card.SUITE.HEART, 12));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
@@ -60,22 +75,40 @@ cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 //cards.push(new Card(Card.SUITE.CLUB, 7));
 
 //debugger;
-
+trump_suite = 'H';
+game_rank = 10;
 Card.sortCards(cards, trump_suite, game_rank);
 
 console.log("\n----------------");
 console.log(p.showHand());
 
+console.log("\n----------------");
+console.log(Card.showCards(cards));
+
 //var stat = new HandStat(p.spades, game.trump, game.rank);
 //console.log('tractors: ' + stat.getTractors(2, false));
-var stat = new HandStat(p.trumps, game.trump, game.rank);
-var tractors = stat.getTractors(2, true);
+//var stat = new HandStat(p.trumps, game.trump, game.rank);
+var stat = new HandStat(cards, trump_suite, game_rank);
+var tractors = stat.getTractors(4, true);
 console.log('tractors: ' + tractors.length);
 tractors.forEach(function (sHand) {
     console.log(sHand.minRank + "," + sHand.type.len);
 });
 
-if (true) return;
+stat = new HandStat(p.spades, game.trump, game.rank);
+tractors = stat.getTractors(2, true);
+console.log('tractors: ' + tractors.length);
+tractors.forEach(function (sHand) {
+    console.log(sHand.minRank + "," + sHand.type.len);
+});
+
+stat = new HandStat(p.hearts, game.trump, game.rank);
+tractors = stat.getTractors(2, true);
+console.log('tractors: ' + tractors.length);
+tractors.forEach(function (sHand) {
+    console.log(sHand.minRank + "," + sHand.type.len);
+});
+if (true) return ;
 //console.log('valid cards: ' + p.allValid(cards));
 
 var pcards = p.trumps.slice(p.trumps.length - 2, p.trumps.length);
