@@ -258,7 +258,11 @@ Card.showCards = function (cards) {
 
 Card.getPointCards = function(cards) {
     var pCards = [];
+    cards.forEach(function (c) {
+        if (c.getPoint() > 0) pCards.push(c);
+    });
 
+    return pCards;
 };
 
 Card.sortCards = function (cards, trump_suite, game_rank) {
@@ -530,4 +534,19 @@ Card.rankToPoint = function (rank) {
     if (rank === 5 || rank === 10) return rank;
     if (rank === 13) return 10;
     return 0;
+};
+
+// check if all subCards exists in srcCards
+Card.containsAll = function (srcCards, subCards) {
+    if (subCards.length < 1) return true;
+    if (srcCards.length < 1) return false;
+    var tmpCards = srcCards.slice();
+    var idx = -1;
+    for (var x = 0, c; c = subCards[x]; x++) {
+        idx = c.indexOf(tmpCards);
+        if (idx < 0) return false;
+        tmpCards.splice(idx, 1);
+    }
+
+    return true;
 };

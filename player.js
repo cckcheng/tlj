@@ -622,6 +622,7 @@ Player.prototype.allValid = function (cards) {
 Player.prototype.isValidPlay = function (hand) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
+    if (firstHand.cardNumber !== hand.cardNumber) return false;
     var cardList;
     var suite = firstHand.suite;
     if (firstHand.isTrump) {
@@ -632,14 +633,9 @@ Player.prototype.isValidPlay = function (hand) {
     }
 
     if (cardList.length >= firstHand.cardNumber) {
-        if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) return false;
-        if (firstHand.isTrump) {
-            if (!hand.isTrump) return false;
-        } else {
-            if (hand.isTrump || hand.suite !== firstHand.suite) return false;
-        }
+        if (!Card.containsAll(cardList, hand.cards)) return false;
     } else if (cardList.length > 0) {
-        if (hand.type.cat !== Hand.COMBINATION.MIX_SUITE) return false;
+        if (!Card.containsAll(hand.cards, cardList)) return false;
     }
 
     return true;

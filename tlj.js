@@ -57,14 +57,12 @@ cards.push(new Card(Card.SUITE.HEART, 10));
 cards.push(new Card(Card.SUITE.HEART, 10));
 cards.push(new Card(Card.SUITE.SPADE, 10));
 cards.push(new Card(Card.SUITE.SPADE, 10));
-cards.push(new Card(Card.SUITE.SPADE, 10));
 cards.push(new Card(Card.SUITE.CLUB, 10));
 cards.push(new Card(Card.SUITE.CLUB, 10));
 cards.push(new Card(Card.SUITE.HEART, 11));
 cards.push(new Card(Card.SUITE.HEART, 11));
 cards.push(new Card(Card.SUITE.HEART, 13));
 cards.push(new Card(Card.SUITE.HEART, 12));
-cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
@@ -89,8 +87,20 @@ console.log(Card.showCards(cards));
 //console.log('tractors: ' + stat.getTractors(2, false));
 //var stat = new HandStat(p.trumps, game.trump, game.rank);
 var stat = new HandStat(cards, trump_suite, game_rank);
+var tractors = stat.getTractors(2, true);
+console.log('tractors 2: ' + tractors.length);
+tractors.forEach(function (sHand) {
+    console.log(sHand.minRank + "," + sHand.type.len);
+});
+
+var tractors = stat.getTractors(3, true);
+console.log('tractors 3: ' + tractors.length);
+tractors.forEach(function (sHand) {
+    console.log(sHand.minRank + "," + sHand.type.len);
+});
+
 var tractors = stat.getTractors(4, true);
-console.log('tractors: ' + tractors.length);
+console.log('tractors 4: ' + tractors.length);
 tractors.forEach(function (sHand) {
     console.log(sHand.minRank + "," + sHand.type.len);
 });

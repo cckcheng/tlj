@@ -34,6 +34,24 @@ function HandStat(cards, trump_suite, game_rank) {
             this.totalPairs++;
         }
     }
+
+    // find card by the number of same card, tRank - trump rank
+    this.findCardByDupNum = function (tRank, num) {
+        for (var ck in this.stat) {
+            var rnk = Number.parseInt(ck.substr(1));
+            if (rnk !== tRank) continue;
+            if (this.stat[ck] >= num) {
+                for (var x = 0, c; c = this.cards[x]; x++) {
+                    if (ck === c.suite + c.trumpRank(trump_suite, game_rank)) {
+                        return c;
+                    }
+                }
+            }
+        }
+
+        console.log('Exception: findCardByDupNum, tRank=' + tRank + ", num=" + num + ";cards:" + Card.showCards(this.cards));
+        return null;    // should never happen
+    };
 }
 
 // return sorted ranks for pair/trips/quads, where num = 2,3,4

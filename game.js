@@ -424,11 +424,7 @@ Hand.COMBINATION = {
 };
 
 Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {
-    function findCard(cc, rnk) {
-        for (var x = 0, c; c = cc[x]; x++) {
-            if (rnk === c.trumpRank(trump_suite, game_rank)) return c;
-        }
-    }
+    var stat = new HandStat(orgCards, trump_suite, game_rank);
     var cards = [];
     var card;
     var sRank = simHand.minRank;
@@ -437,14 +433,14 @@ Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {
         case Hand.COMBINATION.TRIPS:
         case Hand.COMBINATION.PAIR:
         case Hand.COMBINATION.SINGLE:
-            card = findCard(orgCards, sRank);
+            card = stat.findCardByDupNum(sRank, simHand.type.len);
             for (var x = 0; x < simHand.type.len; x++) {
                 cards.push(card);
             }
             break;
         case Hand.COMBINATION.TRACTOR2:
             for (var x = 0; x < simHand.type.len; x += 2) {
-                card = findCard(orgCards, sRank);
+                card = stat.findCardByDupNum(sRank, 2);
                 for (var y = 0; y < 2; y++) {
                     cards.push(card);
                 }
@@ -453,7 +449,7 @@ Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {
             break;
         case Hand.COMBINATION.TRACTOR3:
             for (var x = 0; x < simHand.type.len; x += 3) {
-                card = findCard(orgCards, sRank);
+                card = stat.findCardByDupNum(sRank, 3);
                 for (var y = 0; y < 3; y++) {
                     cards.push(card);
                 }
@@ -462,7 +458,7 @@ Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {
             break;
         case Hand.COMBINATION.TRACTOR4:
             for (var x = 0; x < simHand.type.len; x += 4) {
-                card = findCard(orgCards, sRank);
+                card = stat.findCardByDupNum(sRank, 4);
                 for (var y = 0; y < 4; y++) {
                     cards.push(card);
                 }
