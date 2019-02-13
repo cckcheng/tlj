@@ -778,6 +778,9 @@ Game.prototype.setTrump = function (suite) {
         p.resortCards(this.trump, this.rank);
     }
 
+    this.currentRound = null;
+    this.leadingPlayer = this.contractor;
+    this.rounds = [];
     this.startNewRound();
 };
 
@@ -793,8 +796,6 @@ Game.prototype.getHandType = function (player, cards) {
 Game.prototype.startNewRound = function () {
     if(this.currentRound != null) {
         this.leadingPlayer = this.currentRound.getNextLeadingPlayer();
-    } else {
-        this.leadingPlayer = this.contractor;
     }
     this.currentRound = new Round(this.players, this.trump, this.rank);
     this.rounds.push(this.currentRound);

@@ -369,7 +369,7 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
 Player.prototype.ruff = function (cards) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
-    if (this.trump.length < firstHand.cardNumber) {
+    if (this.trumps.length < firstHand.cardNumber) {
         this.duckCards(cards, firstHand.suite, false, firstHand.cardNumber);
         return;
     }
