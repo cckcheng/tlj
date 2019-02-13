@@ -248,7 +248,7 @@ Table.prototype.autoPlay = function () {
         return;
     }
 
-    console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
+//    console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
     var player = this.players[this.actionPlayerIdx];
     var waitSeconds = this.ROBOT_SECONDS;
     if (player.sock != null) {
@@ -545,7 +545,7 @@ Table.prototype.processPlayerAction = function (player, json) {
             break;
 
         case 'trump':
-            if (player !== this.game.contractor)
+            if (player !== this.game.contractor && this.game.trump != null)
                 return;
             procSetTrump(this, json.trump);
             break;

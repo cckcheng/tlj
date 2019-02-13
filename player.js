@@ -618,6 +618,33 @@ Player.prototype.allValid = function (cards) {
     return true;
 };
 
+// check if the following play is valid, MUST NOT a leading hand
+Player.prototype.isValidPlay = function (hand) {
+    var game = this.currentTable.game;
+    var firstHand = game.currentRound.getFirstHand();
+    var cardList;
+    var suite = firstHand.suite;
+    if (firstHand.isTrump) {
+        cardList = this.trumps;
+        suite = Card.SUITE.JOKER;
+    } else {
+        cardList = this.getCardsBySuite(suite);
+    }
+
+    if (cardList.length >= firstHand.cardNumber) {
+        if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) return false;
+        if (firstHand.isTrump) {
+            if (!hand.isTrump) return false;
+        } else {
+            if (hand.isTrump || hand.suite !== firstHand.suite) return false;
+        }
+    } else if (cardList.length > 0) {
+        if (hand.type.cat !== Hand.COMBINATION.MIX_SUITE) return false;
+    }
+
+    return true;
+};
+
 Player.prototype.playCards = function (strCards) {
     var cards = [];
     var hand = null;
@@ -647,6 +674,7 @@ Player.prototype.playCards = function (strCards) {
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
                     this.matchInfo.alert = '甩牌失败' + orgCards + ',罚' + (-this.matchInfo.penalty);
                     this.addPoints(this.matchInfo.penalty);
+                    hand = null;
                 }
             }
         } else {
@@ -655,6 +683,11 @@ Player.prototype.playCards = function (strCards) {
     } else {
         if (cards.length > 0) {
             // TO DO: validate cards played to prevent illegal play
+            hand = new Hand(this, cards, game.trump, game.rank);
+            if (!this.isValidPlay(hand)) {
+                cards = this.autoPlayCards(isLeading);
+                hand = null;
+            }
         } else {
             cards = this.autoPlayCards(isLeading);
         }

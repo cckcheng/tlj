@@ -29,7 +29,8 @@ function Game(players, deckNumber) {
     this.currentRound = null;
     this.partnerDef = null;
 
-    this.setPartnerDef = function(def) {
+    this.setPartnerDef = function (def) {
+        if (this.partnerDef != null) return;
         if(def == null) {
             def = this.contractor.autoPartner();
         }
@@ -159,7 +160,7 @@ Hand.prototype.doAnalysis = function (cards, trump, rank) {
         this.type.cat = Hand.COMBINATION.SINGLE;
         this.type.len = this.cardNumber;
         this.isTrump = c0.isTrump(trump, rank);
-        this.minRank = this.maxRank = cards[0].rank;
+        this.minRank = this.maxRank = cards[0].trumpRank(trump, rank);
     } else {
         // >= 2 cards
         this.cardNumber = cards.length;
