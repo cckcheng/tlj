@@ -811,8 +811,8 @@ Game.prototype.isLeadingHandValid = function (hand) {
 };
 
 Game.prototype.promote = function () {
-    var summary = '定约分:' + this.contractPoint + "\n";
-    summary += '闲家得分:' + this.collectedPoint + "\n";
+    var summary = '定约分(contract point):' + this.contractPoint + "\n";
+    summary += '闲家得分(defender collected):' + this.collectedPoint + "\n";
     var delta = 1;
     if (this.collectedPoint >= this.contractPoint) {
         var extroPoint = this.collectedPoint - this.contractPoint;
@@ -826,7 +826,7 @@ Game.prototype.promote = function () {
             p.promote(delta);
         }
 
-        summary += '庄垮,闲家升' + delta + '级';
+        summary += '庄垮,闲家升' + delta + '级; contract beaten, defenders promoted ' + delta + 'rank(s)\n';
     } else {
         if (this.collectedPoint <= 0) {
             delta = 3;
@@ -840,17 +840,17 @@ Game.prototype.promote = function () {
 
         this.contractor.promote(delta);
         if (this.partner && this.contractor !== this.partner) this.partner.promote(delta);
-        summary += '庄成,';
+        summary += '庄成(contract made),';
         if (delta === 2) {
-            summary += '小光,';
+            summary += '小光(XiaoGuang),';
         } else if (delta === 3) {
-            summary += '大光,';
+            summary += '大光(DaGuang),';
         }
 
         if (this.partnerDef.noPartner) {
-            summary += '庄家一打五升' + delta + '级';
+            summary += '庄家一打五升' + delta + '级; contractor (1 vs 5) promoted ' + delta + 'rank(s)\n';
         } else {
-            summary += '庄家及帮手升' + delta + '级';
+            summary += '庄家及帮手升' + delta + '级; contractor and partner promoted ' + delta + 'rank(s)\n';
         }
     }
 

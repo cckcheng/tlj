@@ -354,9 +354,9 @@ function procPlayCards(t, cards) {
             for (var x = 0, p; p = t.players[x]; x++) {
                 if (p === game.contractor) continue;
                 if (p === game.partner) {
-                    if (p.matchInfo.points < 0) game.collectedPoints -= p.matchInfo.points;
+                    if (p.matchInfo.points < 0) game.collectedPoint -= p.matchInfo.points;
                 } else {
-                    game.collectedPoints += p.matchInfo.points;
+                    game.collectedPoint += p.matchInfo.points;
                 }
                 p.matchInfo.points = 0;
             }
