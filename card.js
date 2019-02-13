@@ -451,7 +451,7 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
             });
         }
     } else {
-        var tractors = stat.getTractors(2);
+        var tractors = stat.getTractors(2, isTrump);
         if (tractors.length > 0) {
             var totalLen = 0;
             tractors.forEach(function (sHand) {

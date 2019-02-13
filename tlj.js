@@ -2,6 +2,7 @@ var Deck = require('./deck.js');
 var Card = require('./card');
 var Player = require('./player');
 var Table = require('./table');
+var HandStat = require('./stat');
 const {Game, Hand, SimpleHand} = require('./game');
 
 var table = new Table({
@@ -39,34 +40,11 @@ var p = players[0];
 game.contractor = p;
 game.enterPlayStage();
 game.setTrump(trump_suite);
+
 //game.setTrump(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 n = 1;
-//players.forEach(function (p) {
-//    console.log('' + (n++));
-//    console.log(p.showHand());
-//});
 
-//console.log(players[4].matchInfo.currentRank);
-//console.log(game.rank);
 var cards = [];
-//cards.push(new Card(Card.SUITE.SPADE, 5));
-//cards.push(new Card(Card.SUITE.SPADE, 3));
-//cards.push(new Card(Card.SUITE.SPADE, 4));
-//cards.push(new Card(Card.SUITE.SPADE, 5));
-//cards.push(new Card(Card.SUITE.SPADE, 6));
-//cards.push(new Card(Card.SUITE.SPADE, 13));
-//cards.push(new Card(Card.SUITE.SPADE, 14));
-//cards.push(new Card(Card.SUITE.SPADE, 8));
-//cards.push(new Card(Card.SUITE.CLUB, 14));
-
-//cards.push(new Card(Card.SUITE.CLUB, 6));
-//cards.push(new Card(Card.SUITE.CLUB, 8));
-//cards.push(new Card(Card.SUITE.CLUB, 7));
-//cards.push(new Card(Card.SUITE.CLUB, 4));
-//cards.push(new Card(Card.SUITE.CLUB, 2));
-//cards.push(new Card(Card.SUITE.HEART, 7));
-//cards.push(new Card(Card.SUITE.HEART, 8));
-//cards.push(new Card(Card.SUITE.CLUB, 15));
 
 //cards.push(new Card(Card.SUITE.HEART, 2));
 //cards.push(new Card(Card.SUITE.HEART, 9));
@@ -87,6 +65,17 @@ Card.sortCards(cards, trump_suite, game_rank);
 
 console.log("\n----------------");
 console.log(p.showHand());
+
+//var stat = new HandStat(p.spades, game.trump, game.rank);
+//console.log('tractors: ' + stat.getTractors(2, false));
+var stat = new HandStat(p.trumps, game.trump, game.rank);
+var tractors = stat.getTractors(2, true);
+console.log('tractors: ' + tractors.length);
+tractors.forEach(function (sHand) {
+    console.log(sHand.minRank + "," + sHand.type.len);
+});
+
+if (true) return;
 //console.log('valid cards: ' + p.allValid(cards));
 
 var pcards = p.trumps.slice(p.trumps.length - 2, p.trumps.length);
