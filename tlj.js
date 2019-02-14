@@ -46,18 +46,12 @@ n = 1;
 
 var cards = [];
 
-//cards.push(new Card(Card.SUITE.HEART, 2));
+cards.push(new Card(Card.SUITE.HEART, 2));
+cards.push(new Card(Card.SUITE.HEART, 4));
 cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
-
-game.currentRound.addHand(p, cards, new Hand(p, cards, trump_suite, 2));
-game.currentRound.addHand(players[1], cards, null);
-
-console.log(game.currentRound.displayAll());
-
-if (true) return;
 
 cards.push(new Card(Card.SUITE.HEART, 10));
 cards.push(new Card(Card.SUITE.HEART, 10));
@@ -70,6 +64,7 @@ cards.push(new Card(Card.SUITE.CLUB, 10));
 cards.push(new Card(Card.SUITE.HEART, 11));
 cards.push(new Card(Card.SUITE.HEART, 11));
 cards.push(new Card(Card.SUITE.HEART, 13));
+cards.push(new Card(Card.SUITE.HEART, 12));
 cards.push(new Card(Card.SUITE.HEART, 12));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
@@ -88,8 +83,14 @@ Card.sortCards(cards, trump_suite, game_rank);
 console.log("\n----------------");
 console.log(p.showHand());
 
-console.log("\n----------------");
+console.log("\n----------------" + cards.length);
 console.log(Card.showCards(cards));
+
+var myCards = [];
+Card.selectTractor2(16, myCards, cards, true, trump_suite, game_rank);
+console.log(Card.showCards(myCards));
+
+if (true) return;
 
 //var stat = new HandStat(p.spades, game.trump, game.rank);
 //console.log('tractors: ' + stat.getTractors(2, false));
