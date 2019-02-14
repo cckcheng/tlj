@@ -593,7 +593,7 @@ function shuffleArray(arr) {
     if (arr == null)
         return;
     for (var x = 0; x < arr.length; x++) {
-        var idx = Math.floor(Math.round(arr.length));
+        var idx = Math.floor(Math.random() * arr.length);
         if (idx === x)
             continue;
         var tmp = arr[x];

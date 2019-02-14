@@ -127,40 +127,40 @@ function handleData(sock, data) {
     player.timeoutTimes = 0;
 
     var currentTable = player.currentTable;
-    switch (dt.action) {
-        case 'join':
-            if (currentTable != null) {
-                console.log('exist table.');
-                player.pushData();
-                currentTable.resume(player);
-            } else {
-                var robot = null;
-                while (robots.length > 0) {
-                    robot = robots.shift();
-                    if (!(robot.currentTable == null)) break;
-                }
-
-                if (robot == null || robot.currentTable == null) {
-                    createNewTable(player);
-                } else {
-                    console.log('replace robot.');
-                    robot.replaceRobot(player.id, player.sock);
-                    onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
+    try {
+        switch (dt.action) {
+            case 'join':
+                if (currentTable != null) {
+                    console.log('exist table.');
                     player.pushData();
-                    player.currentTable.resume();
-                }
-            }
-            break;
+                    currentTable.resume(player);
+                } else {
+                    var robot = null;
+                    while (robots.length > 0) {
+                        robot = robots.shift();
+                        if (!(robot.currentTable == null)) break;
+                    }
 
-        default:
-            if (currentTable == null) return;
-            try {
+                    if (robot == null || robot.currentTable == null) {
+                        createNewTable(player);
+                    } else {
+                        console.log('replace robot.');
+                        robot.replaceRobot(player.id, player.sock);
+                        onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
+                        player.pushData();
+                        player.currentTable.resume();
+                    }
+                }
+                break;
+
+            default:
+                if (currentTable == null) return;
                 currentTable.processPlayerAction(player, dt);
-            } catch (err) {
-                console.log(new Date().toLocaleString() + ', Exception: ' + err);
-                currentTable.startGame();
-            }
-            break;
+                break;
+        }
+    } catch (err) {
+        console.log(new Date().toLocaleString() + ', Exception: ' + err);
+        if (currentTable != null) currentTable.startGame();
     }
 
     function createNewTable(player) {
