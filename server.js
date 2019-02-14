@@ -27,6 +27,8 @@ if (args.length > 0) {
     }
 }
 
+console.log('START: ' + (new Date().toLocaleString()));
+
 var server = net.createServer();
 server.listen(PORT, HOST);
 
@@ -36,7 +38,7 @@ var runningTables = [];
 var robots = [];
 
 server.on('connection', function (sock) {
-    console.log('Connected: ' + sock.remoteAddress + ':' + sock.remotePort);
+    console.log(new Date().toLocaleString() + ', Connected: ' + sock.remoteAddress + ':' + sock.remotePort);
     sock.on('data', function (data) {
         handleData(sock, data);
     });
@@ -49,7 +51,7 @@ server.on('connection', function (sock) {
 });
 
 function handleClose(sock, hadError) {
-    console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
+//    console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
     var sockId = sock.remoteAddress + ':' + sock.remotePort;
     var player = onlinePlayers[sockId];
     if (player == null) return;
@@ -74,21 +76,30 @@ function handleClose(sock, hadError) {
 }
 
 function handleData(sock, data) {
-    data = data.toString();
+    data = data.toString().trim();
     if (data.length < 2)
         return;
 
     if (data.charAt(0) !== '{') {
         data = Buffer.from(Player.confusedData(data), 'base64').toString();
+    } else if (!Table.Debugging) {
+        console.log(new Date().toLocaleString() + ', ' + sock.remoteAddress + ', RELEASE Mode. Invalid data: ' + data.substring(0, 10) + '...');
+        sock.end();
+        return;
+    }
+
+    if (data.charAt(0) !== '{' || data.charAt(data.length - 1) !== '}') {
+        console.log(new Date().toLocaleString() + ', ' + sock.remoteAddress + ', Invalid data: ' + data.substring(0, 10) + '...');
+        sock.end();
+        return;
     }
 
 //    console.log(sock.remoteAddress + ':' + data);
-//    sock.write('reveived\n');
     try {
         var dt = JSON.parse(data);
     } catch (err) {
-        console.log('Invalid data: ' + err);
-        sock.destroy();
+        console.log(new Date().toLocaleString() + ', ' + sock.remoteAddress + ', Invalid data: ' + err);
+        sock.end();
         return;
     }
 
@@ -143,7 +154,12 @@ function handleData(sock, data) {
 
         default:
             if (currentTable == null) return;
-            currentTable.processPlayerAction(player, dt);
+            try {
+                currentTable.processPlayerAction(player, dt);
+            } catch (err) {
+                console.log(new Date().toLocaleString() + ', Exception: ' + err);
+                currentTable.startGame();
+            }
             break;
     }
 

@@ -5,6 +5,8 @@ var Table = require('./table');
 var HandStat = require('./stat');
 const {Game, Hand, SimpleHand} = require('./game');
 
+console.log(new Date().toLocaleString());
+
 var table = new Table({
 //    matchType: Table.MATCH_TYPE.HALF
     matchType: Table.MATCH_TYPE.POINTS
