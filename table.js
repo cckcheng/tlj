@@ -162,6 +162,10 @@ Table.prototype.startGame = function (testOnly) {
     for (var x = 0, p; p = this.players[x]; x++) {
         p.evaluate();
         p.pushData();
+        if (Table.Debugging) {
+            console.log('*** seat #' + (x + 1) + ':\n');
+            console.log(p.showHand());
+        }
     }
 
     if (testOnly == null) this.autoPlay();
@@ -217,11 +221,9 @@ function procAfterBid(t) {
     t.broadcastGameInfo(obj);
 
     if (!bidOver) {
-        console.log('bidding');
         t.autoPlay();
     } else {
         //bidding over
-        console.log('bid over');
 
         if (!suc) {
             //special case, all passes, force first canBid player to be contractor
@@ -266,7 +268,7 @@ Table.prototype.autoPlay = function () {
         if (t.game.stage === Game.BIDDING_STAGE) {
             var currentPlayer = t.players[t.actionPlayerIdx];
             if (currentPlayer.canBid && currentPlayer.minBid < t.game.contractPoint) {
-                console.log('minBid=' + currentPlayer.minBid + ',contractPoint ' + t.game.contractPoint);
+//                console.log('minBid=' + currentPlayer.minBid + ',contractPoint ' + t.game.contractPoint);
                 t.game.contractPoint -= 5;
                 currentPlayer.matchInfo.lastBid = t.game.contractPoint;
                 t.game.contractor = currentPlayer;
@@ -374,7 +376,11 @@ function procPlayCards(t, cards) {
         return;
     }
 
-    if(status === 'newround') {
+    if (status === 'newround') {
+        if (Table.Debugging) {
+            console.log(t.game.currentRound.displayAll());
+        }
+
         t.actionPlayerIdx = -1;
         if (t.game.partner == null && t.game.leadingPlayer !== t.game.contractor) {
             json.pseat = t.getSeat(t.game.leadingPlayer);

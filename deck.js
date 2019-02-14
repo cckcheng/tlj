@@ -26,7 +26,7 @@ Deck.prototype.deal = function (players) {
     if (reserved < playerNumber / 2) reserved += playerNumber;
     var cardsPerPlayer = (totalCards - reserved) / playerNumber;
 //    console.log('reserved: ' + reserved);
-    console.log('cardsPerPlayer: ' + cardsPerPlayer);
+//    console.log('cardsPerPlayer: ' + cardsPerPlayer);
 
     // deal cards
     for (var i = 0, p; p = players[i]; i++) {

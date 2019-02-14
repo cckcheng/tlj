@@ -82,12 +82,13 @@ function handleData(sock, data) {
         data = Buffer.from(Player.confusedData(data), 'base64').toString();
     }
 
-    console.log(sock.remoteAddress + ':' + data);
+//    console.log(sock.remoteAddress + ':' + data);
 //    sock.write('reveived\n');
     try {
         var dt = JSON.parse(data);
     } catch (err) {
         console.log('Invalid data: ' + err);
+        sock.destroy();
         return;
     }
 

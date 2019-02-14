@@ -22,7 +22,6 @@ function Game(players, deckNumber) {
 
     this.deck = new Deck(deckNumber);
     this.deck.deal(this.players);
-    console.log('remains:' + this.deck.remains.length);
 
     this.holeCards = [];
     this.rounds = [];
@@ -496,6 +495,14 @@ function Round(players, trump, gameRank) {
     var leadingHand = null;
     var firstHand = null;
     var points = 0;
+
+    this.displayAll = function () {
+        var str = '';
+        this.playList.forEach(function (hnd) {
+            str += Card.showCards(hnd.cards) + '; ';
+        });
+        return str + '\n';
+    };
 
     function findHighers(cards, hand_type, minRank) {
 //        console.log(Card.showCards(cards));
