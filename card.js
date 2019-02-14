@@ -438,6 +438,8 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
         return;
     }
 
+    var pairType = {cat: Hand.COMBINATION.PAIR, len: 2};
+
     var tmpCards = cardList.slice();
     var isTrump = cardList[0].isTrump(trump, gameRank);
     var rnks = stat.sortedRanks(2);
@@ -447,7 +449,7 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
         }
 
         for (var x = 0; x < rnks.length; x++) {
-            var sHand = new SimpleHand(Hand.COMBINATION.PAIR, rnks[x], isTrump);
+            var sHand = new SimpleHand(pairType, rnks[x], isTrump);
             var cc = Hand.makeCards(sHand, tmpCards, trump, gameRank);
             cc.forEach(function (c) {
                 cards.push(c);
@@ -490,11 +492,14 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
 
             stat = new HandStat(tmpCards, trump, gameRank);
             rnks = stat.sortedRanks(2);
+            if (stat.totalPairs > rnks.length) {
+                rnks = rnks.concat(stat.sortedRanks(4));
+            }
         }
 
         rnks.sort(sortByPoint(pointFirst, trump, gameRank));
         for (var x = 0, count = len - cards.length; x < rnks.length && count > 0; x++, count -= 2) {
-            var sHand = new SimpleHand({cat: Hand.COMBINATION.PAIR, len: 2}, rnks[x], isTrump);
+            var sHand = new SimpleHand(pairType, rnks[x], isTrump);
             var cc = Hand.makeCards(sHand, tmpCards, trump, gameRank);
             cc.forEach(function (c) {
                 cards.push(c);
