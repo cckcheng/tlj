@@ -51,7 +51,7 @@ server.on('connection', function (sock) {
 });
 
 function handleClose(sock, hadError) {
-//    console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
+    console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
     var sockId = sock.remoteAddress + ':' + sock.remotePort;
     var player = onlinePlayers[sockId];
     if (player == null) return;

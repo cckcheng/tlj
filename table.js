@@ -434,6 +434,7 @@ function procAfterPause(t) {
 }
 
 Table.prototype.goPause = function (seconds) {
+    if (this.autoTime != null) return;  // prevent multi timeout
     this.onPause = true;
     this.autoTimer = setTimeout(function (t) {
         t.autoTimer = null;
@@ -442,6 +443,7 @@ Table.prototype.goPause = function (seconds) {
 };
 
 Table.prototype.declareTrump = function () {
+    if (this.autoTime != null) return;  // prevent multi timeout
     var player = this.game.contractor;
     var waitSeconds = this.ROBOT_SECONDS;
     if (player.sock != null) {
@@ -461,6 +463,8 @@ Table.prototype.declareTrump = function () {
 };
 
 Table.prototype.buryCards = function () {
+    if (this.autoTime != null) return;  // prevent multi timeout
+
     var player = this.game.contractor;
     var waitSeconds = this.ROBOT_SECONDS;
     if (player.sock != null) {
@@ -481,6 +485,7 @@ Table.prototype.buryCards = function () {
 
 Table.prototype.definePartner = function () {
 //    debugger;
+    if (this.autoTime != null) return;  // prevent multi timeout
 
     var player = this.game.contractor;
     var waitSeconds = this.ROBOT_SECONDS;
