@@ -2,6 +2,7 @@ module.exports = {Game, Hand, SimpleHand};
 
 var Card = require('./card');
 var Deck = require('./deck');
+var Table = require('./table');
 var HandStat = require('./stat');
 
 function Game(players, deckNumber) {
@@ -665,6 +666,9 @@ function Round(players, trump, gameRank) {
         var isLastHand = this.playList.length === players.length;
         if (isLastHand) {
             leadingHand.player.addPoints(points);
+            if (Table.Debugging) {
+                console.log(this.displayAll());
+            }
         }
 
         return isLastHand;
@@ -780,6 +784,10 @@ Game.prototype.setTrump = function (suite) {
     this.trump = suite;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.resortCards(this.trump, this.rank);
+        if (Table.Debugging) {
+            console.log('*** seat #' + (x + 1) + ':');
+            console.log(p.showHand());
+        }
     }
 
     this.currentRound = null;

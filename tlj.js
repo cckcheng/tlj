@@ -51,6 +51,14 @@ cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
+
+game.currentRound.addHand(p, cards, new Hand(p, cards, trump_suite, 2));
+game.currentRound.addHand(players[1], cards, null);
+
+console.log(game.currentRound.displayAll());
+
+if (true) return;
+
 cards.push(new Card(Card.SUITE.HEART, 10));
 cards.push(new Card(Card.SUITE.HEART, 10));
 cards.push(new Card(Card.SUITE.HEART, 10));

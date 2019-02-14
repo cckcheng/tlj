@@ -162,10 +162,6 @@ Table.prototype.startGame = function (testOnly) {
     for (var x = 0, p; p = this.players[x]; x++) {
         p.evaluate();
         p.pushData();
-        if (Table.Debugging) {
-            console.log('*** seat #' + (x + 1) + ':\n');
-            console.log(p.showHand());
-        }
     }
 
     if (testOnly == null) this.autoPlay();
@@ -377,10 +373,6 @@ function procPlayCards(t, cards) {
     }
 
     if (status === 'newround') {
-        if (Table.Debugging) {
-            console.log(t.game.currentRound.displayAll());
-        }
-
         t.actionPlayerIdx = -1;
         if (t.game.partner == null && t.game.leadingPlayer !== t.game.contractor) {
             json.pseat = t.getSeat(t.game.leadingPlayer);
