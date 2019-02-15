@@ -77,25 +77,30 @@ Table.prototype.allRobots = function () {
 };
 
 Table.prototype.dismiss = function (activePlayers, playerId) {
+    if (this.game == null) return;
     if (this.pauseTimer != null) return;
     if(this.autoTimer != null) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
     }
-    var pauseMinutes = Table.Debugging ? (Table.FastMode ? 2 : 5) : 30;  // 5(or 2) minutes, set to 30 minutes when release
+    var pauseMinutes = Table.Debugging ? 5 : 30;  // 5 minutes, set to 30 minutes when release
     this.pauseTimer = setTimeout(function (t) {
-        t.dismissed = true;
         t.pauseTimer = null;
-        for (var x = 0, p; x < t.players.length; x++) {
-            p = t.players[x];
-            if (p == null)
-                continue;
-            p.currentTable = null;
-        }
-
-        console.log('table dismissed');
-        delete activePlayers[playerId];
+        t.terminate(activePlayers, playerId);
     }, pauseMinutes * 60000, this);
+};
+
+Table.prototype.terminate = function (activePlayers, playerId) {
+    this.dismissed = true;
+    for (var x = 0, p; x < this.players.length; x++) {
+        p = this.players[x];
+        if (p == null)
+            continue;
+        p.currentTable = null;
+    }
+
+    console.log('table ended');
+    if (playerId != null) delete activePlayers[playerId];
 };
 
 Table.prototype.resume = function (player) {
@@ -116,7 +121,7 @@ Table.prototype.resume = function (player) {
         } else {
             this.autoPlay();
         }
-    } else {
+    } else if (this.game != null) {
         if (player && player === this.players[this.actionPlayerIdx]) {
             if (this.autoTimer != null) {
                 this.autoTimer.refresh();
@@ -415,6 +420,7 @@ function gameOver(t) {
         summary: summary
     });
     t.game = null;
+    t.actionPlayerIdx = -1;
     t.goPause(PAUSE_SECONDS_BETWEEN_GAME);
 }
 
@@ -435,7 +441,11 @@ function procAfterPause(t) {
         }
         t.autoPlay();
     } else {
-        t.startGame();
+        if (t.allRobots()) {
+            t.terminate();
+        } else {
+            t.startGame();
+        }
     }
 }
 
