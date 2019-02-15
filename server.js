@@ -130,10 +130,12 @@ function handleData(sock, data) {
     try {
         switch (dt.action) {
             case 'join':
-                if (currentTable != null) {
+                if (currentTable != null && !currentTable.dismissed) {
                     console.log('exist table.');
                     player.pushData();
-                    currentTable.resume(player);
+                    if (!currentTable.resume(player)) {
+                        createNewTable(player);
+                    }
                 } else {
                     var robot = null;
                     while (robots.length > 0) {

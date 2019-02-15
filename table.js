@@ -17,6 +17,7 @@ const PAUSE_SECONDS_BETWEEN_GAME = 300;
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
+    this.dismissed = false;
     var pos = 0;
     while (pos < SEAT_NUMBER) {
         this._positions.push(pos++);
@@ -76,12 +77,14 @@ Table.prototype.allRobots = function () {
 };
 
 Table.prototype.dismiss = function (activePlayers, playerId) {
+    if (this.pauseTimer != null) return;
     if(this.autoTimer != null) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
     }
     var pauseMinutes = Table.Debugging ? (Table.FastMode ? 2 : 5) : 30;  // 5(or 2) minutes, set to 30 minutes when release
     this.pauseTimer = setTimeout(function (t) {
+        t.dismissed = true;
         t.pauseTimer = null;
         for (var x = 0, p; x < t.players.length; x++) {
             p = t.players[x];
@@ -91,12 +94,12 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
         }
 
         console.log('table dismissed');
-        t.dismissed = true;
         delete activePlayers[playerId];
     }, pauseMinutes * 60000, this);
 };
 
 Table.prototype.resume = function (player) {
+    if (this.dismissed) return false;
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
         this.pauseTimer = null;
@@ -120,6 +123,8 @@ Table.prototype.resume = function (player) {
             }
         }
     }
+
+    return true;
 };
 
 Table.prototype.addPlayer = function (player) {
