@@ -155,7 +155,7 @@ Table.prototype.startGame = function (testOnly) {
         for (var x = 0, p; p = this.players[x]; x++) {
             p.matchInfo.lastBid = '-';
             p.matchInfo.points = 0;
-            this.playedCards = '';
+            p.playedCards = '';
         }
     }
 

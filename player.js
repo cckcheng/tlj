@@ -248,6 +248,29 @@ Player.prototype.pushData = function () {
     if (this.sock == null)
         return;
 
+    var seat = this.currentTable.getSeat(this);
+    var playerInfo = [];
+    var totalPlayer = this.currentTable.players.length;
+    for (var count = totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
+        if (x >= totalPlayer)
+            x -= totalPlayer;
+        p = this.currentTable.players[x];
+        playerInfo.push(p.matchInfo.toJson(x + 1));
+    }
+
+    var game = this.currentTable.game;
+    if (game == null) {
+        json = Object.assign({
+            action: 'init',
+            game: this.currentTable.games.length,
+            info: 'On Break',
+            players: playerInfo,
+            timeout: this.currentTable.TIMEOUT_SECONDS // default timeout
+        }, this.matchInfo.toJson(seat));
+        this.pushJson(json);
+        return;
+    }
+
     var S = Card.getRanks(this.spades);
     var H = Card.getRanks(this.hearts);
     var D = Card.getRanks(this.diamonds);
@@ -273,18 +296,6 @@ Player.prototype.pushData = function () {
                 break;
         }
     }
-
-    var seat = this.currentTable.getSeat(this);
-    var playerInfo = [];
-    var totalPlayer = this.currentTable.players.length;
-    for (var count = totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
-        if (x >= totalPlayer)
-            x -= totalPlayer;
-        p = this.currentTable.players[x];
-        playerInfo.push(p.matchInfo.toJson(x + 1));
-    }
-
-    var game = this.currentTable.game;
 
     var json = Object.assign({
         action: 'init',
