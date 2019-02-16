@@ -7,7 +7,7 @@ const {Game, Hand, SimpleHand} = require('./game');
 Table.Debugging = false;
 Table.FastMode = false;
 Table.HOLE_POINT_TIMES = 4;
-Table.PAUSE_SECONDS_BETWEEN_GAME = 300;
+Table.PAUSE_SECONDS_BETWEEN_GAME = 30;
 Table.PENDING_SECONDS = 5;
 
 const SEAT_NUMBER = 6;
@@ -35,6 +35,8 @@ function Table(o) {
 
     this.TIMEOUT_SECONDS = Table.FastMode ? 8 : 30;     // default: 32 seconds (30s for client side + 2s)
     this.ROBOT_SECONDS = Table.FastMode ? 0.1 : 2;
+
+    this.status = 'running';
 }
 
 Table.MATCH_TYPE = {
@@ -77,7 +79,7 @@ Table.prototype.allRobots = function () {
 };
 
 Table.prototype.dismiss = function (activePlayers, playerId) {
-    if (this.game == null) return;
+    if (this.status === 'break') return;
     if (this.pauseTimer != null) return;
     if(this.autoTimer != null) {
         clearTimeout(this.autoTimer);
@@ -99,7 +101,7 @@ Table.prototype.terminate = function (activePlayers, playerId) {
         p.currentTable = null;
     }
 
-    console.log('table ended');
+    console.log(new Date().toLocaleString() + ', table ended');
     if (playerId != null) delete activePlayers[playerId];
 };
 
@@ -108,24 +110,48 @@ Table.prototype.resume = function (player) {
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
         this.pauseTimer = null;
-        if (this.game.stage === Game.PLAYING_STAGE) {
-            if (this.game.trump == null) {
-                this.enterPlayingStage();
-            } else if (this.game.holeCards.length < 1) {
-                this.buryCards();
-            } else if (this.game.partnerDef == null) {
-                this.definePartner();
-            } else {
-                this.autoPlay();
-            }
-        } else {
-            this.autoPlay();
+        switch (this.status) {
+            case 'running':
+                player.pushData();
+
+                if (this.game.stage === Game.PLAYING_STAGE) {
+                    if (this.game.trump == null) {
+                        this.enterPlayingStage();
+                    } else if (this.game.holeCards.length < 1) {
+                        this.buryCards();
+                    } else if (this.game.partnerDef == null) {
+                        this.definePartner();
+                    } else {
+                        this.autoPlay();
+                    }
+                } else {
+                    this.autoPlay();
+                }
+                break;
+            case 'break':
+                player.pushData();
+                break;
+            case 'pending':
+                this.startGame();
+                break;
         }
-    } else if (this.game != null) {
-        if (player && player === this.players[this.actionPlayerIdx]) {
-            if (this.autoTimer != null) {
-                this.autoTimer.refresh();
-            }
+    } else {
+        switch (this.status) {
+            case 'running':
+                player.pushData();
+
+                if (player && player === this.players[this.actionPlayerIdx]) {
+                    if (this.autoTimer != null) {
+                        this.autoTimer.refresh();
+                    }
+                }
+                break;
+            case 'break':
+                player.pushData();
+                break;
+            case 'pending':
+                this.startGame();
+                break;
         }
     }
 
@@ -151,6 +177,7 @@ Table.prototype.addPlayer = function (player) {
 };
 
 Table.prototype.startGame = function (testOnly) {
+    this.status = 'running';
     this.game = new Game(this.players, this.deckNumber);
     this.games.push(this.game);
 //    debugger;
@@ -409,7 +436,8 @@ function gameOver(t) {
             var times = Table.HOLE_POINT_TIMES * t.game.currentRound.maxSubHandLength();
             var holePoints = holeCardsPoint * times;
             leadPlayer.addPoints(holePoints);
-            summary += '闲家抠底，底分翻' + times + '倍,共' + holePoints + '\n\n';
+            summary += '闲家抠底，底分翻' + times + '倍,共' + holePoints + '\n';
+            summary += 'Hole cards\' points multipled by ' + times + ', total ' + holePoints + '\n';
         }
     }
 
@@ -422,6 +450,7 @@ function gameOver(t) {
         summary: summary
     });
     t.game = null;
+    t.status = 'break';
     t.actionPlayerIdx = -1;
     t.goPause(Table.PAUSE_SECONDS_BETWEEN_GAME);
 }
@@ -444,7 +473,8 @@ function procAfterPause(t) {
         t.autoPlay();
     } else {
         if (t.allRobots()) {
-            t.terminate();
+            t.status = 'pending';
+            t.dismiss();
         } else {
             t.startGame();
         }

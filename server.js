@@ -18,7 +18,7 @@ if (args.length > 0) {
         if (/[Dd]/.test(arg)) Table.Debugging = true;
         if (/[Ff]/.test(arg)) {
             Table.FastMode = true;
-            Table.PAUSE_SECONDS_BETWEEN_GAME = 60;
+            Table.PAUSE_SECONDS_BETWEEN_GAME = 15;
             Table.PENDING_SECONDS = 0.5;
         }
         arg = args.shift();
@@ -55,7 +55,7 @@ server.on('connection', function (sock) {
 });
 
 function handleClose(sock, hadError) {
-    console.log('Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
+    console.log(new Date().toLocaleString() + ', Closed, ' + sock.remoteAddress + ':' + sock.remotePort + '; hadError->' + hadError);
     var sockId = sock.remoteAddress + ':' + sock.remotePort;
     var player = onlinePlayers[sockId];
     if (player == null) return;
@@ -136,7 +136,6 @@ function handleData(sock, data) {
             case 'join':
                 if (currentTable != null && !currentTable.dismissed) {
                     console.log('exist table.');
-                    player.pushData();
                     if (!currentTable.resume(player)) {
                         createNewTable(player);
                     }

@@ -229,7 +229,7 @@ Player.prototype.pushJson = function (json) {
                 p.sock.write(Player.confusedData(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
             }
         } catch (err) {
-            console.log(err.message);
+            console.log(new Date().toLocaleString() + ', ' + err.message);
         }
     }, this);
 //    try {
@@ -263,7 +263,7 @@ Player.prototype.pushData = function () {
         json = Object.assign({
             action: 'init',
             game: this.currentTable.games.length,
-            info: 'On Break',
+            info: 'On break, resume in 30 seconds...',
             players: playerInfo,
             timeout: this.currentTable.TIMEOUT_SECONDS // default timeout
         }, this.matchInfo.toJson(seat));
@@ -702,7 +702,7 @@ Player.prototype.playCards = function (strCards) {
 
     if (cards.length < 1) {
         // temp: to avoid exception, should not run to here if normal
-        console.log('Exception:  player.playCards(), isLeading: ' + isLeading);
+        console.log(new Date().toLocaleString() + ', Exception:  player.playCards(), isLeading: ' + isLeading);
         this.randomPlay(cards);
     }
 
