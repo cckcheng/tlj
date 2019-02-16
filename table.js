@@ -7,12 +7,12 @@ const {Game, Hand, SimpleHand} = require('./game');
 Table.Debugging = false;
 Table.FastMode = false;
 Table.HOLE_POINT_TIMES = 4;
+Table.PAUSE_SECONDS_BETWEEN_GAME = 300;
+Table.PENDING_SECONDS = 5;
 
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const ADD_SECONDS = 2;
-const PENDING_SECONDS = 5;
-const PAUSE_SECONDS_BETWEEN_GAME = 300;
 
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
@@ -34,7 +34,7 @@ function Table(o) {
     this.games = [];
 
     this.TIMEOUT_SECONDS = Table.FastMode ? 8 : 30;     // default: 32 seconds (30s for client side + 2s)
-    this.ROBOT_SECONDS = Table.FastMode ? 1 : 2;
+    this.ROBOT_SECONDS = Table.FastMode ? 0.1 : 2;
 }
 
 Table.MATCH_TYPE = {
@@ -391,7 +391,7 @@ function procPlayCards(t, cards) {
         }
         t.broadcastGameInfo(json);
 
-        t.goPause(PENDING_SECONDS);
+        t.goPause(Table.PENDING_SECONDS);
     } else {
         t.rotatePlayer();
         json.next = t.actionPlayerIdx + 1
@@ -416,12 +416,14 @@ function gameOver(t) {
     summary += t.game.promote();
     t.broadcastGameInfo({
         action: 'gameover',
+        seat: t.getSeat(t.game.contractor),
         hole: Card.cardsToString(t.game.holeCards),
+        pt0: t.game.collectedPoint,
         summary: summary
     });
     t.game = null;
     t.actionPlayerIdx = -1;
-    t.goPause(PAUSE_SECONDS_BETWEEN_GAME);
+    t.goPause(Table.PAUSE_SECONDS_BETWEEN_GAME);
 }
 
 function procAfterPause(t) {

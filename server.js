@@ -16,7 +16,11 @@ if (args.length > 0) {
     var arg = args.shift();
     if (arg.substr(0, 1) === '-') {
         if (/[Dd]/.test(arg)) Table.Debugging = true;
-        if (/[Ff]/.test(arg)) Table.FastMode = true;
+        if (/[Ff]/.test(arg)) {
+            Table.FastMode = true;
+            Table.PAUSE_SECONDS_BETWEEN_GAME = 60;
+            Table.PENDING_SECONDS = 0.5;
+        }
         arg = args.shift();
     }
 
