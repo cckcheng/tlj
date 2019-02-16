@@ -393,7 +393,7 @@ Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, 
                 });
                 Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 1);
             } else {
-                var tractors = stat.getTractor2s();
+                var tractors = stat.getTractors(2, isTrump);
                 if (tractors.length > 0) {
                     tractors[0].type.len = 4;
                     var cc = Hand.makeCards(tractors[0], tmpCards, trump, gameRank);

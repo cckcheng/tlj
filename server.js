@@ -83,13 +83,13 @@ function handleData(sock, data) {
     if (data.charAt(0) !== '{') {
         data = Buffer.from(Player.confusedData(data), 'base64').toString();
     } else if (!Table.Debugging) {
-        console.log(new Date().toLocaleString() + ', ' + sock.remoteAddress + ', RELEASE Mode. Invalid data: ' + data.substring(0, 10) + '...');
+        console.log(new Date().toLocaleString() + ', ' + sock.remoteAddress + ', RELEASE Mode. Invalid data: ' + data.substring(0, 5) + '...');
         sock.end();
         return;
     }
 
-    if (data.charAt(0) !== '{' || data.charAt(data.length - 1) !== '}') {
-        console.log(new Date().toLocaleString() + ', ' + sock.remoteAddress + ', Invalid data: ' + data.substring(0, 10) + '...');
+    if (data.charAt(0) !== '{' || data.charAt(data.length - 1) !== '}' || data.indexOf('eval') >= 0) {
+        console.log(new Date().toLocaleString() + ', ' + sock.remoteAddress + ', Invalid data: ' + data.substring(0, 5) + '...');
         sock.end();
         return;
     }
