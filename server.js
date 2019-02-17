@@ -118,7 +118,7 @@ function handleData(sock, data) {
 
         player = activePlayers[dt.id];
         if (player == null) {
-            player = new Player({id: dt.id, sock: sock});
+            player = new Player({id: dt.id, name: dt.name, sock: sock});
             activePlayers[dt.id] = player;
         } else {
             player.sock = sock;
@@ -150,7 +150,7 @@ function handleData(sock, data) {
                         createNewTable(player);
                     } else {
                         console.log('replace robot.');
-                        robot.replaceRobot(player.id, player.sock);
+                        robot.replaceRobot(player.id, player.name, player.sock);
                         onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
                         player.pushData();
                         player.currentTable.resume();
@@ -178,7 +178,7 @@ function handleData(sock, data) {
             player.sendMessage("No table available. Please wait...");
             return;
         }
-        var table = new Table({});
+        var table = new Table({matchType: Table.MATCH_TYPE.FREE});
         runningTables.push(table);
         table.addPlayer(player);
 

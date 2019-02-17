@@ -29,6 +29,7 @@ function Table(o) {
         this.matchType = Table.MATCH_TYPE.FULL;
     }
 
+    this.maxRank = this.matchType.ranks[this.matchType.ranks.length - 1];
     this.deckNumber = o.deckNumber || DECK_NUMBER;
 
     this.games = [];
@@ -37,6 +38,25 @@ function Table(o) {
     this.ROBOT_SECONDS = Table.FastMode ? 0.1 : 2;
 
     this.status = 'running';
+
+    this.matchSummary = function () {
+        var gameNum = this.games.length;
+        if (gameNum < 1) return '';
+        var summary = 'Total games: ' + gameNum + '\n';
+        this.players.sort(function (a, b) {
+            return b.matchInfo.currentRank - a.matchInfo.currentRank;
+        });
+
+        var pRank = 0, rnk;
+        for (var r = 1, x = 0, p; p = this.players[x]; x++) {
+            rnk = p.matchInfo.currentRank;
+            if (pRank !== 0 && rnk !== pRank) r = x + 1;
+            summary += '\n' + (r === 1 ? 'Winner' : 'No. ' + r) + ': ' + p.name
+                    + ' (' + p.matchInfo.currentRank + ')';
+            pRank = rnk;
+        }
+        return summary;
+    };
 }
 
 Table.MATCH_TYPE = {
@@ -79,6 +99,7 @@ Table.prototype.allRobots = function () {
 };
 
 Table.prototype.dismiss = function (activePlayers, playerId) {
+    if (this.dismissed) return;
     if (this.status === 'break') return;
     if (this.pauseTimer != null) return;
     if(this.autoTimer != null) {
@@ -442,6 +463,7 @@ function gameOver(t) {
     }
 
     summary += t.game.promote();
+
     t.broadcastGameInfo({
         action: 'gameover',
         seat: t.getSeat(t.game.contractor),
@@ -449,10 +471,30 @@ function gameOver(t) {
         pt0: t.game.collectedPoint,
         summary: summary
     });
-    t.game = null;
-    t.status = 'break';
-    t.actionPlayerIdx = -1;
-    t.goPause(Table.PAUSE_SECONDS_BETWEEN_GAME);
+
+    var matchOver = false;
+    for (var x = 0, p; p = t.players[x]; x++) {
+        if (p.matchInfo.currentRank > t.maxRank) {
+            matchOver = true;
+            break;
+        }
+    }
+
+    if (matchOver) {
+        t.dismissed = true;
+        setTimeout(function (t) {
+            t.broadcastGameInfo({
+                action: 'gameover',
+                summary: t.matchSummary()
+            });
+            t.terminate();
+        }, 5000, t);
+    } else {
+        t.game = null;
+        t.status = 'break';
+        t.actionPlayerIdx = -1;
+        t.goPause(Table.PAUSE_SECONDS_BETWEEN_GAME);
+    }
 }
 
 function procAfterPause(t) {

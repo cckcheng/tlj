@@ -9,7 +9,9 @@ function Player(o) {
     if (o) {
         this.id = o.id;
         this.sock = o.sock;
+        this.name = o.name;
     }
+    if (this.sock == null) this.name = 'Robot';
     this.spades = [];
     this.hearts = [];
     this.diamonds = [];
@@ -21,9 +23,10 @@ function Player(o) {
 
     this.timeoutTimes = 0;
 
-    this.replaceRobot = function (id, sock) {
+    this.replaceRobot = function (id, name, sock) {
         this.id = id;
         this.sock = sock;
+        this.name = name;
     };
 
     this.toRobot = function () {

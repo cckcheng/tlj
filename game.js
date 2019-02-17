@@ -780,6 +780,7 @@ Game.prototype.setTrump = function (suite) {
         this.contractor.addCard(c);
     }
     this.contractor.sortHand();
+    this.contractor.matchInfo.contracts++;
 
     this.trump = suite;
     for (var x = 0, p; p = this.players[x]; x++) {
