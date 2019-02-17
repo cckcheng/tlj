@@ -153,7 +153,7 @@ function handleData(sock, data) {
                         robot.replaceRobot(player.id, player.name, player.sock);
                         onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
                         //player.pushData();
-                        player.currentTable.resume();
+                        player.currentTable.resume(player);
                     }
                 }
                 break;
