@@ -310,7 +310,7 @@ Hand.prototype.generateSubHands = function (stat) {
                         this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR2, len: count * 2}, minRank, this.isTrump));
                     } else if (!addOnce) {
                         this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.PAIR, len: 2}, minRank, this.isTrump));
-                        addOnce = true;
+//                        addOnce = true;   // add all
                     }
                     count = 1;
                     minRank = rnk;
@@ -344,7 +344,7 @@ Hand.prototype.generateSubHands = function (stat) {
                         this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR3, len: count * 3}, minRank, this.isTrump));
                     } else if (!addOnce) {
                         this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRIPS, len: 3}, minRank, this.isTrump));
-                        addOnce = true;
+//                        addOnce = true;
                     }
                     count = 1;
                     minRank = rnk;
@@ -378,7 +378,7 @@ Hand.prototype.generateSubHands = function (stat) {
                         this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.TRACTOR4, len: count * 4}, minRank, this.isTrump));
                     } else if (!addOnce) {
                         this.subHands.push(new SimpleHand({cat: Hand.COMBINATION.QUADS, len: 4}, minRank, this.isTrump));
-                        addOnce = true;
+//                        addOnce = true;
                     }
                     count = 1;
                     minRank = rnk;
@@ -485,7 +485,8 @@ function SimpleHand(handType, minRank, isTrump) {
 
 SimpleHand.compare = function (a, b) {
     if (a.type.len === b.type.len) {
-        return a.minRank - b.minRank;
+        if (a.type.cat === b.type.cat) return a.minRank - b.minRank;
+        return a.type.cat - b.type.cat;
     }
 
     return a.type.len - b.type.len;

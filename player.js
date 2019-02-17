@@ -675,6 +675,7 @@ Player.prototype.playCards = function (strCards) {
 //            console.log('is flop: ' + hand.isFlop);
             if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) {
                 cards = this.autoPlayCards(isLeading);
+                hand = null;
             } else {
                 if (!game.isLeadingHandValid(hand)) {
                     console.log('invalid leading: ' + strCards);
