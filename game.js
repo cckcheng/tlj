@@ -423,6 +423,13 @@ Hand.COMBINATION = {
     MIXED: 111
 };
 
+Hand.SIMPLE_TYPE = {
+    SINGLE: {cat: Hand.COMBINATION.SINGLE, len: 1},
+    PAIR: {cat: Hand.COMBINATION.PAIR, len: 2},
+    TRIPS: {cat: Hand.COMBINATION.TRIPS, len: 3},
+    QUADS: {cat: Hand.COMBINATION.QUADS, len: 4}
+};
+
 Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {
     var stat = new HandStat(orgCards, trump_suite, game_rank);
     var cards = [];

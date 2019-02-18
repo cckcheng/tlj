@@ -396,10 +396,43 @@ Player.prototype.ruff = function (cards) {
     this.followPlay(cards, this.trumps, true);
 };
 
-Player.prototype.getStrongHands = function () {
-    var arr = this.getAllSuites( );
+Player.prototype.getStrongHand = function () {
+    var game = this.currentTable.game;
+    var arr = this.getAllSuites();
+    var x = Math.floor(Math.random() * (arr.length));
+    var stat,rnks, sHand, isTrump, tractors;
+    for(var i=0; i<arr.length; i++) {
+        if(arr[x].length >= 4) {
+            isTrump = arr[x] === this.trumps;
+            stat = new HandStat(arr[x], game.trump, game.rank);
+            if(stat.totalQuads > 0) {
+                rnks = stat.sortedRanks(4);
+                sHand = new SimpleHand(Hand.SIMPLE_TYPE.QUADS, rnks[rnks.length-1], isTrump);
+                return Hand.makeCards(sHand, arr[x], game.trump, game.rank);
+            }
+            tractors = stat.getTractors(3);
+            if(tractors.length < 1) {
+                tractors = stat.getTractors(2);
+            }
+            if(tractors.length > 0) {
+                tractors.sort(function (a, b) {
+                    if (a.type.len === b.type.len) return b.minRank - a.minRank;
+                    return b.type.len - a.type.len;
+                });
+                return Hand.makeCards(tractors[0], arr[x], game.trump, game.rank);
+            }
+            if(stat.totalTrips > 0) {
+                rnks = stat.sortedRanks(3);
+                sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length-1], isTrump);
+                return Hand.makeCards(sHand, arr[x], game.trump, game.rank);
+            }
+        }
 
-    return [];
+        x++;
+        if(x === arr.length) x=0;
+    }
+
+    return null;
 };
 
 // this is for the begining play of contractor
@@ -523,9 +556,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
             }
         }
 
-        var strongHands = this.getStrongHands();
-        if (strongHands.length > 0) {
-            cards = strongHands[0];
+        var strongHand = this.getStrongHand();
+        if (strongHand != null) {
+            cards = strongHand;
         } else {
             if (game.partner == null) {
                 if (this === game.contractor) {
@@ -648,6 +681,10 @@ Player.prototype.isValidPlay = function (hand) {
 
     if (cardList.length >= firstHand.cardNumber) {
         if (!Card.containsAll(cardList, hand.cards)) return false;
+        if(hand.totalPairs < firstHand.totalPairs) {
+            var stat = new HandStat(cardList, game.trump, game.rank);
+            if(stat.totalPairs > hand.totalPairs) return false;
+        }
     } else if (cardList.length > 0) {
         if (!Card.containsAll(hand.cards, cardList)) return false;
     }
@@ -692,8 +729,7 @@ Player.prototype.playCards = function (strCards) {
             cards = this.autoPlayCards(isLeading);
         }
     } else {
-        if (cards.length > 0) {
-            // TO DO: validate cards played to prevent illegal play
+        if (cards.length > 0) {        
             hand = new Hand(this, cards, game.trump, game.rank);
             if (!this.isValidPlay(hand)) {
                 cards = this.autoPlayCards(isLeading);
