@@ -388,6 +388,12 @@ Player.prototype.ruff = function (cards) {
         return;
     }
 
+    var leadingHand = game.currentRound.getLeadingHand();
+    if(leadingHand.isTrump) {
+        this.tryBeatLeading(cards, this.trumps);
+        return;
+    }
+
     if (firstHand.cardNumber < 2) {
         Card.selectCardsByPoint(cards, this.trumps, true, game.trump, game.rank, firstHand.cardNumber);
         return;
@@ -435,10 +441,9 @@ Player.prototype.getStrongHand = function () {
     return null;
 };
 
-// this is for the begining play of contractor
 Player.prototype.playPartnerCards = function (cards) {
-    if (this.noPartnerCards) return false;
-    var partnerDef = this.currentTable.game.partnerDef;
+    var game = this.currentTable.game;
+    var partnerDef = game.partnerDef;
     if (partnerDef.noPartner) return false;
     var defCard = partnerDef.getDefCard();
     var cardList = this.getCardsBySuite(defCard.suite);
@@ -457,8 +462,7 @@ Player.prototype.playPartnerCards = function (cards) {
         }
     }
 
-    this.noPartnerCards = cards.length < 1;
-    return !this.noPartnerCards;
+    return cards.length > 0;
 };
 
 Player.prototype.hasPartnerCard = function () {
@@ -542,6 +546,52 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
 Player.prototype.tryBeatLeading = function (cards, cardList) {
     var game = this.currentTable.game;
     var leadingHand = game.currentRound.getLeadingHand();
+    var maxRank,stat,rnks,cc,sHand;
+    switch(leadingHand.type.cat) {
+        case Hand.COMBINATION.SINGLE:
+            var card = cardList[cardList.length - 1];
+            maxRank = card.trumpRank(game.trump, game.rank);
+            if(maxRank > leadingHand.maxRank) {
+                if(cardList.length>1 && game.partner == null && game.cardsPlayed <= 10) {
+                    var partnerDef = this.currentTable.game.partnerDef;
+                    if (!partnerDef.noPartner) {
+                        var defCard = partnerDef.getDefCard();
+                        var viceCard = partnerDef.getViceCard(game.rank);
+                        if(card.equals(defCard)) {
+                            if(viceCard.trumpRank(game.trump, game.rank) > leadingHand.maxRank) {
+                                if(viceCard.indexOf(cardList) >=0) {
+                                    cards.push(viceCard);
+                                    return;
+                                }
+                            }
+                            cards.push(cardList[0]);
+                            return;
+                        }
+                    }
+                }
+                cards.push(cardList[cardList.length - 1]);
+            } else {
+                Card.selectCardsByPoint(cards, cardList, false, game.trump, game.rank, 1);
+            }
+
+            return;
+        case Hand.COMBINATION.PAIR:
+        case Hand.COMBINATION.TRIPS:
+        case Hand.COMBINATION.QUADS:
+            stat = new HandStat(cardList, game.trump, game.rank);
+            rnks = stat.sortedRanks(leadingHand.type.len);
+            if(rnks.length > 0 && rnks[rnks.length-1] > leadingHand.maxRank) {
+                sHand = new SimpleHand(leadingHand.type, rnks[rnks.length-1], cardList === this.trumps);
+                cc = Hand.makeCards(sHand, cardList, game.trump, game.rank);
+                cc.forEach(function (c) {
+                    cards.push(c);
+                });
+                return;
+            }
+            break;
+        default:
+            break;
+    }
     this.followPlay(cards, cardList, false);
 };
 

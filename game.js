@@ -26,6 +26,7 @@ function Game(players, deckNumber) {
 
     this.holeCards = [];
     this.rounds = [];
+    this.cardsPlayed = 0;
     this.currentRound = null;
     this.partnerDef = null;
 
@@ -43,11 +44,8 @@ function Game(players, deckNumber) {
     };
 
     this.isSameSide = function (player1, player2) {
-        if (player1 === this.contractor || player1 === this.partner) {
-            return player2 === this.contractor || player2 === this.partner;
-        }
-
-        return !(player2 === this.contractor || player2 === this.partner);
+        return (player1 === this.contractor || player1 === this.partner) ===
+            (player2 === this.contractor || player2 === this.partner);
     };
 
     this.sumPoints = function (exPlayer) {
@@ -86,6 +84,10 @@ function PartnerDef(def) {
 
     this.getDef = function() {
         return def;
+    };
+
+    this.getSeq = function() {
+        return seq;
     };
 
     this.getDefCard = function () {
@@ -817,6 +819,7 @@ Game.prototype.getHandType = function (player, cards) {
 Game.prototype.startNewRound = function () {
     if(this.currentRound != null) {
         this.leadingPlayer = this.currentRound.getNextLeadingPlayer();
+        this.cardsPlayed += this.currentRound.getFirstHand().cardNumber;
     }
     this.currentRound = new Round(this.players, this.trump, this.rank);
     this.rounds.push(this.currentRound);
