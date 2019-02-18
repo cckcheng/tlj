@@ -86,6 +86,9 @@ HandStat.prototype.getTractors = function (sLen, isTrump) {
     var minRank = -1;
     var count = 1;
     for (var x = 0, rnk; rnk = rnks[x]; x++) {
+        if (rnk === preRank) {
+            continue;
+        }
         if (rnk !== preRank + 1) {
             if (count >= 2) {
                 var sHand = new SimpleHand({cat: cat, len: count * sLen}, minRank, isTrump);
