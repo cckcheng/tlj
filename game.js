@@ -119,29 +119,30 @@ function Hand(player, cards, trump, rank) {
 
     this.doAnalysis(cards, trump, rank);
 
-    this.compareTo = function (other) {
+    this.compareTo = function (other, firstHandType) {
         if (other == null) return 1;
         if (this.type.cat === Hand.COMBINATION.MIX_SUITE) return -1;
         if (other.type.cat === Hand.COMBINATION.MIX_SUITE) return 1;
+        if (!this.isTrump && this.suite !== other.suite) return -1;
 
         if (this.cardNumber === 4 && this.type.cat === Hand.COMBINATION.QUADS && other.type.cat === Hand.COMBINATION.TRACTOR2) {
             return 1;
         }
 
-        if (this.type.cat !== other.type.cat) return -1;
-        if (!this.isTrump && other.isTrump) return -1;
-
-        if (this.type.cat !== Hand.COMBINATION.MIXED) {
+        if (firstHandType.cat !== Hand.COMBINATION.MIXED) {
+            if (this.type.cat !== other.type.cat) return -1;
+            if (!this.isTrump && other.isTrump) return -1;
             if (this.isTrump && !other.isTrump) return 1;
             return this.maxRank > other.maxRank ? 1 : -1;
         }
 
-        if (this.isTrump && !other.isTrump) {
-            // mixed
-            if(this.totalPairs< other.totalPairs || this.totalTrips < other.totalTrips || this.totalQuads<other.totalQuads) return -1;
-			if(other.subHands == null || other.subHands.length<1) return 1;
-			// TODO
-        }
+        // mixed
+        if (!this.isTrump || other.isTrump) return -1;
+
+        // possible ruff
+        if (this.totalPairs < other.totalPairs || this.totalTrips < other.totalTrips || this.totalQuads < other.totalQuads) return -1;
+        if (other.subHands == null || other.subHands.length < 1) return 1;  // valid ruff
+        // TODO, more conditions
 
         return -1;
     };
@@ -510,6 +511,7 @@ function Round(players, trump, gameRank) {
     this.displayAll = function () {
         var str = '';
         this.playList.forEach(function (hnd) {
+            if (hnd === leadingHand) str += 'V ';
             str += Card.showCards(hnd.cards) + '; ';
         });
         return str + '\n';
@@ -667,8 +669,10 @@ function Round(players, trump, gameRank) {
             if (cards == null || cards.length < 1) return false;
             hand = new Hand(player, cards, trump, gameRank);
         }
-        if (firstHand == null) firstHand = hand;
-        if (leadingHand == null || hand.compareTo(leadingHand) > 0) {
+        if (firstHand == null) {
+            firstHand = hand;
+            leadingHand = hand;
+        } else if (hand.compareTo(leadingHand, firstHand.type) > 0) {
             leadingHand = hand;
         }
         this.playList.push(hand);

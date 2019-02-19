@@ -93,7 +93,7 @@ var myCards = [];
 Card.selectTractor2(16, myCards, cards, true, trump_suite, game_rank);
 console.log(Card.showCards(myCards));
 
-if (true) return;
+if (true) process.exit(0);
 
 //var stat = new HandStat(p.spades, game.trump, game.rank);
 //console.log('tractors: ' + stat.getTractors(2, false));
