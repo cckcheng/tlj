@@ -1,3 +1,8 @@
 nbproject/
 *.html
+*.txt
 st*.sh
+server.js
+sys.js
+
+

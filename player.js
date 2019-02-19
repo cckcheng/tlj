@@ -3,6 +3,7 @@ module.exports = Player;
 var Card = require('./card');
 var HandStat = require('./stat');
 var Table = require('./table');
+var Server = require('./server');
 const {Game, Hand, SimpleHand} = require('./game');
 
 function Player(o) {
@@ -212,13 +213,6 @@ Player.prototype.showHand = function () {
     return s;
 };
 
-Player.confusedData = function (data) {
-    var t = data.replace(/T/g, '#');
-    t = t.replace(/L/g, 'T');
-    t = t.replace(/j/g, 'L');
-    return t.replace(/#/g, 'j');
-};
-
 Player.prototype.pushJson = function (json) {
     if (this.sock == null)
         return;
@@ -229,22 +223,12 @@ Player.prototype.pushJson = function (json) {
             if (Table.Debugging) {
                 p.sock.write(JSON.stringify(json) + '\n');
             } else {
-                p.sock.write(Player.confusedData(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
+                p.sock.write(Server.confusedData(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
             }
         } catch (err) {
             console.log(new Date().toLocaleString() + ', ' + err.message);
         }
     }, this);
-//    try {
-//        if (Table.Debugging) {
-//            this.sock.write(JSON.stringify(json) + '\n');
-////            this.sock.write(Buffer.from(JSON.stringify(json)).toString('base64'));
-//        } else {
-//            this.sock.write(Player.confusedData(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
-//        }
-//    } catch (err) {
-//        console.log(err.message);
-//    }
 };
 
 Player.prototype.pushData = function () {
