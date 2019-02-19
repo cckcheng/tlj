@@ -520,14 +520,18 @@ Player.prototype.randomPlay = function (cards) {
 Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
+
+    var tmpCards = cardList.slice();
     switch(firstHand.type.cat) {
         case Hand.COMBINATION.SINGLE:
-            Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, 1);
+            Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber);
             break;
         case Hand.COMBINATION.PAIR:
         case Hand.COMBINATION.TRIPS:
         case Hand.COMBINATION.QUADS:
-            Card.selectSimpleHandByPoint(firstHand.type, cards, cardList, pointFirst, game.trump, game.rank);
+            for (var x = 0, n = firstHand.cardNumber / firstHand.type.len; x < n; x++) {
+                tmpCards = Card.selectSimpleHandByPoint(firstHand.type, cards, tmpCards, pointFirst, game.trump, game.rank);
+            }
             break;
         case Hand.COMBINATION.TRACTOR2:
             Card.selectTractor2(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank);
@@ -538,13 +542,52 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
         case Hand.COMBINATION.TRACTOR4:
             Card.selectTractor4(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank);
             break;
+        case Hand.COMBINATION.MIXED:
+            if (firstHand.subHands == null) {
+                console.log(new Date().toLocaleString() + ', ERROR: MIXED_HAND subHands=null, ' + Card.showCards(firstHand.cards));
+                Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, firstHand.cardNumber);
+            } else {
+                for (var x = firstHand.subHands.length - 1, subH; x >= 0; x--) {
+                    subH = firstHand.subHands[x];
+                    switch (subH.type.cat) {
+                        case Hand.COMBINATION.SINGLE:
+                            break;
+                        case Hand.COMBINATION.PAIR:
+                        case Hand.COMBINATION.TRIPS:
+                        case Hand.COMBINATION.QUADS:
+                            tmpCards = Card.selectSimpleHandByPoint(subH.type, cards, tmpCards, pointFirst, game.trump, game.rank);
+                            break;
+                        case Hand.COMBINATION.TRACTOR2:
+                            tmpCards = Card.selectTractor2(subH.type.len, cards, tmpCards, pointFirst, game.trump, game.rank);
+                            break;
+                        case Hand.COMBINATION.TRACTOR3:
+                            tmpCards = Card.selectTractor3(subH.type.len, cards, tmpCards, pointFirst, game.trump, game.rank);
+                            break;
+                        case Hand.COMBINATION.TRACTOR4:
+                            tmpCards = Card.selectTractor4(subH.type.len, cards, tmpCards, pointFirst, game.trump, game.rank);
+                            break;
+                    }
+                }
+                if (cards.length < firstHand.cardNumber) {
+                    Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber - cards.length);
+                }
+            }
+            break;
         default:
-
+            console.log(new Date().toLocaleString() + ', UNKNOWN HAND COMBINATION:' + firstHand.type.cat);
+            Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, firstHand.cardNumber);
+            break;
     }
 };
 
 Player.prototype.tryBeatLeading = function (cards, cardList) {
     var game = this.currentTable.game;
+    var firstHand = game.currentRound.getFirstHand();
+    if (firstHand.isFlop) {
+        // unable to beat
+        this.followPlay(cards, cardList, false);
+        return;
+    }
     var leadingHand = game.currentRound.getLeadingHand();
     var maxRank,stat,rnks,cc,sHand;
     switch(leadingHand.type.cat) {
@@ -779,7 +822,7 @@ Player.prototype.playCards = function (strCards) {
             cards = this.autoPlayCards(isLeading);
         }
     } else {
-        if (cards.length > 0) {        
+        if (cards.length > 0) {
             hand = new Hand(this, cards, game.trump, game.rank);
             if (!this.isValidPlay(hand)) {
                 cards = this.autoPlayCards(isLeading);
