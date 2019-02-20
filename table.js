@@ -168,7 +168,7 @@ Table.prototype.resume = function (player) {
 
                 if (player && player === this.players[this.actionPlayerIdx]) {
                     if (this.autoTimer != null) {
-                        this.autoTimer.refresh();
+//                        this.autoTimer.refresh(); // probably no need 
                     }
                 }
                 break;
