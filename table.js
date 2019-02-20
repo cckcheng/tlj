@@ -396,7 +396,8 @@ function procDefinePartner(t, def) {
 
 function procPlayCards(t, cards) {
     if (t.actionPlayerIdx < 0) {
-        t.actionPlayerIdx = t.players.indexOf(t.game.leadingPlayer);
+        procAfterPause(t);
+        return;
     }
     var player = t.players[t.actionPlayerIdx];
     var status = player.playCards(cards);
