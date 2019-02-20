@@ -216,9 +216,7 @@ Table.prototype.startGame = function (testOnly) {
         shuffleArray(this.players);
         // init game info
         for (var x = 0, p; p = this.players[x]; x++) {
-            p.matchInfo.lastBid = '-';
-            p.matchInfo.points = 0;
-            p.playedCards = '';
+            p.matchInfo.reset();
         }
     }
 
@@ -397,6 +395,9 @@ function procDefinePartner(t, def) {
 }
 
 function procPlayCards(t, cards) {
+    if (t.actionPlayerIdx < 0) {
+        t.actionPlayerIdx = t.players.indexOf(t.game.leadingPlayer);
+    }
     var player = t.players[t.actionPlayerIdx];
     var status = player.playCards(cards);
     var seat = t.actionPlayerIdx + 1;
@@ -710,6 +711,13 @@ function MatchInfo(t, player) {
     this.points = 0;    // points collected (before contractor's partner appears)
     this.contracts = 0; // contract times
     this.playedCards = ''; // cards played
+
+    this.reset = function () {
+        // call reset when start a new game
+        this.lastBid = '-';
+        this.points = 0;
+        this.playedCards = '';
+    };
 
     this.toJson = function (seat) {
         var json = {
