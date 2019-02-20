@@ -385,7 +385,7 @@ Player.prototype.ruff = function (cards) {
 
     this.followPlay(cards, this.trumps, true);
     var tHand = new Hand(this, cards, game.trump, game.rank);
-    if (tHand.compareTo(leadingHand, firstHand.type) <= 0) {
+    if (tHand.compareTo(leadingHand, firstHand) <= 0) {
         cards.splice(0, cards.length);  // clear cards
         this.duckCards(cards, firstHand.suite, false, firstHand.cardNumber);
     }

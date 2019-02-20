@@ -140,7 +140,7 @@ function Hand(player, cards, trump, rank) {
         if (!this.isTrump || firstHand.isTrump) return -1;
 
         // possible ruff
-        if (this.totalPairs < other.totalPairs || this.totalTrips < other.totalTrips || this.totalQuads < other.totalQuads) return -1;
+        if (this.totalPairs < firstHand.totalPairs || this.totalTrips < firstHand.totalTrips || this.totalQuads < firstHand.totalQuads) return -1;
         if (firstHand.subHands == null || firstHand.subHands.length < 1) {
             if (firstHand === other) return 1;   // valid ruff
             return this.maxRank > other.maxRank ? 1 : -1; // possible overruff
@@ -726,7 +726,7 @@ function Round(players, trump, gameRank) {
         if (firstHand == null) {
             firstHand = hand;
             leadingHand = hand;
-        } else if (hand.compareTo(leadingHand, firstHand.type) > 0) {
+        } else if (hand.compareTo(leadingHand, firstHand) > 0) {
             leadingHand = hand;
         }
         this.playList.push(hand);
