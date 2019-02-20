@@ -120,10 +120,15 @@ Table.prototype.terminate = function (activePlayers, playerId) {
         if (p == null)
             continue;
         p.currentTable = null;
+        if (p.sock == null && p.id != null) {
+            // need delete the player from activePlayers
+            if (activePlayers != null) {
+                delete activePlayers[p.id];
+            }
+        }
     }
 
     console.log(new Date().toLocaleString() + ', table ended');
-    if (playerId != null) delete activePlayers[playerId];
 };
 
 Table.prototype.resume = function (player) {

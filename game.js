@@ -119,7 +119,7 @@ function Hand(player, cards, trump, rank) {
 
     this.doAnalysis(cards, trump, rank);
 
-    this.compareTo = function (other, firstHandType) {
+    this.compareTo = function (other, firstHand) {
         if (other == null) return 1;
         if (this.type.cat === Hand.COMBINATION.MIX_SUITE) return -1;
         if (other.type.cat === Hand.COMBINATION.MIX_SUITE) return 1;
@@ -129,7 +129,7 @@ function Hand(player, cards, trump, rank) {
             return 1;
         }
 
-        if (firstHandType.cat !== Hand.COMBINATION.MIXED) {
+        if (firstHand.type.cat !== Hand.COMBINATION.MIXED) {
             if (this.type.cat !== other.type.cat) return -1;
             if (!this.isTrump && other.isTrump) return -1;
             if (this.isTrump && !other.isTrump) return 1;
@@ -137,14 +137,68 @@ function Hand(player, cards, trump, rank) {
         }
 
         // mixed
-        if (!this.isTrump || other.isTrump) return -1;
+        if (!this.isTrump || firstHand.isTrump) return -1;
 
         // possible ruff
         if (this.totalPairs < other.totalPairs || this.totalTrips < other.totalTrips || this.totalQuads < other.totalQuads) return -1;
-        if (other.subHands == null || other.subHands.length < 1) return 1;  // valid ruff
-        // TODO, more conditions
+        if (firstHand.subHands == null || firstHand.subHands.length < 1) {
+            if (firstHand === other) return 1;   // valid ruff
+            return this.maxRank > other.maxRank ? 1 : -1; // possible overruff
+        }
 
-        return -1;
+        // more comparation
+        var tmpCards = this.cards.slice();
+        var stat = new HandStat(tmpCards, trump, rank);
+        var statOther;
+        if (other.isTrump) {
+            statOther = new HandStat(other.cards, trump, rank);
+        }
+
+        var x = firstHand.subHands.length - 1;
+        var sHand = firstHand.subHands[x];
+        var rnks, tractors, tractorsOther;
+        switch (sHand.type.cat) {
+            case Hand.COMBINATION.PAIR:
+            case Hand.COMBINATION.TRIPS:
+            case Hand.COMBINATION.QUADS:
+                rnks = stat.sortedRanks(sHand.type.len);
+                if (rnks < 1) return -1;
+                if (other.isTrump) {
+                    var rnksOther = statOther.sortedRanks(sHand.type.len);
+                    if (rnksOther[rnksOther.length - 1] >= rnks[rnks.length - 1]) return -1;
+                }
+                break;
+            case Hand.COMBINATION.TRACTOR2:
+                tractors = stat.getTractors(2, true);
+                if (tractors.length < 1) return -1;
+                if (tractors[tractors.length - 1].type.len < sHand.type.len) return -1;
+                if (other.isTrump) {
+                    tractorsOther = stat.getTractors(2, true);
+                    if (tractorsOther[tractorsOther.length - 1].minRank >= tractors[tractors.length - 1].minRank) return -1;
+                }
+                break;
+            case Hand.COMBINATION.TRACTOR3:
+                tractors = stat.getTractors(3, true);
+                if (tractors.length < 1) return -1;
+                if (tractors[tractors.length - 1].type.len < sHand.type.len) return -1;
+                if (other.isTrump) {
+                    tractorsOther = stat.getTractors(3, true);
+                    if (tractorsOther[tractorsOther.length - 1].minRank >= tractors[tractors.length - 1].minRank) return -1;
+                }
+                break;
+            case Hand.COMBINATION.TRACTOR4:
+                tractors = stat.getTractors(4, true);
+                if (tractors.length < 1) return -1;
+                if (tractors[tractors.length - 1].type.len < sHand.type.len) return -1;
+                if (other.isTrump) {
+                    tractorsOther = stat.getTractors(4, true);
+                    if (tractorsOther[tractorsOther.length - 1].minRank >= tractors[tractors.length - 1].minRank) return -1;
+                }
+                break;
+        }
+
+        // TODO: need verify some rarely happened case
+        return 1;
     };
 
     this.display = function () {
