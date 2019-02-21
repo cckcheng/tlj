@@ -1,6 +1,6 @@
 module.exports = Table;
 
-var Player = require('./player');
+var Server = require('./server');
 var Card = require('./card');
 const {Game, Hand, SimpleHand} = require('./game');
 
@@ -213,7 +213,7 @@ Table.prototype.startGame = function (testOnly) {
             p.matchInfo = new MatchInfo(this, p);
         }
     } else {
-        shuffleArray(this.players);
+        Server.shuffleArray(this.players);
         // init game info
         for (var x = 0, p; p = this.players[x]; x++) {
             p.matchInfo.reset();
@@ -690,19 +690,6 @@ Table.prototype.getNextRank = function (rank, delta) {
 
     return this.matchType.ranks[nextIdx];
 };
-
-function shuffleArray(arr) {
-    if (arr == null)
-        return;
-    for (var x = 0; x < arr.length; x++) {
-        var idx = Math.floor(Math.random() * arr.length);
-        if (idx === x)
-            continue;
-        var tmp = arr[x];
-        arr[x] = arr[idx];
-        arr[idx] = tmp;
-    }
-}
 
 // record match info per player
 function MatchInfo(t, player) {
