@@ -2,13 +2,14 @@ module.exports = Table;
 
 var Server = require('./server');
 var Card = require('./card');
+var Config = require('./conf');
 const {Game, Hand, SimpleHand} = require('./game');
 
 Table.Debugging = false;
 Table.FastMode = false;
 Table.HOLE_POINT_TIMES = 4;
-Table.PAUSE_SECONDS_BETWEEN_GAME = 30;
-Table.PENDING_SECONDS = 5;
+Table.PAUSE_SECONDS_BETWEEN_GAME = Config.PAUSE_SECONDS_BETWEEN_GAME;
+Table.PAUSE_SECONDS_BETWEEN_ROUND = Config.PAUSE_SECONDS_BETWEEN_ROUND;
 
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
@@ -34,8 +35,8 @@ function Table(o) {
 
     this.games = [];
 
-    this.TIMEOUT_SECONDS = Table.FastMode ? 8 : 30;     // default: 32 seconds (30s for client side + 2s)
-    this.ROBOT_SECONDS = Table.FastMode ? 0.1 : 2;
+    this.TIMEOUT_SECONDS = Table.FastMode ? Config.FAST_TIMEOUT_SECONDS : Config.TIMEOUT_SECONDS;     // default: 32 seconds (30s for client side + 2s)
+    this.ROBOT_SECONDS = Table.FastMode ? 0.1 : Config.ROBOT_SECONDS;
 
     this.status = 'running';
 
@@ -52,10 +53,21 @@ function Table(o) {
             rnk = p.matchInfo.currentRank;
             if (pRank !== 0 && rnk !== pRank) r = x + 1;
             summary += '\n' + (r === 1 ? 'Winner' : 'No. ' + r) + ': ' + p.name
-                    + ' (' + p.matchInfo.currentRank + ')';
+                    + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')';
             pRank = rnk;
         }
         return summary;
+    };
+
+    this.playerNames = function () {
+        var s = '';
+        this.players.forEach(function (p) {
+            s += ', ' + p.name;
+            if (p.id != null && p.sock == null) {
+                s += '(away)';
+            }
+        });
+        return s.substr(2);
     };
 }
 
@@ -106,7 +118,7 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
     }
-    var pauseMinutes = Table.Debugging ? 5 : 30;  // 5 minutes, set to 30 minutes when release
+    var pauseMinutes = Table.Debugging ? 5 : Config.TABLE_IDLE_MINUTES;  // 5 minutes, set to 30 minutes when release
     this.pauseTimer = setTimeout(function (t) {
         t.pauseTimer = null;
         t.terminate(activePlayers, playerId);
@@ -446,7 +458,7 @@ function procPlayCards(t, cards) {
         }
         t.broadcastGameInfo(json);
 
-        t.goPause(Table.PENDING_SECONDS);
+        t.goPause(Table.PAUSE_SECONDS_BETWEEN_ROUND);
     } else {
         t.rotatePlayer();
         json.next = t.actionPlayerIdx + 1
@@ -470,6 +482,8 @@ function gameOver(t) {
     }
 
     summary += t.game.promote();
+    summary += t.playerNames() + '\n';
+    summary += 'Next game will start in ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds.';
 
     t.broadcastGameInfo({
         action: 'gameover',

@@ -250,7 +250,7 @@ Player.prototype.pushData = function () {
         json = Object.assign({
             action: 'init',
             game: this.currentTable.games.length,
-            info: 'On break, resume in 30 seconds...',
+            info: 'On break for ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds...',
             players: playerInfo,
             timeout: this.currentTable.TIMEOUT_SECONDS // default timeout
         }, this.matchInfo.toJson(seat));
