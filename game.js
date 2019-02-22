@@ -795,6 +795,8 @@ function Round(players, trump, gameRank) {
 
     this.isWinning = function (exPlayer) {
         if (firstHand.isFlop) return true;
+        if (this.playList.length === players.length - 1) return true;    // is last play
+        // TODO, check if following players are all same side
         return !hasPossibleHighers(leadingHand, exPlayer);
     };
 

@@ -24,6 +24,14 @@ function Player(o) {
 
     this.timeoutTimes = 0;
 
+    this.totalCardLeft = function () {
+        return this.trumps.length +
+                this.spades.length +
+                this.hearts.length +
+                this.diamonds.length +
+                this.clubs.length;
+    };
+
     this.replaceRobot = function (id, name, sock) {
         this.id = id;
         this.sock = sock;
@@ -334,6 +342,19 @@ Player.prototype.pushData = function () {
     this.pushJson(json);
 };
 
+Player.prototype.playAllCards = function (cards) {
+    var allCards = [];
+    allCards = allCards.concat(this.spades);
+    allCards = allCards.concat(this.hearts);
+    allCards = allCards.concat(this.diamonds);
+    allCards = allCards.concat(this.clubs);
+    allCards = allCards.concat(this.trumps);
+
+    for (var x = 0; x < allCards.length; x++) {
+        cards.push(allCards[x]);
+    }
+};
+
 Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     var allCards = [];
     if (exSuite !== Card.SUITE.SPADE) {
@@ -632,6 +653,11 @@ Player.prototype.autoPlayCards = function (isLeading) {
     var game = this.currentTable.game;
     var round = game.currentRound;
     if (isLeading) {
+        if (this.totalCardLeft() < 2) {
+            this.playAllCards(cards);
+            return cards;
+        }
+
         if (this === game.contractor && game.partner == null) {
             if (this.playPartnerCards(cards)) {
                 return cards;
@@ -664,6 +690,11 @@ Player.prototype.autoPlayCards = function (isLeading) {
         }
     } else {
         var firstHand = round.getFirstHand();
+        if (this.totalCardLeft() <= firstHand.cardNumber) {
+            this.playAllCards(cards);
+            return cards;
+        }
+
         var leadingPlayer = round.getNextLeadingPlayer();
         var cardList;
         var suite = firstHand.suite;
@@ -841,7 +872,7 @@ Player.prototype.playCards = function (strCards) {
 
         return 'gameover';
     }
-    return '';
+    return this.totalCardLeft() < 1 ? 'lasthand' : '';
 };
 
 Player.prototype.addPoints = function (points) {

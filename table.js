@@ -313,17 +313,18 @@ function procAfterBid(t) {
     }
 }
 
-Table.prototype.autoPlay = function () {
+Table.prototype.autoPlay = function (deemRobot) {
     if (this.autoTime != null) return;  // prevent multi timeout
     if (this.actionPlayerIdx < 0) {
         procAfterPause(this);
         return;
     }
 
+    if (deemRobot == null) deemRobot = false;
 //    console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
     var player = this.players[this.actionPlayerIdx];
     var waitSeconds = this.ROBOT_SECONDS;
-    if (player.sock != null) {
+    if (!deemRobot && player.sock != null) {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
@@ -463,7 +464,7 @@ function procPlayCards(t, cards) {
         t.rotatePlayer();
         json.next = t.actionPlayerIdx + 1
         t.broadcastGameInfo(json);
-        t.autoPlay();
+        t.autoPlay(status === 'lasthand');
     }
 }
 
@@ -533,7 +534,8 @@ function procAfterPause(t) {
         } else {
             t.actionPlayerIdx = 0;
         }
-        t.autoPlay();
+
+        t.autoPlay(t.game.leadingPlayer.totalCardLeft() <= 1);
     } else {
         if (t.allRobots()) {
             t.status = 'pending';
