@@ -4,7 +4,5 @@
     "keywords": ["util", "functional", "server", "client", "browser"],
     "author": "ccheng",
     "contributors": [],
-    "dependencies": {}, "scripts":{
-"start":"node server.js -Df 192.168.1.99"}
-
+    "dependencies": {}, "scripts":{}
 }
