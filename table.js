@@ -43,7 +43,8 @@ function Table(o) {
     this.matchSummary = function () {
         var gameNum = this.games.length;
         if (gameNum < 1) return '';
-        var summary = 'Total games: ' + gameNum + '\n';
+//        var summary = 'Total games: ' + gameNum + '\n';
+        var summary = '';
         this.players.sort(function (a, b) {
             return b.matchInfo.currentRank - a.matchInfo.currentRank;
         });
@@ -52,8 +53,8 @@ function Table(o) {
         for (var r = 1, x = 0, p; p = this.players[x]; x++) {
             rnk = p.matchInfo.currentRank;
             if (pRank !== 0 && rnk !== pRank) r = x + 1;
-            summary += '\n' + (r === 1 ? 'Winner' : 'No. ' + r) + ': ' + p.name
-                    + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')';
+            summary += (r === 1 ? 'Winner' : 'No. ' + r) + ': ' + p.name
+                    + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
             pRank = rnk;
         }
         return summary;
@@ -62,10 +63,11 @@ function Table(o) {
     this.playerNames = function () {
         var s = '';
         this.players.forEach(function (p) {
-            s += ', ' + p.name;
+            s += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
             if (p.id != null && p.sock == null) {
-                s += '(away)';
+                s += ',away';
             }
+            s += ')';
         });
         return s.substr(2);
     };
@@ -110,7 +112,7 @@ Table.prototype.allRobots = function () {
     return true;
 };
 
-Table.prototype.dismiss = function (activePlayers, playerId) {
+Table.prototype.dismiss = function () {
     if (this.dismissed) return;
     if (this.status === 'break') return;
     if (this.pauseTimer != null) return;
@@ -121,11 +123,12 @@ Table.prototype.dismiss = function (activePlayers, playerId) {
     var pauseMinutes = Table.Debugging ? 5 : Config.TABLE_IDLE_MINUTES;  // 5 minutes, set to 30 minutes when release
     this.pauseTimer = setTimeout(function (t) {
         t.pauseTimer = null;
-        t.terminate(activePlayers, playerId);
+        t.terminate();
     }, pauseMinutes * 60000, this);
 };
 
-Table.prototype.terminate = function (activePlayers, playerId) {
+Table.prototype.terminate = function () {
+    console.log(this.playerNames());
     this.dismissed = true;
     for (var x = 0, p; x < this.players.length; x++) {
         p = this.players[x];
@@ -134,9 +137,7 @@ Table.prototype.terminate = function (activePlayers, playerId) {
         p.currentTable = null;
         if (p.sock == null && p.id != null) {
             // need delete the player from activePlayers
-            if (activePlayers != null) {
-                delete activePlayers[p.id];
-            }
+            Server.removePlayer(p);
         }
     }
 
