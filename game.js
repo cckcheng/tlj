@@ -60,11 +60,12 @@ function Game(players, deckNumber) {
 
 function PartnerDef(def) {
     this.noPartner = def === '0';
-    var card = def.charAt(0);
+    this.suite = def.charAt(0);
+    var card = this.suite;
     var seq = 0;
     if (!this.noParter) {
         var rnk = Card.StringToRank(def.charAt(1));
-        this.keyCard = new Card(card, rnk);
+        this.keyCard = new Card(this.suite, rnk);
         card += Card.StringToRank(def.charAt(1));
         seq = 1 + parseInt(def.charAt(2));
     }

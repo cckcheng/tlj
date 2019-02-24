@@ -357,6 +357,7 @@ Player.prototype.playAllCards = function (cards) {
 
 Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     var allCards = [];
+
     if (exSuite !== Card.SUITE.SPADE) {
         allCards = allCards.concat(this.spades);
     }
@@ -395,7 +396,9 @@ Player.prototype.ruff = function (cards) {
 
     var leadingHand = game.currentRound.getLeadingHand();
     if(leadingHand.isTrump) {
-        this.tryBeatLeading(cards, this.trumps);
+        if (this.tryBeatLeading(cards, this.trumps)) return;
+        cards.splice(0, cards.length);  // clear cards
+        this.duckCards(cards, firstHand.suite, false, firstHand.cardNumber);
         return;
     }
 
@@ -495,13 +498,13 @@ Player.prototype.passToPartner = function (cards) {
         this.randomPlay(cards);
         return false;
     }
-    var defCard = partnerDef.getDefCard();
-    var cardList = this.getCardsBySuite(defCard.suite);
+    var cardList = this.getCardsBySuite(partnerDef.suite);
     if (cardList.length < 1) {
         this.randomPlay(cards);
         return false;
     }
 
+    if (this.playPartnerCards(cards)) return true;
     Card.selectCardsByPoint(cards, cardList, true, game.trump, game.rank, 1);
     return true;
 };
@@ -517,7 +520,28 @@ Player.prototype.getAllSuites = function () {
 };
 
 Player.prototype.randomPlay = function (cards) {
-    var arr = this.getAllSuites();
+//    var arr = this.getAllSuites();
+
+    // not totally random
+    var game = this.currentTable.game;
+    var exSuite = game.partnerDef.suite;
+
+    var arr = [];
+    for (var i = 0, suit, lst; suit = Card.SUITES[i]; i++) {
+        if (suit === exSuite) continue;
+        lst = this.getCardsBySuite(suit);
+        if (lst.length < 1) continue;
+        arr.push(lst);
+    }
+
+    if (arr.length < 1) {
+        if (this.trumps.length > 0) {
+            arr.push(this.trumps);
+        } else {
+            arr.push(this.getCardsBySuite(exSuite));
+        }
+    }
+
     var x = Math.floor(Math.random() * (arr.length));
     var y = Math.floor(Math.random() * (arr[x].length));
 
@@ -596,11 +620,11 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
     if (firstHand.isFlop) {
         // unable to beat
         this.followPlay(cards, cardList, false);
-        return;
+        return false;
     }
     var leadingHand = game.currentRound.getLeadingHand();
     var maxRank,stat,rnks,cc,sHand;
-    switch(leadingHand.type.cat) {
+    switch (firstHand.type.cat) {
         case Hand.COMBINATION.SINGLE:
             var card = cardList[cardList.length - 1];
             maxRank = card.trumpRank(game.trump, game.rank);
@@ -614,11 +638,11 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                             if(viceCard.trumpRank(game.trump, game.rank) > leadingHand.maxRank) {
                                 if(viceCard.indexOf(cardList) >=0) {
                                     cards.push(viceCard);
-                                    return;
+                                    return true;
                                 }
                             }
                             cards.push(cardList[0]);
-                            return;
+                            return false;
                         }
                     }
                 }
@@ -627,7 +651,7 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                 Card.selectCardsByPoint(cards, cardList, false, game.trump, game.rank, 1);
             }
 
-            return;
+            return false;
         case Hand.COMBINATION.PAIR:
         case Hand.COMBINATION.TRIPS:
         case Hand.COMBINATION.QUADS:
@@ -639,13 +663,14 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                 cc.forEach(function (c) {
                     cards.push(c);
                 });
-                return;
+                return true;
             }
             break;
         default:
             break;
     }
     this.followPlay(cards, cardList, false);
+    return false;
 };
 
 Player.prototype.autoPlayCards = function (isLeading) {

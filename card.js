@@ -4,7 +4,7 @@ var HandStat = require('./stat');
 const {Game, Hand, SimpleHand} = require('./game');
 
 function Card(suite, rank) {
-	this.suite = suite;
+    this.suite = suite;
     this.rank = rank;
 }
 
@@ -65,6 +65,8 @@ Card.SUITE = {
     JOKER: 'V'
 };
 
+Card.SUITES = ['C', 'D', 'H', 'S'];
+
 Card.RANK = {
     SmallJoker: 97,
     BigJoker: 98
@@ -114,6 +116,11 @@ Card.RankToString = function (rank) {
 Card.prototype.isTrump = function (trump_suite, game_rank) {
     if (this.rank === game_rank || this.suite === trump_suite) return true;
     return this.rank === Card.RANK.BigJoker || this.rank === Card.RANK.SmallJoker;
+};
+
+Card.prototype.isHonor = function (trump_suite, game_rank) {
+    if (this.isTrump(trump_suite, game_rank)) return this.rank === Card.RANK.BigJoker;
+    return game_rank === 14 ? this.rank === 13 : this.rank === 14;
 };
 
 Card.prototype.trumpRank = function (trump_suite, game_rank) {
@@ -348,6 +355,9 @@ Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank
     var stat = new HandStat(tmpCards, trump, gameRank);
     var lst = cardList.slice();
     lst.sort(function (a, b) {
+        if (a.equals(b)) return 0;
+        if (a.isHonor(trump, gameRank)) return 1;
+        if (b.isHonor(trump, gameRank)) return -1;
         var aDup = stat.stat[a.key(trump, gameRank)];
         var bDup = stat.stat[b.key(trump, gameRank)];
         if (aDup !== bDup) {
