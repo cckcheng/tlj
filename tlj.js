@@ -48,37 +48,31 @@ n = 1;
 
 var cards = [];
 
-cards.push(new Card(Card.SUITE.HEART, 2));
+cards.push(new Card(Card.SUITE.HEART, 3));
+cards.push(new Card(Card.SUITE.HEART, 6));
+cards.push(new Card(Card.SUITE.HEART, 5));
 cards.push(new Card(Card.SUITE.HEART, 4));
-cards.push(new Card(Card.SUITE.HEART, 9));
-cards.push(new Card(Card.SUITE.HEART, 9));
-cards.push(new Card(Card.SUITE.HEART, 9));
 cards.push(new Card(Card.SUITE.HEART, 9));
 
 cards.push(new Card(Card.SUITE.HEART, 10));
-cards.push(new Card(Card.SUITE.HEART, 10));
-cards.push(new Card(Card.SUITE.HEART, 10));
-cards.push(new Card(Card.SUITE.HEART, 10));
 cards.push(new Card(Card.SUITE.SPADE, 10));
-cards.push(new Card(Card.SUITE.SPADE, 10));
-cards.push(new Card(Card.SUITE.CLUB, 10));
+cards.push(new Card(Card.SUITE.DIAMOND, 10));
+cards.push(new Card(Card.SUITE.DIAMOND, 10));
 cards.push(new Card(Card.SUITE.CLUB, 10));
 //cards.push(new Card(Card.SUITE.HEART, 11));
 //cards.push(new Card(Card.SUITE.HEART, 11));
-cards.push(new Card(Card.SUITE.HEART, 14));
-cards.push(new Card(Card.SUITE.HEART, 14));
-cards.push(new Card(Card.SUITE.HEART, 12));
-cards.push(new Card(Card.SUITE.HEART, 12));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
-//cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
-//cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 
 //cards.push(new Card(Card.SUITE.HEART, 13));
 //cards.push(new Card(Card.SUITE.CLUB, 7));
 
-//debugger;
 trump_suite = 'H';
 game_rank = 10;
 Card.sortCards(cards, trump_suite, game_rank);
@@ -90,7 +84,8 @@ console.log("\n----------------" + cards.length);
 console.log(Card.showCards(cards));
 
 var myCards = [];
-Card.selectTractor2(16, myCards, cards, true, trump_suite, game_rank);
+debugger;
+Card.selectTractor4(12, myCards, cards, false, trump_suite, game_rank);
 console.log(Card.showCards(myCards));
 
 if (true) process.exit(0);

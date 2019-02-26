@@ -10,6 +10,7 @@ Table.FastMode = false;
 Table.HOLE_POINT_TIMES = 4;
 Table.PAUSE_SECONDS_BETWEEN_GAME = Config.PAUSE_SECONDS_BETWEEN_GAME;
 Table.PAUSE_SECONDS_BETWEEN_ROUND = Config.PAUSE_SECONDS_BETWEEN_ROUND;
+Table.TIMEOUT_SECONDS_BURYCARDS = Config.TIMEOUT_SECONDS_BURYCARDS;
 
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
@@ -375,14 +376,14 @@ function procSetTrump(t, trump) {
         seat: t.actionPlayerIdx + 1,
         gameRank: t.game.rank,
         contract: t.game.contractPoint,
-        acttime: t.TIMEOUT_SECONDS * 5,
+        acttime: Table.TIMEOUT_SECONDS_BURYCARDS,
         trump: t.game.trump
     });
 
     t.game.contractor.pushJson({
         action: 'add_remains',
         cards: Card.cardsToString(t.game.deck.remains),
-        acttime: t.TIMEOUT_SECONDS * 5     // more action time when bury hole cards
+        acttime: Table.TIMEOUT_SECONDS_BURYCARDS
     });
 
     t.buryCards();
@@ -585,7 +586,7 @@ Table.prototype.buryCards = function () {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
-            waitSeconds = this.TIMEOUT_SECONDS * 5 + ADD_SECONDS;
+            waitSeconds = Table.TIMEOUT_SECONDS_BURYCARDS + ADD_SECONDS;
         }
     }
 

@@ -1,6 +1,7 @@
 module.exports = HandStat;
 
 const {Game, Hand, SimpleHand} = require('./game');
+var Card = require('./card');
 
 function HandStat(cards, trump_suite, game_rank) {
     this.cards = cards;
@@ -42,7 +43,7 @@ function HandStat(cards, trump_suite, game_rank) {
             if (rnk !== tRank) continue;
             if (this.stat[ck] >= num) {
                 for (var x = 0, c; c = this.cards[x]; x++) {
-                    if (ck === c.suite + c.trumpRank(trump_suite, game_rank)) {
+                    if (ck === c.key(trump_suite, game_rank)) {
                         return c;
                     }
                 }
