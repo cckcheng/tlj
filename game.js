@@ -794,9 +794,26 @@ function Round(players, trump, gameRank) {
         return false;
     }
 
-    this.isWinning = function (exPlayer) {
-        if (firstHand.isFlop) return true;
+    this.allFriendsLeft = function (game, player) {
         if (this.playList.length === players.length - 1) return true;    // is last play
+        if (player === game.contractor || player === game.partner) {
+            if (game.partnerDef.noPartner) return false;
+            for (var x = 0, hand; hand = this.playList[x]; x++) {
+                if (hand.player === game.contractor || hand.player === game.partner) return false;
+            }
+            return players.length - this.playList.length <= 2;
+        }
+
+        var count = 0;
+        for (var x = 0, hand; hand = this.playList[x]; x++) {
+            if (hand.player === game.contractor || hand.player === game.partner) count++;
+        }
+        return game.partnerDef.noPartner ? count >= 1 : count >= 2;
+    };
+
+    this.isWinning = function (game, exPlayer) {
+        if (firstHand.isFlop) return true;
+        if (this.allFriendsLeft(game, exPlayer)) return true;
         // TODO, check if following players are all same side
         return !hasPossibleHighers(leadingHand, exPlayer);
     };

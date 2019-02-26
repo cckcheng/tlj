@@ -647,6 +647,7 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                     }
                 }
                 cards.push(cardList[cardList.length - 1]);
+                return true;
             } else {
                 Card.selectCardsByPoint(cards, cardList, false, game.trump, game.rank, 1);
             }
@@ -669,8 +670,10 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
         default:
             break;
     }
+
     this.followPlay(cards, cardList, false);
-    return false;
+    var tHand = new Hand(this, cards, game.trump, game.rank);
+    return tHand.compareTo(leadingHand, firstHand) > 0;
 };
 
 Player.prototype.autoPlayCards = function (isLeading) {
@@ -732,7 +735,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
 
         if (cardList.length > firstHand.cardNumber) {
             if (game.isSameSide(this, leadingPlayer)) {
-                if (round.isWinning(this)) {
+                if (round.isWinning(game, this)) {
                     this.followPlay(cards, cardList, true);
                 } else {
                     this.tryBeatLeading(cards, cardList);
@@ -743,10 +746,10 @@ Player.prototype.autoPlayCards = function (isLeading) {
         } else if (cardList.length === 0) {
             if (firstHand.isTrump) {
                 this.duckCards(cards, suite,
-                        game.isSameSide(this, leadingPlayer) && round.isWinning(this),
+                        game.isSameSide(this, leadingPlayer) && round.isWinning(game, this),
                         firstHand.cardNumber);
             } else {
-                if (game.isSameSide(this, leadingPlayer) && round.isWinning(this)) {
+                if (game.isSameSide(this, leadingPlayer) && round.isWinning(game, this)) {
                     this.duckCards(cards, suite, true, firstHand.cardNumber);
                 } else {
                     this.ruff(cards);
@@ -759,7 +762,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
 
             if (cards.length < firstHand.cardNumber) {
                 this.duckCards(cards, suite,
-                        game.isSameSide(this, leadingPlayer) && round.isWinning(this),
+                        game.isSameSide(this, leadingPlayer) && round.isWinning(game, this),
                         firstHand.cardNumber - cards.length);
             }
         }
