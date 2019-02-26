@@ -8,6 +8,7 @@ const {Game, Hand, SimpleHand} = require('./game');
 Table.Debugging = false;
 Table.FastMode = false;
 Table.HOLE_POINT_TIMES = 4;
+Table.SHOW_MINBID = Config.SHOW_MINBID ? true : false;
 Table.PAUSE_SECONDS_BETWEEN_GAME = Config.PAUSE_SECONDS_BETWEEN_GAME;
 Table.PAUSE_SECONDS_BETWEEN_ROUND = Config.PAUSE_SECONDS_BETWEEN_ROUND;
 Table.TIMEOUT_SECONDS_BURYCARDS = Config.TIMEOUT_SECONDS_BURYCARDS;
