@@ -58,6 +58,7 @@ function Table(o) {
                     + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
             pRank = rnk;
         }
+        console.log(summary);
         return summary;
     };
 
@@ -485,16 +486,7 @@ function gameOver(t) {
     }
 
     summary += t.game.promote();
-    summary += t.playerNames() + '\n';
-    summary += 'Next game will start in ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds.';
-
-    t.broadcastGameInfo({
-        action: 'gameover',
-        seat: t.getSeat(t.game.contractor),
-        hole: Card.cardsToString(t.game.holeCards),
-        pt0: t.game.collectedPoint,
-        summary: summary
-    });
+    summary += t.game.playerStatus;
 
     var matchOver = false;
     for (var x = 0, p; p = t.players[x]; x++) {
@@ -503,6 +495,15 @@ function gameOver(t) {
             break;
         }
     }
+    if (!matchOver) summary += '\nNext game will start in ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds.';
+
+    t.broadcastGameInfo({
+        action: 'gameover',
+        seat: t.getSeat(t.game.contractor),
+        hole: Card.cardsToString(t.game.holeCards),
+        pt0: t.game.collectedPoint,
+        summary: summary
+    });
 
     if (matchOver) {
         t.dismissed = true;

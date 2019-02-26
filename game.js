@@ -928,6 +928,8 @@ Game.prototype.promote = function () {
         }
 
         summary += '庄垮,闲家升' + delta + '级;\nContract down, defenders promoted ' + delta + ' rank(s)\n';
+
+        this.result = -delta;
     } else {
         if (this.collectedPoint <= 0) {
             delta = 3;
@@ -935,12 +937,6 @@ Game.prototype.promote = function () {
             delta = 2;
         }
 
-        if (this.partnerDef.noPartner) {
-            delta *= 2;
-        }
-
-        this.contractor.promote(delta);
-        if (this.partner && this.contractor !== this.partner) this.partner.promote(delta);
         summary += '庄成(Contract made),';
         if (delta === 2) {
             summary += '小光(XiaoGuang),';
@@ -949,11 +945,46 @@ Game.prototype.promote = function () {
         }
 
         if (this.partnerDef.noPartner) {
+            delta *= 2;
+        }
+
+        this.contractor.promote(delta);
+        if (this.contractor !== this.partner) this.partner.promote(delta);
+
+        if (this.partnerDef.noPartner) {
             summary += '庄家一打五升' + delta + '级;\nContractor (1 vs 5) promoted ' + delta + ' rank(s)\n';
         } else {
             summary += '庄家及帮手升' + delta + '级;\nContractor and partner promoted ' + delta + ' rank(s)\n';
         }
+
+        this.result = delta;
     }
+
+    this.playerStatus = '[' + this.contractor.name
+            + '(' + Card.RankToString(this.contractor.matchInfo.currentRank);
+    if (this.contractor.id != null && this.contractor.sock == null) {
+        this.playerStatus += ',away';
+    }
+    this.playerStatus += ')';
+    if (this.contractor !== this.partner) {
+        this.playerStatus += ', ' + this.partner.name + '(' + Card.RankToString(this.partner.matchInfo.currentRank);
+        if (this.partner.id != null && this.partner.sock == null) {
+            this.playerStatus += ',away';
+        }
+        this.playerStatus += ')';
+    }
+    this.playerStatus += '] ' + (this.result > 0 ? '+' : '-') + delta + '\n';
+
+    var s = '';
+    for (var x = 0, p; p = this.players[x]; x++) {
+        if (p === this.contractor || p === this.partner) continue;
+        s += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
+        if (p.id != null && p.sock == null) {
+            s += ',away';
+        }
+        s += ')';
+    }
+    this.playerStatus += s.substr(2);
 
     return summary;
 };
