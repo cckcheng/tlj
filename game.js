@@ -912,8 +912,9 @@ Game.prototype.isLeadingHandValid = function (hand) {
 };
 
 Game.prototype.promote = function () {
-    var summary = '定约分(Contract Point):' + this.contractPoint + "\n";
-    summary += '闲家得分(Defender Collected):' + this.collectedPoint + "\n";
+//    var summary = '定约分(Contract Point):' + this.contractPoint + "\n";
+//    summary += '闲家得分(Defender Collected):' + this.collectedPoint + "\n";
+    var summary = '';
     var delta = 1;
     if (this.collectedPoint >= this.contractPoint) {
         var extroPoint = this.collectedPoint - this.contractPoint;
