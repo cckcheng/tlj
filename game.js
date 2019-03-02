@@ -44,6 +44,7 @@ function Game(players, deckNumber) {
     };
 
     this.isSameSide = function (player1, player2) {
+        if (this.partner == null) return false;
         return (player1 === this.contractor || player1 === this.partner) ===
             (player2 === this.contractor || player2 === this.partner);
     };

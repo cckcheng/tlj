@@ -478,17 +478,23 @@ Player.prototype.playPartnerCards = function (cards) {
     return cards.length > 0;
 };
 
-Player.prototype.hasPartnerCard = function () {
-    var partnerDef = this.currentTable.game.partnerDef;
+Player.prototype.shouldPlayPartner = function () {
+    var game = this.currentTable.game;
+    var partnerDef = game.partnerDef;
     if (partnerDef.noPartner) return false;
     var defCard = partnerDef.getDefCard();
     var cardList = this.getCardsBySuite(defCard.suite);
     if (cardList.length < 1) return false;
+    var n = 0;
     for (var x = 0, c; c = cardList[x]; x++) {
-        if (c.equals(defCard)) return true;
+        if (c.equals(defCard)) n++;
     }
 
-    return false;
+    if (n < 1) return false;
+    if (n > 1 || partnerDef.keyCardCount + n === 4) {
+        return true;
+    }
+    return game.sumPoints(this) < game.contractPoint / 2;
 };
 
 Player.prototype.passToPartner = function (cards) {
@@ -634,12 +640,21 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                     if (!partnerDef.noPartner) {
                         var defCard = partnerDef.getDefCard();
                         var viceCard = partnerDef.getViceCard(game.rank);
-                        if(card.equals(defCard)) {
-                            if(viceCard.trumpRank(game.trump, game.rank) > leadingHand.maxRank) {
-                                if(viceCard.indexOf(cardList) >=0) {
-                                    cards.push(viceCard);
+                        if (card.equals(defCard)) {
+                            var viceRank = viceCard.trumpRank(game.trump, game.rank);
+                            if (viceRank === leadingHand.maxRank) {
+                                if (game.contractor !== leadingHand.player && this.shouldPlayPartner()) {
+                                    cards.push(card);
                                     return true;
                                 }
+
+                                cards.push(cardList[0]);
+                                return false;
+                            }
+
+                            if (viceRank > leadingHand.maxRank && viceCard.indexOf(cardList) >= 0) {
+                                cards.push(viceCard);
+                                return true;
                             }
                             cards.push(cardList[0]);
                             return false;
@@ -699,12 +714,8 @@ Player.prototype.autoPlayCards = function (isLeading) {
             if (game.partner == null) {
                 if (this === game.contractor) {
                     this.passToPartner(cards);
-                } else if (this.hasPartnerCard()) {
-                    if (game.sumPoints(this) < game.contractPoint / 2) {
-                        this.playPartnerCards(cards);
-                    } else {
-                        this.randomPlay(cards);
-                    }
+                } else if (this.shouldPlayPartner()) {
+                    this.playPartnerCards(cards);
                 } else {
                     this.randomPlay(cards);
                 }
