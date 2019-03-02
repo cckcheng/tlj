@@ -530,6 +530,7 @@ function procAfterPause(t) {
             t.actionPlayerIdx = t.players.indexOf(t.game.leadingPlayer);
             t.players.forEach(function (p) {
                 p.matchInfo.playedCards = '';
+                p.matchInfo.alert = null;
             });
             t.broadcastGameInfo({
                 action: 'play',
@@ -719,12 +720,14 @@ function MatchInfo(t, player) {
     this.points = 0;    // points collected (before contractor's partner appears)
     this.contracts = 0; // contract times
     this.playedCards = ''; // cards played
+    this.alert = null;
 
     this.reset = function () {
         // call reset when start a new game
         this.lastBid = '-';
         this.points = 0;
         this.playedCards = '';
+        this.alert = null;
     };
 
     this.toJson = function (seat) {
