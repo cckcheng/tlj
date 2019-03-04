@@ -13,6 +13,7 @@ function Player(o) {
         this.name = o.name;
     }
     if (this.sock == null) this.name = 'Robot';
+    this.lang = 'en';   // default language, support 'zh' (Chinese)
     this.spades = [];
     this.hearts = [];
     this.diamonds = [];
@@ -255,10 +256,15 @@ Player.prototype.pushData = function () {
 
     var game = this.currentTable.game;
     if (game == null) {
+        var sec = Table.PAUSE_SECONDS_BETWEEN_GAME;
+        if (this.currentTable.resumeTime != null) {
+            sec = Math.round((this.currentTable.resumeTime - (new Date()).getTime()) / 1000);
+        }
         json = Object.assign({
             action: 'init',
             game: this.currentTable.games.length,
-            info: 'On break for ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds...',
+            info: this.lang === 'zh' ? '下一局' + sec + '秒后开始...'
+                    : 'Next game will start in ' + sec + ' seconds...',
             players: playerInfo,
             timeout: this.currentTable.TIMEOUT_SECONDS // default timeout
         }, this.matchInfo.toJson(seat));

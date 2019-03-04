@@ -915,7 +915,8 @@ Game.prototype.isLeadingHandValid = function (hand) {
 Game.prototype.promote = function () {
 //    var summary = '定约分(Contract Point):' + this.contractPoint + "\n";
 //    summary += '闲家得分(Defender Collected):' + this.collectedPoint + "\n";
-    var summary = '';
+    this.enSummary = '';
+    this.zhSummary = '';
     var delta = 1;
     if (this.collectedPoint >= this.contractPoint) {
         var extroPoint = this.collectedPoint - this.contractPoint;
@@ -929,7 +930,8 @@ Game.prototype.promote = function () {
             p.promote(delta);
         }
 
-        summary += '庄垮,闲家升' + delta + '级;\nContract down, defenders promoted ' + delta + ' rank(s)\n';
+        this.enSummary += 'Contract down, defenders promoted ' + delta + ' rank(s)\n';
+        this.zhSummary += '庄垮,闲家升' + delta + '级\n';
 
         this.result = -delta;
     } else {
@@ -939,11 +941,14 @@ Game.prototype.promote = function () {
             delta = 2;
         }
 
-        summary += '庄成(Contract made),';
+        this.enSummary += 'Contract made, ';
+        this.zhSummary += '庄成,';
         if (delta === 2) {
-            summary += '小光(XiaoGuang),';
+            this.enSummary += 'XiaoGuang, ';
+            this.zhSummary += '小光,';
         } else if (delta === 3) {
-            summary += '大光(DaGuang),';
+            this.enSummary += 'DaGuang, ';
+            this.zhSummary += '大光,';
         }
 
         if (this.partnerDef.noPartner) {
@@ -954,39 +959,51 @@ Game.prototype.promote = function () {
         if (this.contractor !== this.partner) this.partner.promote(delta);
 
         if (this.partnerDef.noPartner) {
-            summary += '庄家一打五升' + delta + '级;\nContractor (1 vs 5) promoted ' + delta + ' rank(s)\n';
+            this.enSummary += 'Contractor (1vs5) promoted ' + delta + ' rank(s)\n';
+            this.zhSummary += '庄家一打五升' + delta + '级\n';
         } else {
-            summary += '庄家及帮手升' + delta + '级;\nContractor and partner promoted ' + delta + ' rank(s)\n';
+            this.enSummary += 'Contractor and partner promoted ' + delta + ' rank(s)\n';
+            this.zhSummary += '庄家及帮手升' + delta + '级\n';
         }
 
         this.result = delta;
     }
 
-    this.playerStatus = '[' + this.contractor.name
+    this.playerStatusEn = '[' + this.contractor.name
+            + '(' + Card.RankToString(this.contractor.matchInfo.currentRank);
+    this.playerStatusZh = '[' + this.contractor.name
             + '(' + Card.RankToString(this.contractor.matchInfo.currentRank);
     if (this.contractor.id != null && this.contractor.sock == null) {
-        this.playerStatus += ',away';
+        this.playerStatusEn += ',away';
+        this.playerStatusZh += ',离开';
     }
     this.playerStatus += ')';
     if (this.contractor !== this.partner) {
-        this.playerStatus += ', ' + this.partner.name + '(' + Card.RankToString(this.partner.matchInfo.currentRank);
+        this.playerStatusEn += ', ' + this.partner.name + '(' + Card.RankToString(this.partner.matchInfo.currentRank);
+        this.playerStatusZh += ', ' + this.partner.name + '(' + Card.RankToString(this.partner.matchInfo.currentRank);
         if (this.partner.id != null && this.partner.sock == null) {
-            this.playerStatus += ',away';
+            this.playerStatusEn += ',away';
+            this.playerStatusZh += ',离开';
         }
-        this.playerStatus += ')';
+        this.playerStatusEn += ')';
+        this.playerStatusZh += ')';
     }
-    this.playerStatus += '] ' + (this.result > 0 ? '+' : '-') + delta + '\n';
+    this.playerStatusEn += '] ' + (this.result > 0 ? '+' : '-') + delta + '\n';
+    this.playerStatusZh += '] ' + (this.result > 0 ? '+' : '-') + delta + '\n';
 
-    var s = '';
+    var sEn = '';
+    var sZh = '';
     for (var x = 0, p; p = this.players[x]; x++) {
         if (p === this.contractor || p === this.partner) continue;
-        s += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
+        sEn += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
+        sZh += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
         if (p.id != null && p.sock == null) {
-            s += ',away';
+            sEn += ',away';
+            sZh += ',离开';
         }
-        s += ')';
+        sEn += ')';
+        sZh += ')';
     }
-    this.playerStatus += s.substr(2);
-
-    return summary;
+    this.playerStatusEn += sEn.substr(2);
+    this.playerStatusZh += sZh.substr(2);
 };

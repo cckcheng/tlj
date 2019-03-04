@@ -473,7 +473,8 @@ function procPlayCards(t, cards) {
 }
 
 function gameOver(t) {
-    var summary = '';
+    var enSummary = '';
+    var zhSummary = '';
     var holeCardsPoint = Card.getTotalPoints(t.game.holeCards);
     if (holeCardsPoint > 0) {
         var leadPlayer = t.game.currentRound.getNextLeadingPlayer();
@@ -481,13 +482,16 @@ function gameOver(t) {
             var times = Table.HOLE_POINT_TIMES * t.game.currentRound.maxSubHandLength();
             var holePoints = holeCardsPoint * times;
             leadPlayer.addPoints(holePoints);
-            summary += '闲家抠底，底分翻' + times + '倍,共' + holePoints + '\n';
-            summary += 'Hole cards\' points multipled by ' + times + ', total ' + holePoints + '\n';
+            zhSummary += '闲家抠底，底分翻' + times + '倍,共' + holePoints + '\n';
+            enSummary += 'Hole cards\' points multipled by ' + times + ', total ' + holePoints + '\n';
         }
     }
 
-    summary += t.game.promote();
-    summary += t.game.playerStatus;
+    t.game.promote();
+    enSummary += t.game.enSummary;
+    zhSummary += t.game.zhSummary;
+    enSummary += t.game.playerStatusEn;
+    zhSummary += t.game.playerStatusZh;
 
     var matchOver = false;
     for (var x = 0, p; p = t.players[x]; x++) {
@@ -496,14 +500,24 @@ function gameOver(t) {
             break;
         }
     }
-    if (!matchOver) summary += '\nNext game will start in ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds.';
+    if (!matchOver) {
+        enSummary += '\nNext game will start in ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds.';
+        zhSummary += '\n下一局' + Table.PAUSE_SECONDS_BETWEEN_GAME + '秒后开始...';
+    }
 
     t.broadcastGameInfo({
         action: 'gameover',
         seat: t.getSeat(t.game.contractor),
         hole: Card.cardsToString(t.game.holeCards),
         pt0: t.game.collectedPoint,
-        summary: summary
+        pause: matchOver ? 0 : Table.PAUSE_SECONDS_BETWEEN_GAME
+    }, null, {
+        en: {
+            summary: enSummary
+        },
+        zh: {
+            summary: zhSummary
+        }
     });
 
     if (matchOver) {
@@ -519,6 +533,7 @@ function gameOver(t) {
         t.game = null;
         t.status = 'break';
         t.actionPlayerIdx = -1;
+        t.resumeTime = (new Date()).getTime() + Table.PAUSE_SECONDS_BETWEEN_GAME * 1000;
         t.goPause(Table.PAUSE_SECONDS_BETWEEN_GAME);
     }
 }
@@ -623,9 +638,12 @@ Table.prototype.definePartner = function () {
     }, waitSeconds * 1000, this);
 };
 
-Table.prototype.broadcastGameInfo = function (json, exceptPlayer) {
+Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
     this.players.forEach(function (p) {
-        if(p === exceptPlayer) return;
+        if (p === exceptPlayer) return;
+        if (langInfo != null) {
+            json = Object.assign(json, langInfo[p.lang]);
+        }
         p.pushJson(json);
     });
 };
