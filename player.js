@@ -629,6 +629,14 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
         return false;
     }
     var leadingHand = game.currentRound.getLeadingHand();
+    if (leadingHand.isTrump) {
+        if (!cardList[0].isTrump(game.trump, game.rank)) {
+            // unable to beat
+            this.followPlay(cards, cardList, false);
+            return false;
+        }
+    }
+
     var maxRank,stat,rnks,cc,sHand;
     switch (firstHand.type.cat) {
         case Hand.COMBINATION.SINGLE:
