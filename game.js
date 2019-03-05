@@ -609,7 +609,6 @@ function Round(players, trump, gameRank) {
         var hand_stat = new HandStat(cards, trump, gameRank);
         var sortedRanks = null;
         var unit = 1;
-        debugger;
 
         switch (hand_type.cat) {
             case Hand.COMBINATION.TRACTOR4:
@@ -959,10 +958,10 @@ Game.prototype.promote = function () {
         if (this.contractor !== this.partner) this.partner.promote(delta);
 
         if (this.partnerDef.noPartner) {
-            this.enSummary += 'Contractor (1vs5) promoted ' + delta + ' rank(s)\n';
+            this.enSummary += '\nContractor (1vs5) promoted ' + delta + ' rank(s)\n';
             this.zhSummary += '庄家一打五升' + delta + '级\n';
         } else {
-            this.enSummary += 'Contractor and partner promoted ' + delta + ' rank(s)\n';
+            this.enSummary += '\nContractor and partner promoted ' + delta + ' rank(s)\n';
             this.zhSummary += '庄家及帮手升' + delta + '级\n';
         }
 

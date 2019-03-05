@@ -135,9 +135,7 @@ Table.prototype.terminate = function () {
     this.dismissed = true;
     for (var x = 0, p; x < this.players.length; x++) {
         p = this.players[x];
-        if (p == null)
-            continue;
-        p.currentTable = null;
+        if (p == null) continue;
         if (p.sock == null && p.id != null) {
             // need delete the player from activePlayers
             Server.removePlayer(p);
@@ -149,6 +147,7 @@ Table.prototype.terminate = function () {
 
 Table.prototype.resume = function (player) {
     if (this.dismissed) return false;
+    if (player.currentTable !== this) return false;
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
         this.pauseTimer = null;
@@ -617,7 +616,6 @@ Table.prototype.buryCards = function () {
 };
 
 Table.prototype.definePartner = function () {
-//    debugger;
     if (this.autoTime != null) return;  // prevent multi timeout
 
     var player = this.game.contractor;
@@ -639,12 +637,15 @@ Table.prototype.definePartner = function () {
 };
 
 Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
+    var t = this;
     this.players.forEach(function (p) {
         if (p === exceptPlayer) return;
+        if (p.currentTable !== t) return;
         if (langInfo != null) {
-            json = Object.assign(json, langInfo[p.lang]);
+            p.pushJson(Object.assign(Object.assign({}, json), langInfo[p.lang]));
+        } else {
+            p.pushJson(json);
         }
-        p.pushJson(json);
     });
 };
 

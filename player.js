@@ -265,6 +265,7 @@ Player.prototype.pushData = function () {
             game: this.currentTable.games.length,
             info: this.lang === 'zh' ? '下一局' + sec + '秒后开始...'
                     : 'Next game will start in ' + sec + ' seconds...',
+            pause: sec,
             players: playerInfo,
             timeout: this.currentTable.TIMEOUT_SECONDS // default timeout
         }, this.matchInfo.toJson(seat));
@@ -807,7 +808,6 @@ Player.prototype.allValid = function (cards) {
         }
     }
 
-    debugger;
     for (var k in cardCount) {
         if (Card.getTotalCardNumber(this.trumps, k) >= cardCount[k]) continue;
         switch (k.charAt(0)) {

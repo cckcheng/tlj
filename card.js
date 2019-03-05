@@ -505,7 +505,6 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
             tractors.forEach(function (sHand) {
                 totalLen += sHand.type.len;
             });
-            debugger;
             if (totalLen <= len) {
                 tractors.forEach(function (sHand) {
                     var cc = Hand.makeCards(sHand, tmpCards, trump, gameRank);
