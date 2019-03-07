@@ -232,7 +232,7 @@ Player.prototype.pushJson = function (json) {
             if (Table.Debugging) {
                 p.sock.write(JSON.stringify(json) + '\n');
             } else {
-                p.sock.write(Server.confusedData(Buffer.from(JSON.stringify(json) + '\n').toString('base64')));
+                p.sock.write(Server.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
             }
         } catch (err) {
             console.log(new Date().toLocaleString() + ', ' + err.message);

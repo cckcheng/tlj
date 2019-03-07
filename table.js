@@ -504,30 +504,36 @@ function gameOver(t) {
         zhSummary += '\n下一局' + Table.PAUSE_SECONDS_BETWEEN_GAME + '秒后开始...';
     }
 
-    t.broadcastGameInfo({
+    var json = {
         action: 'gameover',
         seat: t.getSeat(t.game.contractor),
         hole: Card.cardsToString(t.game.holeCards),
         pt0: t.game.collectedPoint,
         pause: matchOver ? 0 : Table.PAUSE_SECONDS_BETWEEN_GAME
-    }, null, {
+    };
+    var langInfo = {
         en: {
             summary: enSummary
         },
         zh: {
             summary: zhSummary
         }
-    });
+    };
+
+    setTimeout(function (t) {
+        t.broadcastGameInfo(json, null, langInfo);
+    }, 2000, t);
 
     if (matchOver) {
         t.dismissed = true;
+        var summary = t.matchSummary();
         setTimeout(function (t) {
             t.broadcastGameInfo({
                 action: 'gameover',
-                summary: t.matchSummary()
+                summary: summary
             });
             t.terminate();
-        }, 5000, t);
+        }, 8000, t);
     } else {
         t.game = null;
         t.status = 'break';
