@@ -183,7 +183,7 @@ Table.prototype.resume = function (player) {
 
                 if (player && player === this.players[this.actionPlayerIdx]) {
                     if (this.autoTimer != null) {
-//                        this.autoTimer.refresh(); // probably no need 
+//                        this.autoTimer.refresh(); // probably no need
                     }
                 }
                 break;
@@ -757,6 +757,7 @@ function MatchInfo(t, player) {
 
     this.toJson = function (seat) {
         var json = {
+            name: this.player.name,
             seat: seat,
             rank: this.currentRank,
             contracts: this.contracts
