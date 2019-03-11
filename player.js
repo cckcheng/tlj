@@ -39,8 +39,16 @@ function Player(o) {
         this.name = name;
     };
 
-    this.toRobot = function () {
+    this.toRobot = function (keepMinutes) {
         this.sock = null;
+        if (this.idleTimer != null) return;
+
+        var timeout = 10;
+        if (keepMinutes == null) {
+            timeout = Table.MAX_IDLE_MINUTES * 60000;
+        } else if (keepMinutes > 0) {
+            timeout = keepMinutes * 60000;
+        }
         this.idleTimer = setTimeout(function (p) {
             if (p.sock != null) return;
             Server.removePlayer(p);
@@ -48,7 +56,7 @@ function Player(o) {
             p.id = null;
             p.name = 'Robot';
             Server.addRobot(p);
-        }, Table.MAX_IDLE_MINUTES * 60000, this);
+        }, timeout, this);
     };
 
     this.clearIdleTimer = function () {
