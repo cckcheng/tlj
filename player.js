@@ -572,13 +572,21 @@ Player.prototype.drawTrump = function (cards) {
     var stat = new HandStat(this.trumps, game.trump, game.rank);
     var rnks = stat.sortedRanks(2);
     if (rnks.length > 0) {
-
+        var sHand = new SimpleHand(Hand.SIMPLE_TYPE.PAIR, rnks[rnks.length - 1], true);
+        cc = Hand.makeCards(sHand, this.trumps, game.trump, game.rank);
+        cc.forEach(function (c) {
+            cards.push(c);
+        });
+        return;
     }
     var ntLen = this.ntLength();
     if (ntLen < 10) {
         // draw all trumps
-
+        cards.push(this.trumps[this.trumps.length - 1]);
+        return;
     }
+
+    this.randomPlay(cards);
 };
 
 Player.prototype.randomPlay = function (cards) {
