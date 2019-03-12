@@ -33,6 +33,13 @@ function Player(o) {
                 this.clubs.length;
     };
 
+    this.ntLength = function () {
+        return this.spades.length +
+                this.hearts.length +
+                this.diamonds.length +
+                this.clubs.length;
+    };
+
     this.replaceRobot = function (id, name, sock) {
         this.id = id;
         this.sock = sock;
@@ -521,7 +528,7 @@ Player.prototype.shouldPlayPartner = function () {
     }
 
     if (n < 1) return false;
-    if (n > 1 || partnerDef.keyCardCount + n === 4) {
+    if (n > 1 || partnerDef.keyCardCount + n === 4 || cardList.length < 5) {
         return true;
     }
     return game.sumPoints(this) < game.contractPoint / 2;
@@ -553,6 +560,25 @@ Player.prototype.getAllSuites = function () {
     if (this.hearts.length > 0) arr.push(this.hearts);
     if (this.trumps.length > 0) arr.push(this.trumps);
     return arr;
+};
+
+Player.prototype.drawTrump = function (cards) {
+    if (this.trumps.length < 1) {
+        this.randomPlay(cards);
+        return;
+    }
+
+    var game = this.currentTable.game;
+    var stat = new HandStat(this.trumps, game.trump, game.rank);
+    var rnks = stat.sortedRanks(2);
+    if (rnks.length > 0) {
+
+    }
+    var ntLen = this.ntLength();
+    if (ntLen < 10) {
+        // draw all trumps
+
+    }
 };
 
 Player.prototype.randomPlay = function (cards) {
@@ -758,8 +784,10 @@ Player.prototype.autoPlayCards = function (isLeading) {
                     this.randomPlay(cards);
                 }
             } else {
-                if (this === game.contractor || this === game.partner) {
+                if (this === game.partner) {
                     this.passToPartner(cards);
+                } else if (this === game.contractor) {
+                    this.drawTrump(cards);
                 } else {
                     this.randomPlay(cards);
                 }
