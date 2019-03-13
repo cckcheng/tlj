@@ -580,8 +580,8 @@ Player.prototype.drawTrump = function (cards) {
         return;
     }
     var ntLen = this.ntLength();
-    if (ntLen < 10) {
-        // draw all trumps
+    if (ntLen < 10 && this.trumps.length > 1) {
+        // draw trumps, from high to low
         cards.push(this.trumps[this.trumps.length - 1]);
         return;
     }
@@ -590,8 +590,6 @@ Player.prototype.drawTrump = function (cards) {
 };
 
 Player.prototype.randomPlay = function (cards) {
-//    var arr = this.getAllSuites();
-
     // not totally random
     var game = this.currentTable.game;
     var exSuite = game.partnerDef.suite;
