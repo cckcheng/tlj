@@ -158,6 +158,7 @@ Card.prototype.indexOf = function (cards) {
 };
 
 Card.compare = function (a, b) {
+    if (a.equals(b)) return 0;
 	if(a.suite === b.suite) {
 		return a.rank - b.rank;
 	}
@@ -207,6 +208,7 @@ Card.stringToArray = function (strCards, trump_suite, game_rank) {
     });
 
     cards.sort(function (a, b) {
+        if (a.equals(b)) return 0;
         var aTrump = a.isTrump(trump_suite, game_rank);
         var bTrump = b.isTrump(trump_suite, game_rank);
         if (!aTrump && !bTrump) return Card.compare(a, b);
