@@ -763,6 +763,19 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
     return tHand.compareTo(leadingHand, firstHand) > 0;
 };
 
+Player.prototype.trumpExclusive = function (cards) {
+    if (this.ntLength() > 0) return false;
+    for (var x = 0, p; p = this.currentTable.players[x]; x++) {
+        if (p === this) continue;
+        if (p.trumps.length > 0) return false;
+    }
+    this.trumps.forEach(function (c) {
+        cards.push(c);
+    });
+
+    return true;
+};
+
 Player.prototype.autoPlayCards = function (isLeading) {
     var cards = [];
     var game = this.currentTable.game;
@@ -770,6 +783,10 @@ Player.prototype.autoPlayCards = function (isLeading) {
     if (isLeading) {
         if (this.totalCardLeft() < 2) {
             this.playAllCards(cards);
+            return cards;
+        }
+
+        if (this.trumpExclusive(cards)) {
             return cards;
         }
 
