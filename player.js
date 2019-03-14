@@ -60,6 +60,7 @@ function Player(o) {
             if (p.sock != null) return;
             Server.removePlayer(p);
             p.idleTimer = null;
+            if (p.currentTable == null || p.currentTable.dismissed) return;
             p.id = null;
             p.name = 'Robot';
             Server.addRobot(p);
