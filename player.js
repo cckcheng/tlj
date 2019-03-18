@@ -367,7 +367,7 @@ Player.prototype.pushData = function () {
             obj.trump = game.trump;
             if (game.holeCards.length < 1) {
                 obj.act = 'bury';
-                obj.acttime = this.currentTable.TIMEOUT_SECONDS * 5;
+                obj.acttime = Table.TIMEOUT_SECONDS_BURYCARDS;
             } else if(game.partnerDef == null) {
                 obj.act = 'partner';
             } else {
