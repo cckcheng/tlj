@@ -50,6 +50,10 @@ function Player(o) {
         this.sock = null;
         if (this.idleTimer != null) return;
 
+        if (this.currentTable != null) {
+            this.currentTable.broadcastGameInfo({action: 'out', seat: this.currentTable.getSeat(this)});
+        }
+
         var timeout = 10;
         if (keepMinutes == null) {
             timeout = Table.MAX_IDLE_MINUTES * 60000;

@@ -657,13 +657,23 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
 };
 
 Table.prototype.processPlayerAction = function (player, json) {
-    if (player !== this.players[this.actionPlayerIdx])
+    if (player !== this.players[this.actionPlayerIdx]) {
+        player.pushJson({action: 'ack'});   // prevent client connection check error
         return;    // late response
+    }
 
     clearTimeout(this.autoTimer);
     this.autoTimer = null;
 
     switch (json.action) {
+        case 'robot':
+            if (json.on == 1) {
+                player.timeoutTimes = 3;
+            } else {
+                player.pushJson({action: 'ack'});
+            }
+            this.autoPlay(true);
+            break;
         case 'bid':
             if (this.game.stage !== Game.BIDDING_STAGE)
                 return;
