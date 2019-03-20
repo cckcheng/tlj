@@ -658,6 +658,7 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
 
 Table.prototype.processPlayerAction = function (player, json) {
     if (player !== this.players[this.actionPlayerIdx]) {
+        if(json.action === 'robot' && json.on == 1) player.timeoutTimes = 3;
         player.pushJson({action: 'ack'});   // prevent client connection check error
         return;    // late response
     }
