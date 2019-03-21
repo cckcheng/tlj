@@ -87,6 +87,10 @@ function Player(o) {
     };
 
     this.isOut = function () {
+        if (this.timeoutTimes === 2) {
+            this.pushJson({action: 'robot'});
+            this.timeoutTimes = 9;
+        }
         return this.timeoutTimes >= 2;
     };
 

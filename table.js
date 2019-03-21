@@ -659,7 +659,7 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
 
 Table.prototype.processPlayerAction = function (player, json) {
     if (player !== this.players[this.actionPlayerIdx]) {
-        if(json.action === 'robot' && json.on == 1) player.timeoutTimes = 3;
+        if (json.action === 'robot' && json.on == 1) player.timeoutTimes = 9;
         player.pushJson({action: 'ack'});   // prevent client connection check error
         return;    // late response
     }
@@ -670,7 +670,7 @@ Table.prototype.processPlayerAction = function (player, json) {
     switch (json.action) {
         case 'robot':
             if (json.on == 1) {
-                player.timeoutTimes = 3;
+                player.timeoutTimes = 9;
             } else {
                 player.pushJson({action: 'ack'});
             }
