@@ -76,6 +76,7 @@ function Player(o) {
             clearTimeout(this.idleTimer);
             this.idleTimer = null;
         }
+        this.currentTable.broadcastGameInfo({action: 'in', name: this.name, seat: this.currentTable.getSeat(this)}, this);
     };
 
     this.isHandEmpty = function() {
