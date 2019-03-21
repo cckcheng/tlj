@@ -735,9 +735,9 @@ function Round(players, trump, gameRank) {
         var isLastHand = this.playList.length === players.length;
         if (isLastHand) {
             leadingHand.player.addPoints(points);
-            if (Table.Debugging) {
+//            if (Table.Debugging) {
                 console.log(this.displayAll());
-            }
+//            }
         }
 
         return isLastHand;
