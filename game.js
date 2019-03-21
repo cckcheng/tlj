@@ -958,19 +958,19 @@ Game.prototype.promote = function () {
         if (this.contractor !== this.partner) this.partner.promote(delta);
 
         if (this.partnerDef.noPartner) {
-            this.enSummary += '\nContractor (1vs5) promoted ' + delta + ' rank(s)\n';
+            this.enSummary += '\nDeclarer (1vs5) promoted ' + delta + ' rank(s)\n';
             this.zhSummary += '庄家一打五升' + delta + '级\n';
         } else {
-            this.enSummary += '\nContractor and partner promoted ' + delta + ' rank(s)\n';
+            this.enSummary += '\nDeclarer and partner promoted ' + delta + ' rank(s)\n';
             this.zhSummary += '庄家及帮手升' + delta + '级\n';
         }
 
         this.result = delta;
     }
 
-    this.playerStatusEn = '[' + this.contractor.name
+    this.playerStatusEn = '{' + this.contractor.name
             + '(' + Card.RankToString(this.contractor.matchInfo.currentRank);
-    this.playerStatusZh = '[' + this.contractor.name
+    this.playerStatusZh = '{' + this.contractor.name
             + '(' + Card.RankToString(this.contractor.matchInfo.currentRank);
     if (this.contractor.id != null && this.contractor.sock == null) {
         this.playerStatusEn += ',away';
@@ -987,8 +987,8 @@ Game.prototype.promote = function () {
         this.playerStatusEn += ')';
         this.playerStatusZh += ')';
     }
-    this.playerStatusEn += '] ' + (this.result > 0 ? '+' : '-') + delta + '\n';
-    this.playerStatusZh += '] ' + (this.result > 0 ? '+' : '-') + delta + '\n';
+    this.playerStatusEn += '} ' + (this.result > 0 ? '+' : '-') + delta + '\n';
+    this.playerStatusZh += '} ' + (this.result > 0 ? '+' : '-') + delta + '\n';
 
     var sEn = '';
     var sZh = '';
