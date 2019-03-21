@@ -418,6 +418,7 @@ function procPlayCards(t, cards) {
     }
     var player = t.players[t.actionPlayerIdx];
     var status = player.playCards(cards);
+    if (status === 'error') return;
     var seat = t.actionPlayerIdx + 1;
 
     var strCards = player.matchInfo.playedCards;

@@ -938,6 +938,7 @@ Player.prototype.isValidPlay = function (hand) {
 };
 
 Player.prototype.playCards = function (strCards) {
+    if (this.totalCardLeft() < 1) return 'error';    // no card to play
     var cards = [];
     var hand = null;
     var game = this.currentTable.game;
