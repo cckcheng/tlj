@@ -563,6 +563,7 @@ function Round(players, trump, gameRank) {
     var leadingHand = null;
     var firstHand = null;
     var points = 0;
+    this.cardNumber = 0;
 
     this.displayAll = function () {
         var str = '';
@@ -727,6 +728,7 @@ function Round(players, trump, gameRank) {
         if (firstHand == null) {
             firstHand = hand;
             leadingHand = hand;
+            this.cardNumber = cards.length;
         } else if (hand.compareTo(leadingHand, firstHand) > 0) {
             leadingHand = hand;
         }
@@ -969,23 +971,20 @@ Game.prototype.promote = function () {
     }
 
     this.playerStatusEn = '{' + this.contractor.name
-            + '(' + Card.RankToString(this.contractor.matchInfo.currentRank);
+            + ':' + Card.RankToString(this.contractor.matchInfo.currentRank);
     this.playerStatusZh = '{' + this.contractor.name
-            + '(' + Card.RankToString(this.contractor.matchInfo.currentRank);
+            + ':' + Card.RankToString(this.contractor.matchInfo.currentRank);
     if (this.contractor.id != null && this.contractor.sock == null) {
         this.playerStatusEn += ',away';
         this.playerStatusZh += ',离开';
     }
-    this.playerStatus += ')';
     if (this.contractor !== this.partner) {
-        this.playerStatusEn += ', ' + this.partner.name + '(' + Card.RankToString(this.partner.matchInfo.currentRank);
-        this.playerStatusZh += ', ' + this.partner.name + '(' + Card.RankToString(this.partner.matchInfo.currentRank);
+        this.playerStatusEn += ', ' + this.partner.name + ':' + Card.RankToString(this.partner.matchInfo.currentRank);
+        this.playerStatusZh += ', ' + this.partner.name + ':' + Card.RankToString(this.partner.matchInfo.currentRank);
         if (this.partner.id != null && this.partner.sock == null) {
             this.playerStatusEn += ',away';
             this.playerStatusZh += ',离开';
         }
-        this.playerStatusEn += ')';
-        this.playerStatusZh += ')';
     }
     this.playerStatusEn += '} ' + (this.result > 0 ? '+' : '-') + delta + '\n';
     this.playerStatusZh += '} ' + (this.result > 0 ? '+' : '-') + delta + '\n';
@@ -994,14 +993,12 @@ Game.prototype.promote = function () {
     var sZh = '';
     for (var x = 0, p; p = this.players[x]; x++) {
         if (p === this.contractor || p === this.partner) continue;
-        sEn += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
-        sZh += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
+        sEn += ', ' + p.name + ':' + Card.RankToString(p.matchInfo.currentRank);
+        sZh += ', ' + p.name + ':' + Card.RankToString(p.matchInfo.currentRank);
         if (p.id != null && p.sock == null) {
             sEn += ',away';
             sZh += ',离开';
         }
-        sEn += ')';
-        sZh += ')';
     }
     this.playerStatusEn += sEn.substr(2);
     this.playerStatusZh += sZh.substr(2);

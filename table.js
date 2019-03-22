@@ -464,7 +464,12 @@ function procPlayCards(t, cards) {
         }
         t.broadcastGameInfo(json);
 
-        t.goPause(Table.PAUSE_SECONDS_BETWEEN_ROUND);
+        var addSeconds = 0;
+        if (t.game.currentRound.cardNumber > 4) {
+            addSeconds = t.game.currentRound.cardNumber - 4;
+        }
+
+        t.goPause(Table.PAUSE_SECONDS_BETWEEN_ROUND + addSeconds);
     } else {
         t.rotatePlayer();
         json.next = t.actionPlayerIdx + 1
@@ -769,8 +774,12 @@ function MatchInfo(t, player) {
     };
 
     this.toJson = function (seat) {
+        var pName = this.player.name;
+        if (this.player.id != null && this.player.sock == null) {
+            pName += '(away)';
+        }
         var json = {
-            name: this.player.name,
+            name: pName,
             seat: seat,
             rank: this.currentRank,
             contracts: this.contracts
