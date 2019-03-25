@@ -931,7 +931,7 @@ Game.prototype.promote = function () {
             p.promote(delta);
         }
 
-        this.enSummary += 'Contract down, defenders promoted ' + delta + ' rank(s)\n';
+        this.enSummary += 'Contract down, defenders promoted ' + delta + ' rank' + (delta > 1 ? 's' : '') + '\n';
         this.zhSummary += '庄垮,闲家升' + delta + '级\n';
 
         this.result = -delta;
@@ -960,10 +960,10 @@ Game.prototype.promote = function () {
         if (this.contractor !== this.partner) this.partner.promote(delta);
 
         if (this.partnerDef.noPartner) {
-            this.enSummary += '\nDeclarer (1vs5) promoted ' + delta + ' rank(s)\n';
+            this.enSummary += '\nDeclarer (1vs5) promoted ' + delta + ' rank' + (delta > 1 ? 's' : '') + '\n';
             this.zhSummary += '庄家一打五升' + delta + '级\n';
         } else {
-            this.enSummary += '\nDeclarer and partner promoted ' + delta + ' rank(s)\n';
+            this.enSummary += '\nDeclarer and partner promoted ' + delta + ' rank' + (delta > 1 ? 's' : '') + '\n';
             this.zhSummary += '庄家及帮手升' + delta + '级\n';
         }
 
@@ -974,17 +974,17 @@ Game.prototype.promote = function () {
             + ':' + Card.RankToString(this.contractor.matchInfo.currentRank);
     this.playerStatusZh = '{' + this.contractor.name
             + ':' + Card.RankToString(this.contractor.matchInfo.currentRank);
-    if (this.contractor.id != null && this.contractor.sock == null) {
-        this.playerStatusEn += ',away';
-        this.playerStatusZh += ',离开';
-    }
+//    if (this.contractor.id != null && this.contractor.sock == null) {
+//        this.playerStatusEn += ',away';
+//        this.playerStatusZh += ',离开';
+//    }
     if (this.contractor !== this.partner) {
         this.playerStatusEn += ', ' + this.partner.name + ':' + Card.RankToString(this.partner.matchInfo.currentRank);
         this.playerStatusZh += ', ' + this.partner.name + ':' + Card.RankToString(this.partner.matchInfo.currentRank);
-        if (this.partner.id != null && this.partner.sock == null) {
-            this.playerStatusEn += ',away';
-            this.playerStatusZh += ',离开';
-        }
+//        if (this.partner.id != null && this.partner.sock == null) {
+//            this.playerStatusEn += ',away';
+//            this.playerStatusZh += ',离开';
+//        }
     }
     this.playerStatusEn += '} ' + (this.result > 0 ? '+' : '-') + delta + '\n';
     this.playerStatusZh += '} ' + (this.result > 0 ? '+' : '-') + delta + '\n';
@@ -995,10 +995,10 @@ Game.prototype.promote = function () {
         if (p === this.contractor || p === this.partner) continue;
         sEn += ', ' + p.name + ':' + Card.RankToString(p.matchInfo.currentRank);
         sZh += ', ' + p.name + ':' + Card.RankToString(p.matchInfo.currentRank);
-        if (p.id != null && p.sock == null) {
-            sEn += ',away';
-            sZh += ',离开';
-        }
+//        if (p.id != null && p.sock == null) {
+//            sEn += ',away';
+//            sZh += ',离开';
+//        }
     }
     this.playerStatusEn += sEn.substr(2);
     this.playerStatusZh += sZh.substr(2);
