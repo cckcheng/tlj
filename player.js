@@ -67,7 +67,9 @@ function Player(o) {
             if (p.currentTable == null || p.currentTable.dismissed) return;
             p.id = null;
             p.name = 'Robot';
-            Server.addRobot(p);
+            if (!p.currentTable.dismiss()) {
+                Server.addRobot(p);
+            }
         }, timeout, this);
     };
 

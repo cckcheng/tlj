@@ -117,9 +117,31 @@ Table.prototype.allRobots = function () {
 };
 
 Table.prototype.dismiss = function () {
-    if (this.dismissed) return;
-    if (this.status === 'break') return;
-    if (this.pauseTimer != null) return;
+    if (this.dismissed) return true;
+
+    var noPlayerLeft = true;
+    for (var x = 0, p; x < SEAT_NUMBER; x++) {
+        p = this.players[x];
+        if (p == null) continue;    // should not happen
+        if (p.sock != null) return false; // has active player
+        if (p.id != null) noPlayerLeft = false;
+    }
+
+    if (noPlayerLeft) {
+        if (this.pauseTimer != null) {
+            clearTimeout(this.pauseTimer);
+            this.pauseTimer = null;
+        }
+        if (this.autoTimer != null) {
+            clearTimeout(this.autoTimer);
+            this.autoTimer = null;
+        }
+        this.terminate();
+        return true;
+    }
+
+    if (this.status === 'break') return false;
+    if (this.pauseTimer != null) return false;
     if(this.autoTimer != null) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
@@ -129,6 +151,7 @@ Table.prototype.dismiss = function () {
         t.pauseTimer = null;
         t.terminate();
     }, pauseMinutes * 60000, this);
+    return false;
 };
 
 Table.prototype.terminate = function () {
@@ -682,8 +705,10 @@ Table.prototype.processPlayerAction = function (player, json) {
             this.autoPlay(true);
             break;
         case 'bid':
-            if (this.game.stage !== Game.BIDDING_STAGE)
+            if (this.game.stage !== Game.BIDDING_STAGE) {
+                this.autoPlay(true);
                 return;
+            }
             var lastBid = json.bid;
             if (player.matchInfo.lastBid === 'pass') {
                 // this should never happen
@@ -709,27 +734,40 @@ Table.prototype.processPlayerAction = function (player, json) {
             break;
 
         case 'trump':
-            if (player !== this.game.contractor && this.game.trump != null)
+            if (player !== this.game.contractor && this.game.trump != null) {
+                this.autoPlay(true);
                 return;
+            }
             procSetTrump(this, json.trump);
             break;
 
         case 'bury':
-            if (player !== this.game.contractor)
+            if (player !== this.game.contractor) {
+                this.autoPlay(true);
                 return;
+            }
             procBuryCards(this, json.cards);
             break;
 
         case 'partner':
-            if (player !== this.game.contractor)
+            if (player !== this.game.contractor) {
+                this.autoPlay(true);
                 return;
+            }
             procDefinePartner(this, json.def);
             break;
 
         case 'play':
-            if (this.game.stage !== Game.PLAYING_STAGE)
+            if (this.game.stage !== Game.PLAYING_STAGE) {
+                this.autoPlay(true);
                 return;
+            }
             procPlayCards(this, json.cards);
+            break;
+
+        default:
+            player.pushData();
+            this.autoPlay(true);
             break;
     }
 };
