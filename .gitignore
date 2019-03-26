@@ -1,7 +1,7 @@
 nbproject/
 *.html
 *.txt
-st*.sh
+*.sh
 server.js
 sys.js
 conf.js
