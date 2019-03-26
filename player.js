@@ -407,6 +407,7 @@ Player.prototype.playAllCards = function (cards) {
 };
 
 Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
+    var game = this.currentTable.game;
     var allCards = [];
 
     if (exSuite !== Card.SUITE.SPADE) {
@@ -428,8 +429,14 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     allCards.sort(function (a, b) {
         var aPoint = a.getPoint();
         var bPoint = b.getPoint();
-        return aPoint === bPoint ? a.rank - b.rank :
-                (pointFirst ? bPoint - aPoint : aPoint - bPoint);
+
+        if (aPoint === bPoint) {
+            var aTrump = a.isTrump(game.trump, game.rank);
+            var bTrump = b.isTrump(game.trump, game.rank);
+            if (aTrump !== bTrump) return aTrump ? 1 : -1;
+            return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
+        }
+        return pointFirst ? bPoint - aPoint : aPoint - bPoint;
     });
 
     for (var x = 0; x < num; x++) {
