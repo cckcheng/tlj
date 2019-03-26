@@ -50,7 +50,7 @@ function Player(o) {
         this.sock = null;
         if (this.idleTimer != null) return;
 
-        if (this.currentTable != null) {
+        if (this.currentTable != null && !this.currentTable.dismissed) {
             this.currentTable.broadcastGameInfo({action: 'out', seat: this.currentTable.getSeat(this)});
         }
 
@@ -78,7 +78,9 @@ function Player(o) {
             clearTimeout(this.idleTimer);
             this.idleTimer = null;
         }
-        this.currentTable.broadcastGameInfo({action: 'in', name: this.name, seat: this.currentTable.getSeat(this)}, this);
+        if (this.currentTable != null && !this.currentTable.dismissed) {
+            this.currentTable.broadcastGameInfo({action: 'in', name: this.name, seat: this.currentTable.getSeat(this)}, this);
+        }
     };
 
     this.isHandEmpty = function() {
