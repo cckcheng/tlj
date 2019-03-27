@@ -468,6 +468,13 @@ function procPlayCards(t, cards) {
         }
     }
 
+    if (status === 'newround' || status === 'gameover') {
+        if (player === t.game.leadingPlayer) json.lead = 1;
+    } else {
+        var leadingPlayer = t.game.currentRound.getNextLeadingPlayer();
+        if (player === leadingPlayer) json.lead = 1;
+    }
+
     if (player.matchInfo.alert != null) {
         json.alert = player.matchInfo.alert;
     }
@@ -825,6 +832,10 @@ function MatchInfo(t, player) {
 
         if (t.game != null) {
             if (t.game.stage === Game.PLAYING_STAGE) {
+                var leadingPlayer = t.game.currentRound.getNextLeadingPlayer();
+                if (leadingPlayer === this.player) {
+                    json.lead = 1;
+                }
                 json.cards = this.playedCards;
                 json.pt1 = this.points;
                 if (this.penalty != null) json.penalty = this.penalty;
