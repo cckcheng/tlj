@@ -829,10 +829,12 @@ function MatchInfo(t, player) {
 
         if (t.game != null) {
             if (t.game.stage === Game.PLAYING_STAGE) {
-                var leadingHand = t.game.currentRound.getLeadingHand();
-                var leadingPlayer = leadingHand ? leadingHand.player : t.game.leadingPlayer;
-                if (leadingPlayer === this.player) {
-                    json.lead = 1;
+                if(t.game.currentRound) {
+                    var leadingHand = t.game.currentRound.getLeadingHand();
+                    var leadingPlayer = leadingHand ? leadingHand.player : t.game.leadingPlayer;
+                    if (leadingPlayer === this.player) {
+                        json.lead = 1;
+                    }
                 }
                 json.cards = this.playedCards;
                 json.pt1 = this.points;
