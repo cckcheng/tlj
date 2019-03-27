@@ -674,7 +674,6 @@ Table.prototype.definePartner = function () {
 
 Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
     var t = this;
-    if (t.dismissed) return;
     this.players.forEach(function (p) {
         if (p === exceptPlayer) return;
         if (p.currentTable !== t) return;
