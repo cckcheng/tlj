@@ -942,9 +942,78 @@ Player.prototype.isValidPlay = function (hand) {
 
     if (cardList.length >= firstHand.cardNumber) {
         if (!Card.containsAll(cardList, hand.cards)) return false;
+        var stat = new HandStat(cardList, game.trump, game.rank);
         if(hand.totalPairs < firstHand.totalPairs) {
-            var stat = new HandStat(cardList, game.trump, game.rank);
-            if(stat.totalPairs > hand.totalPairs) return false;
+            if (stat.totalPairs > hand.totalPairs) return false;
+        } else {
+            var handStat, tractors, playedTractors;
+            var totalTractorLen;
+            switch (firstHand.type.cat) {
+                case Hand.COMBINATION.SINGLE:
+                case Hand.COMBINATION.PAIR:
+                    return true;
+                case Hand.COMBINATION.TRIPS:
+                    if (hand.type.cat !== firstHand.type.cat) {
+                        if (stat.totalTrips > 0) return false;
+                    }
+                    break;
+                case Hand.COMBINATION.QUADS:
+                    if (hand.type.cat !== firstHand.type.cat) {
+                        if (stat.totalQuads > 0) return false;
+                        if (stat.totalTrips > 0) {
+                            return hand.totalTrips > 0;
+                        }
+                        if (hand.type.cat !== Hand.COMBINATION.TRACTOR2) {
+                            return stat.getTractors(2, firstHand.isTrump).length < 1;
+                        }
+                    }
+                    break;
+                case Hand.COMBINATION.TRACTOR2:
+                    if (hand.type.cat !== firstHand.type.cat) {
+                        tractors = stat.getTractors(2, firstHand.isTrump);
+                        if (tractors.length < 0) return true;
+                        handStat = new HandStat(hand, game.trump, game.rank);
+                        playedTractors = handStat.getTractors(2, firstHand.isTrump);
+                        if (playedTractors.length < 1) return false;
+                        if (tractors[tractors.length - 1].type.len > playedTractors[playedTractors.length - 1].type.len) return false;
+
+                        totalTractorLen = HandStat.totalTractorLength(tractors);
+                        if (totalTractorLen <= firstHand.type.len) {
+                            if (HandStat.totalTractorLength(playedTractors) < totalTractorLen) return false;
+                        }
+                    }
+                    break;
+                case Hand.COMBINATION.TRACTOR3:
+                    if (hand.type.cat !== firstHand.type.cat) {
+                        tractors = stat.getTractors(3, firstHand.isTrump);
+                        if (tractors.length < 0) {
+                            if (hand.totalTrips < firstHand.totalTrips) {
+                                return hand.totalTrips === stat.totalTrips;
+                            }
+                            return true;
+                        }
+                        handStat = new HandStat(hand, game.trump, game.rank);
+                        playedTractors = handStat.getTractors(3, firstHand.isTrump);
+                        if (playedTractors.length < 1) return false;
+                        if (tractors[tractors.length - 1].type.len > playedTractors[playedTractors.length - 1].type.len) return false;
+
+                        totalTractorLen = HandStat.totalTractorLength(tractors);
+                        if (totalTractorLen <= firstHand.type.len) {
+                            if (HandStat.totalTractorLength(playedTractors) < totalTractorLen) return false;
+                        }
+                    }
+                    break;
+                case Hand.COMBINATION.TRACTOR4:
+                    if (hand.type.cat !== firstHand.type.cat) {
+                        if (hand.totalQuads < firstHand.totalQuads) {
+                            return hand.totalQuads === stat.totalQuads;
+                        }
+                        return true;
+                    }
+                    break;
+                case Hand.COMBINATION.MIXED:
+                    break;
+            }
         }
     } else if (cardList.length > 0) {
         if (!Card.containsAll(hand.cards, cardList)) return false;

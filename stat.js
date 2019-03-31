@@ -131,3 +131,13 @@ HandStat.prototype.getTractors = function (sLen, isTrump) {
     });
     return tractors;
 };
+
+HandStat.totalTractorLength = function (tractors) {
+    if (tractors == null) return 0;
+    if (tractors.length < 1) return 0;
+    var len = 0;
+    for (var x = 0; x < tractors.length; x++) {
+        len += tractors[x].typ.len;
+    }
+    return len;
+};
