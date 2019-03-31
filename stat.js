@@ -137,7 +137,7 @@ HandStat.totalTractorLength = function (tractors) {
     if (tractors.length < 1) return 0;
     var len = 0;
     for (var x = 0; x < tractors.length; x++) {
-        len += tractors[x].typ.len;
+        len += tractors[x].type.len;
     }
     return len;
 };

@@ -8,8 +8,9 @@ const {Game, Hand, SimpleHand} = require('./game');
 console.log(new Date().toLocaleString());
 
 var table = new Table({
+    matchType: Table.MATCH_TYPE.FULL
 //    matchType: Table.MATCH_TYPE.HALF
-    matchType: Table.MATCH_TYPE.POINTS
+//    matchType: Table.MATCH_TYPE.POINTS
 //    matchType: Table.MATCH_TYPE.FREE
 //    matchType: Table.MATCH_TYPE.EXPRESS
 });
@@ -34,7 +35,7 @@ table.startGame(true);
 var n = 1;
 //var trump_suite = Card.SUITE.HEART;
 var trump_suite = Card.SUITE.CLUB;
-var game_rank = 7;
+var game_rank = 9;
 
 var game = table.game;
 var p = players[0];
@@ -43,10 +44,45 @@ game.contractor = p;
 game.enterPlayStage();
 game.setTrump(trump_suite);
 
+p.spades = [];
+p.spades.push(new Card(Card.SUITE.SPADE, 6));
+p.spades.push(new Card(Card.SUITE.SPADE, 6));
+p.spades.push(new Card(Card.SUITE.SPADE, 7));
+p.spades.push(new Card(Card.SUITE.SPADE, 7));
+p.spades.push(new Card(Card.SUITE.SPADE, 10));
+p.spades.push(new Card(Card.SUITE.SPADE, 10));
+p.spades.push(new Card(Card.SUITE.SPADE, 10));
+p.spades.push(new Card(Card.SUITE.SPADE, 11));
+p.spades.push(new Card(Card.SUITE.SPADE, 11));
+p.spades.push(new Card(Card.SUITE.SPADE, 12));
+p.spades.push(new Card(Card.SUITE.SPADE, 12));
+p.spades.push(new Card(Card.SUITE.SPADE, 12));
+p.spades.push(new Card(Card.SUITE.SPADE, 12));
+p.spades.push(new Card(Card.SUITE.SPADE, 14));
+
+var cards = [];
+cards.push(new Card(Card.SUITE.SPADE, 14));
+cards.push(new Card(Card.SUITE.SPADE, 13));
+cards.push(new Card(Card.SUITE.SPADE, 13));
+cards.push(new Card(Card.SUITE.SPADE, 13));
+cards.push(new Card(Card.SUITE.SPADE, 13));
+
+game.currentRound.addHand(players[5], cards);
+
+var pCards = [];
+pCards.push(new Card(Card.SUITE.SPADE, 14));
+pCards.push(new Card(Card.SUITE.SPADE, 12));
+pCards.push(new Card(Card.SUITE.SPADE, 12));
+pCards.push(new Card(Card.SUITE.SPADE, 12));
+pCards.push(new Card(Card.SUITE.SPADE, 7));
+
+var hand = new Hand(p, pCards, trump_suite, game_rank);
+debugger;
+console.log(p.isValidPlay(hand));
+if (true) process.exit(0);
 //game.setTrump(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
 n = 1;
 
-var cards = [];
 
 cards.push(new Card(Card.SUITE.HEART, 3));
 cards.push(new Card(Card.SUITE.HEART, 6));
