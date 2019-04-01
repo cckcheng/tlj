@@ -1388,6 +1388,26 @@ Player.prototype.promote = function (delta) {
 };
 
 Player.prototype.evaluate = function () {
+    var numGames = this.currentTable.games.length;
+    if (numGames > 1) {
+        var lastGame = this.currentTable.games[numGames - 2];
+        if (lastGame.constructor === this) {
+            if (lastGame.result < -1) {
+                this.canBid = false;
+                this.matchInfo.alert = 'Bid forbidden, last contract down ' + (-lastGame.result);
+                return;
+            }
+
+            if (lastGame.result < 0 && numGames > 2) {
+                var preGame = this.currentTable.games[numGames - 3];
+                if (preGame.constructor === this && preGame.result < 0) {
+                    this.canBid = false;
+                    this.matchInfo.alert = 'Bid forbidden, consecutive contract down';
+                    return;
+                }
+            }
+        }
+    }
     var currentGameRank = this.matchInfo.currentRank;
     var honorPoints = 0;
     for (var x = 0, c; c = this.trumps[x]; x++) {
