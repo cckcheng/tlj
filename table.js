@@ -266,14 +266,13 @@ Table.prototype.startGame = function (testOnly) {
     }
 
     if (!this.players[0].canBid) {
-        this.players[0].pushJson();
         this.actionPlayerIdx = 1;
     }
 
     for (var x = 0, p; p = this.players[x]; x++) {
         p.pushData();
         if (p.matchInfo.alert) {
-            p.sendMessage(this.matchInfo.alert);
+            p.sendMessage(p.matchInfo.alert);
         }
         if (!p.canBid) {
             p.matchInfo.lastBid = 'pass';

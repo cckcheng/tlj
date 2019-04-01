@@ -1393,8 +1393,9 @@ Player.prototype.promote = function (delta) {
 Player.prototype.evaluate = function () {
     var numGames = this.currentTable.games.length;
     if (numGames > 1) {
+      debugger;
         var lastGame = this.currentTable.games[numGames - 2];
-        if (lastGame.constructor === this) {
+        if (lastGame.contractor === this) {
             if (lastGame.result < -1) {
                 this.canBid = false;
                 this.matchInfo.alert = 'Bid forbidden, last contract down ' + (-lastGame.result);
@@ -1403,7 +1404,7 @@ Player.prototype.evaluate = function () {
 
             if (lastGame.result < 0 && numGames > 2) {
                 var preGame = this.currentTable.games[numGames - 3];
-                if (preGame.constructor === this && preGame.result < 0) {
+                if (preGame.contractor === this && preGame.result < 0) {
                     this.canBid = false;
                     this.matchInfo.alert = 'Bid forbidden, consecutive contract down';
                     return;
