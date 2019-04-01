@@ -167,6 +167,7 @@ Table.prototype.terminate = function () {
     }
 
     console.log(new Date().toLocaleString() + ', table ended');
+    Server.removeTable(this);
 };
 
 Table.prototype.resume = function (player) {
