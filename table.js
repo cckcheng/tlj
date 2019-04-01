@@ -263,7 +263,26 @@ Table.prototype.startGame = function (testOnly) {
     this.actionPlayerIdx = 0;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.evaluate();
+    }
+
+    if (!this.players[0].canBid) {
+        this.players[0].pushJson();
+        this.actionPlayerIdx = 1;
+    }
+
+    for (var x = 0, p; p = this.players[x]; x++) {
         p.pushData();
+        if (p.matchInfo.alert) {
+            p.sendMessage(this.matchInfo.alert);
+        }
+        if (!p.canBid) {
+            p.matchInfo.lastBid = 'pass';
+            this.broadcastGameInfo({
+                action: 'bid',
+                seat: x + 1,
+                bid: 'pass'
+            });
+        }
     }
 
     if (testOnly == null) this.autoPlay();

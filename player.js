@@ -1147,7 +1147,10 @@ Player.prototype.playCards = function (strCards) {
                     var orgCards = Card.showCards(cards);
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
-                    this.matchInfo.alert = '甩牌失败' + orgCards + ',罚' + (-this.matchInfo.penalty);
+                    this.matchInfo.alert = this.lang === 'zh' ?
+                            '甩牌失败' + orgCards + ',罚' + (-this.matchInfo.penalty) + '分'
+                            : 'Invalid Flop, penalty: ' + this.matchInfo.penalty + ' points';
+                    this.sendMessage(this.matchInfo.alert);
                     this.addPoints(this.matchInfo.penalty);
                     hand = null;
                 }
@@ -1606,7 +1609,8 @@ Player.prototype.sendMessage = function (msg) {
     if (this.sock == null)
         return;
     var json = {
-        message: msg
+        action: 'info',
+        info: msg
     };
 
     this.pushJson(json);
