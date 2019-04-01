@@ -1609,10 +1609,22 @@ Player.prototype.evaluate = function () {
 Player.prototype.sendMessage = function (msg) {
     if (this.sock == null)
         return;
+
+    if (this.messageTimer) {
+        clearTimeout(this.messageTimer);
+    }
+
     var json = {
         action: 'info',
         info: msg
     };
 
     this.pushJson(json);
+    this.messageTimer = setTimeout(function (p) {
+        p.pushJson({
+            action: 'info',
+            info: ' '
+        });
+        p.messageTimer = null;
+    }, 60000, this);
 };

@@ -832,6 +832,9 @@ function MatchInfo(t, player) {
         this.points = 0;
         this.playedCards = '';
         this.alert = null;
+        if (this.player.messageTimer) {
+            clearTimeout(this.player.messageTimer);
+        }
     };
 
     this.toJson = function (seat) {
