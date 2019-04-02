@@ -1148,7 +1148,7 @@ Player.prototype.playCards = function (strCards) {
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
                     this.matchInfo.alert = this.lang === 'zh' ?
-                            '甩牌失败' + orgCards + ',罚' + (-this.matchInfo.penalty) + '分'
+                            '甩牌失败,罚' + (this.matchInfo.penalty) + '分'
                             : 'Invalid Flop, penalty: ' + this.matchInfo.penalty + ' points';
                     this.sendMessage(this.matchInfo.alert);
                     this.addPoints(this.matchInfo.penalty);
@@ -1623,8 +1623,8 @@ Player.prototype.sendMessage = function (msg) {
     this.messageTimer = setTimeout(function (p) {
         p.pushJson({
             action: 'info',
-            info: ' '
+            info: '.'
         });
         p.messageTimer = null;
-    }, 60000, this);
+    }, 10000, this);
 };
