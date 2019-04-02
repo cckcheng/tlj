@@ -1148,8 +1148,8 @@ Player.prototype.playCards = function (strCards) {
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
                     this.matchInfo.alert = this.lang === 'zh' ?
-                            '甩牌失败,罚' + (this.matchInfo.penalty) + '分'
-                            : 'Invalid Flop, penalty: ' + this.matchInfo.penalty + ' points';
+                            '甩牌失败,罚' + (-this.matchInfo.penalty) + '分'
+                            : 'Invalid Flop, penalty: ' + (-this.matchInfo.penalty) + ' points';
                     this.sendMessage(this.matchInfo.alert);
                     this.addPoints(this.matchInfo.penalty);
                     hand = null;
@@ -1398,7 +1398,9 @@ Player.prototype.evaluate = function () {
         if (lastGame.contractor === this) {
             if (lastGame.result < -1) {
                 this.canBid = false;
-                this.matchInfo.alert = 'Bid forbidden, last contract down ' + (-lastGame.result);
+                this.matchInfo.alert = this.lang === 'zh' ?
+                      '??,????' + (-lastGame.result)
+                    : 'Bid forbidden, last contract down ' + (-lastGame.result);
                 return;
             }
 
@@ -1406,7 +1408,9 @@ Player.prototype.evaluate = function () {
                 var preGame = this.currentTable.games[numGames - 3];
                 if (preGame.contractor === this && preGame.result < 0) {
                     this.canBid = false;
-                    this.matchInfo.alert = 'Bid forbidden, consecutive contract down';
+                    this.matchInfo.alert = this.lang === 'zh' ?
+                       '??,????'
+                      :'Bid forbidden, consecutive contract down';
                     return;
                 }
             }

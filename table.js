@@ -547,9 +547,12 @@ function gameOver(t) {
 
     var matchOver = false;
     for (var x = 0, p; p = t.players[x]; x++) {
+        if (p.messageTimer) {
+            clearTimeout(p.messageTimer);
+            p.messageTimer = null;
+        }
         if (p.matchInfo.currentRank > t.maxRank) {
             matchOver = true;
-            break;
         }
     }
     if (!matchOver) {
