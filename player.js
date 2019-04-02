@@ -1399,7 +1399,7 @@ Player.prototype.evaluate = function () {
             if (lastGame.result < -1) {
                 this.canBid = false;
                 this.matchInfo.alert = this.lang === 'zh' ?
-                      '??,????' + (-lastGame.result)
+                      '禁叫，上局跨庄:' + (lastGame.result)
                     : 'Bid forbidden, last contract down ' + (-lastGame.result);
                 return;
             }
@@ -1409,7 +1409,7 @@ Player.prototype.evaluate = function () {
                 if (preGame.contractor === this && preGame.result < 0) {
                     this.canBid = false;
                     this.matchInfo.alert = this.lang === 'zh' ?
-                       '??,????'
+                       '禁叫，连续跨庄'
                       :'Bid forbidden, consecutive contract down';
                     return;
                 }
