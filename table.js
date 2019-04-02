@@ -834,6 +834,7 @@ function MatchInfo(t, player) {
         this.alert = null;
         if (this.player.messageTimer) {
             clearTimeout(this.player.messageTimer);
+            this.player.messageTimer = null;
         }
     };
 
