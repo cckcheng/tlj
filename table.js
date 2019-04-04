@@ -269,6 +269,7 @@ Table.prototype.startGame = function (testOnly) {
         this.actionPlayerIdx = 1;
     }
 
+    var broadJson;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.pushData();
         if (p.matchInfo.alert) {
@@ -276,12 +277,16 @@ Table.prototype.startGame = function (testOnly) {
         }
         if (!p.canBid) {
             p.matchInfo.lastBid = 'pass';
-            this.broadcastGameInfo({
+            broadJson = {
                 action: 'bid',
                 seat: x + 1,
                 bid: 'pass'
-            });
+            };
         }
+    }
+    
+    if(broadJson) {
+        this.broadcastGameInfo(broadJson);
     }
 
     if (testOnly == null) this.autoPlay();
