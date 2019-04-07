@@ -265,7 +265,7 @@ Table.prototype.startGame = function (testOnly) {
         p.evaluate();
     }
 
-    if (!this.players[0].canBid) {
+    if (!this.players[0].canBid && this.players[0].matchInfo.alert) {
         this.actionPlayerIdx = 1;
     }
 
@@ -274,14 +274,14 @@ Table.prototype.startGame = function (testOnly) {
         p.pushData();
         if (p.matchInfo.alert) {
             p.sendMessage(p.matchInfo.alert);
-        }
-        if (!p.canBid) {
-            p.matchInfo.lastBid = 'pass';
-            broadJson = {
-                action: 'bid',
-                seat: x + 1,
-                bid: 'pass'
-            };
+            if (!p.canBid) {
+                p.matchInfo.lastBid = 'pass';
+                broadJson = {
+                    action: 'bid',
+                    seat: x + 1,
+                    bid: 'pass'
+                };
+            }
         }
     }
     
