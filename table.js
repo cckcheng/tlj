@@ -284,7 +284,7 @@ Table.prototype.startGame = function (testOnly) {
             }
         }
     }
-    
+
     if(broadJson) {
         this.broadcastGameInfo(broadJson);
     }
@@ -524,7 +524,20 @@ function procPlayCards(t, cards) {
     } else {
         t.rotatePlayer();
         json.next = t.actionPlayerIdx + 1
-        t.broadcastGameInfo(json);
+        var nxtPlayer = t.players[t.actionPlayerIdx];
+        if (nxtPlayer.sock == null || nxtPlayer.isOut()) {
+            t.broadcastGameInfo(json);
+        } else {
+            var sugCards = nxtPlayer.suggestedCards();
+            if (sugCards == null) {
+                t.broadcastGameInfo(json);
+            } else {
+                t.broadcastGameInfo(json, nxtPlayer);
+                nxtPlayer.pushJson(Object.assign({
+                    sug: sugCards
+                }, json));
+            }
+        }
         t.autoPlay(status === 'lasthand');
     }
 }

@@ -795,6 +795,32 @@ Player.prototype.trumpExclusive = function (cards) {
     return true;
 };
 
+Player.prototype.suggestedCards = function () {
+    if (this === game.leadingPlayer) return null;
+    var game = this.currentTable.game;
+    var round = game.currentRound;
+
+    var firstHand = round.getFirstHand();
+    if (firstHand.cardNumber < 2) return null;
+
+    var cardList;
+    var suite = firstHand.suite;
+    if (firstHand.isTrump) {
+        cardList = this.trumps;
+        suite = Card.SUITE.JOKER;
+    } else {
+        cardList = this.getCardsBySuite(suite);
+    }
+
+    if (cardList.length <= firstHand.cardNumber) {
+        return null;
+    }
+
+    var cards = this.autoPlayCards(false);
+    if (cards.length < firstHand.cardNumber) return null;
+    return Card.cardsToString(cards);
+};
+
 Player.prototype.autoPlayCards = function (isLeading) {
     var cards = [];
     var game = this.currentTable.game;
