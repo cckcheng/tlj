@@ -796,8 +796,8 @@ Player.prototype.trumpExclusive = function (cards) {
 };
 
 Player.prototype.suggestedCards = function () {
-    if (this === game.leadingPlayer) return null;
     var game = this.currentTable.game;
+    if (this === game.leadingPlayer) return null;
     var round = game.currentRound;
 
     var firstHand = round.getFirstHand();
