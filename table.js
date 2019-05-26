@@ -270,10 +270,11 @@ Table.prototype.startGame = function (testOnly) {
     }
 
     var broadJson;
+    var langMsg;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.pushData();
         if (p.matchInfo.alert) {
-            p.sendMessage(p.matchInfo.alert);
+            langMsg = p.matchInfo.alert;
             if (!p.canBid) {
                 p.matchInfo.lastBid = 'pass';
                 broadJson = {
@@ -287,6 +288,10 @@ Table.prototype.startGame = function (testOnly) {
 
     if(broadJson) {
         this.broadcastGameInfo(broadJson);
+    }
+
+    if (langMsg) {
+        this.broadcastMessage(langMsg);
     }
 
     if (testOnly == null) this.autoPlay();
@@ -496,9 +501,6 @@ function procPlayCards(t, cards) {
     var leadingPlayer = leadingHand ? leadingHand.player : t.game.leadingPlayer;
     if (player === leadingPlayer) json.lead = 1;
 
-    if (player.matchInfo.alert != null) {
-        json.alert = player.matchInfo.alert;
-    }
     json.pt1 = player.matchInfo.points;
     json.pt0 = game.collectedPoint;
     if (status === 'gameover') {
@@ -726,6 +728,14 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
         } else {
             p.pushJson(json);
         }
+    });
+};
+
+Table.prototype.broadcastMessage = function (langMessage) {
+    var t = this;
+    this.players.forEach(function (p) {
+        if (p.currentTable !== t) return;
+        p.sendMessage(langMessage[p.lang]);
     });
 };
 

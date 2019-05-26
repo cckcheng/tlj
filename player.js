@@ -1173,10 +1173,11 @@ Player.prototype.playCards = function (strCards) {
                     var orgCards = Card.showCards(cards);
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
-                    this.matchInfo.alert = this.lang === 'zh' ?
-                            '甩牌失败,罚' + (-this.matchInfo.penalty) + '分'
-                            : 'Invalid Flop, penalty: ' + (-this.matchInfo.penalty) + ' points';
-                    this.sendMessage(this.matchInfo.alert);
+                    this.matchInfo.alert = {
+                        'zh': this.name + ': 甩牌失败,罚' + (-this.matchInfo.penalty) + '分',
+                        'en': this.name + ': Invalid Flop, penalty: ' + (-this.matchInfo.penalty) + ' points'
+                    };
+                    this.currentTable.broadcastMessage(this.matchInfo.alert);
                     this.addPoints(this.matchInfo.penalty);
                     hand = null;
                 }
@@ -1424,9 +1425,10 @@ Player.prototype.evaluate = function () {
         if (lastGame.contractor === this) {
             if (lastGame.result < -1) {
                 this.canBid = false;
-                this.matchInfo.alert = this.lang === 'zh' ?
-                      '禁叫，上局垮庄:' + (lastGame.result)
-                    : 'Bid forbidden, last contract down ' + (-lastGame.result);
+                this.matchInfo.alert = {
+                    'zh': this.name + ': 禁叫，上局垮庄:' + (lastGame.result),
+                    'en': this.name + ': Bid forbidden, last contract down ' + (-lastGame.result)
+                };
                 return;
             }
 
@@ -1434,9 +1436,10 @@ Player.prototype.evaluate = function () {
                 var preGame = this.currentTable.games[numGames - 3];
                 if (preGame.contractor === this && preGame.result < 0) {
                     this.canBid = false;
-                    this.matchInfo.alert = this.lang === 'zh' ?
-                       '禁叫，连续垮庄'
-                      :'Bid forbidden, consecutive contract down';
+                    this.matchInfo.alert = {
+                        'zh': this.name + ': 禁叫，连续垮庄',
+                        'en': this.name + ': Bid forbidden, consecutive contract down'
+                    };
                     return;
                 }
             }
