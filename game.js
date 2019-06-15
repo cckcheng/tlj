@@ -137,7 +137,7 @@ function Hand(player, cards, trump, rank) {
             if (this.isTrump && !other.isTrump) return 1;
             return this.maxRank > other.maxRank ? 1 : -1;
         }
-
+        debugger;
         // mixed
         if (!this.isTrump || firstHand.isTrump) return -1;
 

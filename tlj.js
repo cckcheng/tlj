@@ -19,7 +19,7 @@ var table = new Table({
 var players = [];
 var player;
 while (players.length < 6) {
-    player = new Player();
+    player = new Player({id: 'p' + players.length});
     players.push(player);
     table.addPlayer(player);
 }
@@ -43,7 +43,25 @@ var p = players[0];
 game.contractor = p;
 game.enterPlayStage();
 game.setTrump(trump_suite);
+var curRound = game.currentRound;
+var cards = [];
+cards.push(new Card(Card.SUITE.SPADE, 6));
+cards.push(new Card(Card.SUITE.SPADE, 14));
+curRound.addHand(players[0], cards);
+console.log(curRound.getNextLeadingPlayer().id);
+cards = [];
+cards.push(new Card(trump_suite, 6));
+cards.push(new Card(trump_suite, 13));
+curRound.addHand(players[1], cards);
+console.log(curRound.getNextLeadingPlayer().id);
 
+cards = [];
+cards.push(new Card(Card.SUITE.HEART, game_rank));
+cards.push(new Card(trump_suite, 14));
+curRound.addHand(players[2], cards);
+console.log(curRound.getNextLeadingPlayer().id);
+
+if (true) process.exit(0);
 p.spades = [];
 p.spades.push(new Card(Card.SUITE.SPADE, 6));
 p.spades.push(new Card(Card.SUITE.SPADE, 6));
@@ -60,7 +78,6 @@ p.spades.push(new Card(Card.SUITE.SPADE, 12));
 p.spades.push(new Card(Card.SUITE.SPADE, 12));
 p.spades.push(new Card(Card.SUITE.SPADE, 14));
 
-var cards = [];
 cards.push(new Card(Card.SUITE.SPADE, 14));
 cards.push(new Card(Card.SUITE.SPADE, 13));
 cards.push(new Card(Card.SUITE.SPADE, 13));
@@ -161,7 +178,7 @@ console.log('tractors: ' + tractors.length);
 tractors.forEach(function (sHand) {
     console.log(sHand.minRank + "," + sHand.type.len);
 });
-if (true) return ;
+if (true) process.exit(0);
 //console.log('valid cards: ' + p.allValid(cards));
 
 var pcards = p.trumps.slice(p.trumps.length - 2, p.trumps.length);
