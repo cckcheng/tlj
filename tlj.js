@@ -46,25 +46,29 @@ game.setTrump(trump_suite);
 var curRound = game.currentRound;
 
 var cards = [];
-cards.push(new Card(Card.SUITE.SPADE, 6));
+cards.push(new Card(Card.SUITE.SPADE, 13));
+cards.push(new Card(Card.SUITE.SPADE, 13));
 cards.push(new Card(Card.SUITE.SPADE, 14));
 curRound.addHand(players[0], cards);
 console.log(curRound.getNextLeadingPlayer().id);
 
 cards = [];
-cards.push(new Card(trump_suite, 4));
-cards.push(new Card(trump_suite, 13));
+cards.push(new Card(Card.SUITE.SPADE, 6));
+cards.push(new Card(Card.SUITE.SPADE, 6));
+cards.push(new Card(Card.SUITE.SPADE, 5));
 curRound.addHand(players[1], cards);
 console.log(curRound.getNextLeadingPlayer().id);
 
 cards = [];
+cards.push(new Card(trump_suite, 5));
+cards.push(new Card(trump_suite, 5));
 cards.push(new Card(trump_suite, 4));
-cards.push(new Card(trump_suite, 14));
 curRound.addHand(players[2], cards);
 console.log(curRound.getNextLeadingPlayer().id);
 
 cards = [];
-cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+cards.push(new Card(trump_suite, 5));
+cards.push(new Card(trump_suite, 5));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 curRound.addHand(players[5], cards);
 console.log(curRound.getNextLeadingPlayer().id);
