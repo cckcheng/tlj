@@ -131,14 +131,14 @@ function Hand(player, cards, trump, rank) {
             return 1;
         }
 
-        if (firstHand.type.cat !== Hand.COMBINATION.MIXED) {
+//        if (firstHand.type.cat !== Hand.COMBINATION.MIXED) {
+        if (!firstHand.isFlop) {
             if (this.type.cat !== other.type.cat) return -1;
             if (!this.isTrump && other.isTrump) return -1;
             if (this.isTrump && !other.isTrump) return 1;
             return this.maxRank > other.maxRank ? 1 : -1;
         }
-        debugger;
-        // mixed
+        // Flop play
         if (!this.isTrump || firstHand.isTrump) return -1;
 
         // possible ruff
@@ -148,7 +148,7 @@ function Hand(player, cards, trump, rank) {
             return this.maxRank > other.maxRank ? 1 : -1; // possible overruff
         }
 
-        // more comparation
+        // more comparation, mixed combination
         var tmpCards = this.cards.slice();
         var stat = new HandStat(tmpCards, trump, rank);
         var statOther;

@@ -35,7 +35,7 @@ table.startGame(true);
 var n = 1;
 //var trump_suite = Card.SUITE.HEART;
 var trump_suite = Card.SUITE.CLUB;
-var game_rank = 9;
+var game_rank = 2;
 
 var game = table.game;
 var p = players[0];
@@ -44,21 +44,29 @@ game.contractor = p;
 game.enterPlayStage();
 game.setTrump(trump_suite);
 var curRound = game.currentRound;
+
 var cards = [];
 cards.push(new Card(Card.SUITE.SPADE, 6));
 cards.push(new Card(Card.SUITE.SPADE, 14));
 curRound.addHand(players[0], cards);
 console.log(curRound.getNextLeadingPlayer().id);
+
 cards = [];
-cards.push(new Card(trump_suite, 6));
+cards.push(new Card(trump_suite, 4));
 cards.push(new Card(trump_suite, 13));
 curRound.addHand(players[1], cards);
 console.log(curRound.getNextLeadingPlayer().id);
 
 cards = [];
-cards.push(new Card(Card.SUITE.HEART, game_rank));
+cards.push(new Card(trump_suite, 4));
 cards.push(new Card(trump_suite, 14));
 curRound.addHand(players[2], cards);
+console.log(curRound.getNextLeadingPlayer().id);
+
+cards = [];
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+curRound.addHand(players[5], cards);
 console.log(curRound.getNextLeadingPlayer().id);
 
 if (true) process.exit(0);
