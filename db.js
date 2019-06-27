@@ -31,7 +31,8 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
 SqlDb.prototype.recordUser = function (o) {
     this.getCountryCode(o.ip, function (countryCode) {
         var db = new sqlite3.Database(Config.MAIN_DB);
-        var q0 = "insert or ignore into users (player_id) values (?)";
+
+        var q0 = "insert or ignore into users (player_id,start_time) values (?,datetime('now'))";
         var q1 = "update users set player_name=?,lang=?,country_code=?,last_time=datetime('now')"
                 + ",ip=? where player_id=?";
         db.serialize(() => {
