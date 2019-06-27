@@ -31,12 +31,19 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
 SqlDb.prototype.recordUser = function (o) {
     this.getCountryCode(o.ip, function (countryCode) {
         var db = new sqlite3.Database(Config.MAIN_DB);
-        var q = "insert or replace into users (player_id,player_name,lang,country_code,last_time)"
-                + " values (?,?,?,?,datetime('now'))";
-        db.run(q, [o.id, o.name, o.lang, countryCode], function (err) {
-            if (err) {
-                console.log(err.message);
-            }
+        var q0 = "insert or ignore into users (player_id) values (?)";
+        var q1 = "update users set player_name=?,lang=?,country_code=?,last_time=datetime('now')"
+                + ",ip=? where player_id=?";
+        db.serialize(() => {
+            db.run(q0, [o.id], function (err) {
+                if (err) {
+                    console.log(err.message);
+                }
+            }).run(q1, [o.name, o.lang, countryCode, o.ip, o.id], function (err) {
+                if (err) {
+                    console.log(err.message);
+                }
+            });
         });
         db.close();
     });
