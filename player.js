@@ -40,10 +40,11 @@ function Player(o) {
                 this.clubs.length;
     };
 
-    this.replaceRobot = function (id, name, sock) {
-        this.id = id;
-        this.sock = sock;
-        this.name = name;
+    this.replaceRobot = function (p) {
+        this.id = p.id;
+        this.sock = p.sock;
+        this.name = p.name;
+        this.lang = p.lang;
     };
 
     this.toRobot = function (keepMinutes) {
