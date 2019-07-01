@@ -28,10 +28,19 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     country_db.close();
 };
 
-SqlDb.prototype.recordUser = function (o) {
+SqlDb.prototype.recordUser = function (player, o) {
+    var db = new sqlite3.Database(Config.MAIN_DB);
+    var q = "select * from users where player_id=?";
+    db.get(q, [o.id], (err, row) => {
+        if (err) {
+        } else {
+            if(row && player) player.setProperty(row);
+        }
+    });
+    db.close();
+
     this.getCountryCode(o.ip, function (countryCode) {
         var db = new sqlite3.Database(Config.MAIN_DB);
-
         var q0 = "insert or ignore into users (player_id,start_time) values (?,datetime('now'))";
         var q1 = "update users set player_name=?,lang=?,country_code=?,last_time=datetime('now')"
                 + ",ip=? where player_id=?";
@@ -49,7 +58,7 @@ SqlDb.prototype.recordUser = function (o) {
         db.close();
     });
 };
-
+/*
 var sqlDB = new SqlDb();
 var o = Object.assign({
     ip: '104.243.110.169'
@@ -58,4 +67,5 @@ var o = Object.assign({
     name: 'ck',
     lang: 'zh'
 });
-sqlDB.recordUser(o);
+sqlDB.recordUser(p ,o);
+*/

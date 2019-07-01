@@ -284,6 +284,7 @@ Table.prototype.startGame = function (testOnly) {
                 };
             }
         }
+        console.log(p.name + ': AI '  + p.property.aiLevel);
     }
 
     if(broadJson) {
@@ -867,6 +868,8 @@ function MatchInfo(t, player) {
             clearTimeout(this.player.messageTimer);
             this.player.messageTimer = null;
         }
+        
+        this.player.voids = [];
     };
 
     this.toJson = function (seat) {
