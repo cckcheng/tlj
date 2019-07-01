@@ -19,7 +19,14 @@ function Player(o) {
     this.diamonds = [];
     this.clubs = [];
     this.trumps = [];
+    this.voids = [];  // void suits
 
+    this.property = {
+        credit: 0,
+        priority: 0,
+        aiLevel: 0
+    };
+    
     this.currentTable = null;
     this.matchInfo = null;
 
@@ -40,6 +47,23 @@ function Player(o) {
                 this.clubs.length;
     };
 
+    this.setLang = function(lang) {
+        if(lang === 'zh') {
+            this.lang = lang;
+        } else {
+            this.lang = 'en';
+        }
+    };
+    
+    this.setProperty = function(rec) {
+        // set property from DB record
+        this.property = {
+            credit: rec['credit'],
+            priority: rec['priority'],
+            aiLevel: rec['ai_level']
+        };
+    };
+    
     this.replaceRobot = function (p) {
         this.id = p.id;
         this.sock = p.sock;
