@@ -869,7 +869,7 @@ function MatchInfo(t, player) {
             this.player.messageTimer = null;
         }
         
-        this.player.voids = [];
+        this.player.voids = {};
     };
 
     this.toJson = function (seat) {

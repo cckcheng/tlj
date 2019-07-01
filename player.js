@@ -19,7 +19,7 @@ function Player(o) {
     this.diamonds = [];
     this.clubs = [];
     this.trumps = [];
-    this.voids = [];  // void suits
+    this.voids = {};  // void suits
 
     this.property = {
         credit: 0,
@@ -53,6 +53,10 @@ function Player(o) {
         } else {
             this.lang = 'en';
         }
+    };
+    
+    this.setVoids = function(suite, isVoid) {
+        this.voids[suite] = isVoid;
     };
     
     this.setProperty = function(rec) {
