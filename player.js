@@ -781,6 +781,16 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                         }
                     }
                 }
+                
+                if(this.aiLevel >= 2 && game.currentRound.allFriendsLeft(game, this)) {
+                    var tmpCards = [];
+                    for(var x=cardList.length-1, c; c=cardList[x]; x--) {
+                        if(c.trumpRank(game.trump, game.rank) <= leadingHand.maxRank) break;
+                        tmpCards.push(c);
+                    }
+                    Card.selectCardsByPoint(cards, tmpCards, true, game.trump, game.rank, 1);
+                    return true;
+                }
                 cards.push(cardList[cardList.length - 1]);
                 return true;
             } else {
@@ -850,7 +860,64 @@ Player.prototype.suggestedCards = function () {
     return Card.cardsToString(cards);
 };
 
+Player.prototype.isOpponentVoid = function (game, suite) {
+    var players = this.currentTable.players;
+    if(game.partner != null) {
+        for(var x=0,p; p=players[x]; x++) {
+            if(p === this) continue;
+            if(this === game.contractor || this === game.partner) {
+                if(p === game.contractor || p === game.partner) continue;
+                if(p.voids[suite]) return true;
+            } else {
+                if(p === game.contractor || p === game.partner) {
+                    if(p.voids[suite]) return true;
+                }
+            }
+        }
+    } else {
+        for(var x=0,p; p=players[x]; x++) {
+            if(p === this) continue;
+            if(p.voids[suite]) return true;
+        }
+    }
+    return false;
+};
+
+Player.prototype.recalStrong = function (cards) {
+    var game = this.currentTable.game;
+    var honorRank = 14;
+    var viceRank = 13;
+    if(game.rank === 14) honorRank = 13;
+    if(game.rank >= 13) viceRank = 12;
+    var xRank = cards[cards.length-1].rank;
+    var cardList = this.getCardsBySuite(cards[0].suite);
+    if(xRank === honorRank) {
+        if(cards.length != 4) return cards;
+        var nCards = [];
+        for(var x=cardList.length-1,c; c=cardList[x]; x--) {
+            if(c.rank < viceRank) break;
+            nCards.push(c);
+        }
+        return nCards;
+    }
+    
+    if(this.isOpponentVoid(game, cards[0].suite)) return cards;
+    var nCards = [];
+    for(var x=cardList.length-1,c; c=cardList[x]; x--) {
+        if(c.rank < honorRank) break;
+        nCards.push(c);
+    }
+    return nCards.length > 0 ? nCards : cards;
+};
+
 Player.prototype.autoPlayCards = function (isLeading) {
+    this.aiLevel = 0;
+    if(this.sock) {
+        this.aiLevel = this.property.aiLevel;
+    } else {
+        this.aiLevel = this.currentTable.getAiLevel();
+    }
+    
     var cards = [];
     var game = this.currentTable.game;
     var round = game.currentRound;
@@ -873,6 +940,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
         var strongHand = this.getStrongHand();
         if (strongHand != null) {
             cards = strongHand;
+            if(this.aiLevel >= 2 && !cards[0].isTrump(game.trump, game.rank)) {
+                cards = this.recalStrong(strongHand);
+            }
         } else {
             if (game.partner == null) {
                 if (this === game.contractor) {

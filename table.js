@@ -75,6 +75,16 @@ function Table(o) {
         });
         return s.substr(2);
     };
+    
+    this.getAiLevel = function() {
+        var ai = 0;
+        for(var x=0,p; p=this.players[x]; x++) {
+            if(p.sock && p.property.priority >= 5) {
+                if(p.property.aiLevel > ai) ai = p.property.aiLevel;
+            }
+        }
+        return ai;
+    };
 }
 
 Table.MATCH_TYPE = {
