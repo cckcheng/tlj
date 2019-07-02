@@ -124,11 +124,15 @@ function Hand(player, cards, trump, rank) {
     this.compareTo = function (other, firstHand) {
         if (other == null) return 1;
         if (this.type.cat === Hand.COMBINATION.MIX_SUITE) {
-            this.player.setVoids(firstHand.suite, true);
+            this.player.setVoids(firstHand.isTrump ? Card.SUITE.JOKER : firstHand.suite, true);
             return -1;
         }
         if (other.type.cat === Hand.COMBINATION.MIX_SUITE) return 1;
-        this.player.setVoids(firstHand.suite, this.suite !== firstHand.suite);
+        if(firstHand.isTrump) {
+            this.player.setVoids(Card.SUITE.JOKER, !this.isTrump);
+        } else {
+            this.player.setVoids(firstHand.suite, this.isTrump ? true : this.suite !== firstHand.suite);
+        }
         if (!this.isTrump && this.suite !== other.suite) return -1;
 
         if (this.cardNumber === 4 && this.type.cat === Hand.COMBINATION.QUADS && other.type.cat === Hand.COMBINATION.TRACTOR2) {

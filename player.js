@@ -59,6 +59,11 @@ function Player(o) {
         this.voids[suite] = isVoid;
     };
     
+    this.hasTrump = function() {
+        if(this.voids[Card.SUITE.JOKER]) return false;
+        return true;
+    };
+    
     this.setProperty = function(rec) {
         // set property from DB record
         this.property = {
@@ -860,24 +865,32 @@ Player.prototype.suggestedCards = function () {
     return Card.cardsToString(cards);
 };
 
-Player.prototype.isOpponentVoid = function (game, suite) {
+Player.prototype.possibleOpponentRuff = function (game, suite) {
     var players = this.currentTable.players;
+    var startIdx = this.currentTable.getSeat(this);
+    if(startIdx >= players.length) startIdx = 0;
+    var firstPlayer = game.leadingPlayer;
+    
     if(game.partner != null) {
-        for(var x=0,p; p=players[x]; x++) {
-            if(p === this) continue;
+        for(var x = startIdx, p; ; x++) {
+            if(x === players.length) x = 0;
+            p = players[x];
+            if(p === firstPlayer) break;
             if(this === game.contractor || this === game.partner) {
                 if(p === game.contractor || p === game.partner) continue;
-                if(p.voids[suite]) return true;
+                if(p.voids[suite] && p.hasTrump()) return true;
             } else {
                 if(p === game.contractor || p === game.partner) {
-                    if(p.voids[suite]) return true;
+                    if(p.voids[suite] && p.hasTrump()) return true;
                 }
             }
         }
     } else {
-        for(var x=0,p; p=players[x]; x++) {
-            if(p === this) continue;
-            if(p.voids[suite]) return true;
+        for(var x = startIdx, p; ; x++) {
+            if(x === players.length) x = 0;
+            p = players[x];
+            if(p === firstPlayer) break;
+            if(p.voids[suite] && p.hasTrump()) return true;
         }
     }
     return false;
@@ -901,7 +914,7 @@ Player.prototype.recalStrong = function (cards) {
         return nCards;
     }
     
-    if(this.isOpponentVoid(game, cards[0].suite)) return cards;
+    if(this.possibleOpponentRuff(game, cards[0].suite)) return cards;
     var nCards = [];
     for(var x=cardList.length-1,c; c=cardList[x]; x--) {
         if(c.rank < honorRank) break;
