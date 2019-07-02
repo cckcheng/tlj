@@ -603,8 +603,36 @@ Player.prototype.passToPartner = function (cards) {
     }
 
     if (this.playPartnerCards(cards)) return true;
-    Card.selectCardsByPoint(cards, cardList, true, game.trump, game.rank, 1);
+    if(this.aiLevel >= 2) {
+        if(this === game.partner) {
+            var suite = this.choosePartnerVoidSuite(game, game.contractor, partnerDef.suite);
+            cardList = this.getCardsBySuite(suite);
+            Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
+            return true;
+        }
+    }
+    Card.selectCardsByPoint(cards, cardList, true, game.trump, game.rank, 1);    
     return true;
+};
+
+Player.prototype.choosePartnerVoidSuite = function (game, partner, pSuite) {
+    if(pSuite && partner.voids[pSuite]) return pSuite;
+    var arr = [];
+    for (var i = 0, suit, lst; suit = Card.SUITES[i]; i++) {
+        if (suit === pSuite) continue;
+        lst = this.getCardsBySuite(suit);
+        if (lst.length < 1) continue;
+        arr.push(suit);
+    }
+
+    if (arr.length < 1) return pSuite;
+    if(arr.length == 1) {
+        return partner.voids[arr[0]] ? arr[0] : pSuite;
+    }
+    var x = Math.floor(Math.random() * (arr.length));
+    if(partner.voids[arr[x]]) return arr[x];
+    x = (x===0 ? 1 : 0);  // should be only two suit available
+    return partner.voids[arr[x]] ? arr[x] : pSuite;
 };
 
 Player.prototype.getAllSuites = function () {
@@ -650,11 +678,37 @@ Player.prototype.randomPlay = function (cards) {
     var exSuite = game.partnerDef.suite;
 
     var arr = [];
+    var arrSuite = [];
     for (var i = 0, suit, lst; suit = Card.SUITES[i]; i++) {
         if (suit === exSuite) continue;
         lst = this.getCardsBySuite(suit);
         if (lst.length < 1) continue;
         arr.push(lst);
+        arrSuite.push(suit);
+    }
+
+    if(this.aiLevel >= 2) {
+        var suite = null;
+        if(this === game.contractor) {
+            if(game.partner != null) {
+                suite = this.choosePartnerVoidSuite(game, game.partner, null);
+                if(suite != null) {
+                    var cardList = this.getCardsBySuite(suite);
+                    Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
+                    return;
+                }
+            }
+        } else {
+            if(this.getCardsBySuite(exSuite).length>0) {
+                arrSuite.push(exSuite);
+            }
+            
+            for(var x=0, s; s=arrSuite[x]; x++) {
+                if(this.possibleOpponentRuff(game, s)) {
+                    
+                }
+            }
+        }
     }
 
     if (arr.length < 1) {
@@ -925,7 +979,7 @@ Player.prototype.recalStrong = function (cards) {
 
 Player.prototype.autoPlayCards = function (isLeading) {
     this.aiLevel = 0;
-    if(this.sock) {
+    if(this.id) {
         this.aiLevel = this.property.aiLevel;
     } else {
         this.aiLevel = this.currentTable.getAiLevel();
@@ -995,7 +1049,11 @@ Player.prototype.autoPlayCards = function (isLeading) {
         if (cardList.length > firstHand.cardNumber) {
             if (game.isSameSide(this, leadingPlayer)) {
                 if (round.isWinning(game, this)) {
-                    this.followPlay(cards, cardList, true);
+                    var pointFirst = true;
+                    if(!firstHand.isTrump && this.aiLevel >= 2) {
+                        pointFirst = !this.possibleOpponentRuff(game, suite);
+                    }
+                    this.followPlay(cards, cardList, pointFirst);
                 } else {
                     this.tryBeatLeading(cards, cardList);
                 }

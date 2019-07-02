@@ -79,7 +79,7 @@ function Table(o) {
     this.getAiLevel = function() {
         var ai = 0;
         for(var x=0,p; p=this.players[x]; x++) {
-            if(p.sock && p.property.priority >= 5) {
+            if(p.id && p.property.priority >= 5) {
                 if(p.property.aiLevel > ai) ai = p.property.aiLevel;
             }
         }
