@@ -352,10 +352,11 @@ Card.getTotalCardNumber = function (cards, k) {
     return num;
 };
 
-Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank, num) {
+Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank, num, keepTop) {
     var tmpCards = cardList.slice();
     var stat = new HandStat(tmpCards, trump, gameRank);
-    var lst = cardList.slice();
+    var lst = cardList.slice(0, keepTop ? cardList.length-1 : cardList.length);
+    //if(keepTop) console.log('>>>' + Card.showCards(lst));
     lst.sort(function (a, b) {
         if (a.equals(b)) return 0;
         if (a.isHonor(trump, gameRank)) return 1;
@@ -376,16 +377,17 @@ Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank
         tmpCards.splice(c.indexOf(tmpCards), 1);
     }
 
+    //if(keepTop) console.log('<<<' + Card.showCards(cards));
     return tmpCards;
 };
 
 // select pair, trips, quads
-Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, trump, gameRank) {
+Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, trump, gameRank, keepTop) {
     var wholeLength = handType.len + cards.length;
     var tmpCards = cardList.slice();
     var stat = new HandStat(tmpCards, trump, gameRank);
     if (stat.totalPairs < 1) {
-        return Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, handType.len);
+        return Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, handType.len, keepTop);
     }
 
     var isTrump = tmpCards[0].isTrump(trump, gameRank);
@@ -408,7 +410,7 @@ Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, 
                 cards.push(c);
                 tmpCards.splice(c.indexOf(tmpCards), 1);
             });
-            tmpCards = Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 1);
+            tmpCards = Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 1, keepTop);
         } else if (handType.cat === Hand.COMBINATION.QUADS) {
             rnks = stat.sortedRanks(3);
             if (rnks.length > 0) {
@@ -419,7 +421,7 @@ Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, 
                     cards.push(c);
                     tmpCards.splice(c.indexOf(tmpCards), 1);
                 });
-                tmpCards = Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 1);
+                tmpCards = Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, 1, keepTop);
             } else {
                 var tractors = stat.getTractors(2, isTrump);
                 if (tractors.length > 0) {
@@ -443,7 +445,7 @@ Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, 
                     });
                 }
                 if (cards.length < wholeLength) {
-                    tmpCards = Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, wholeLength - cards.length);
+                    tmpCards = Card.selectCardsByPoint(cards, tmpCards, pointFirst, trump, gameRank, wholeLength - cards.length, keepTop);
                 }
             }
         }

@@ -20,6 +20,7 @@ function Player(o) {
     this.clubs = [];
     this.trumps = [];
     this.voids = {};  // void suits
+    this.orgLength = {};  // void suits
 
     this.property = {
         credit: 0,
@@ -164,11 +165,17 @@ function Player(o) {
             if (a.lenHonor > 3 || b.lenHonor > 3) {
                 return a.lenHonor != b.lenHonor ? a.lenHonor - b.lenHonor : a.lenPoint - b.lenPoint;
             }
+            /*
             if (a.lenPoint === 1) return b.lenPoint === 1 ? a.length - b.length : -1;
             if (b.lenPoint === 1) return 1;
             if (a.lenPoint > b.lenPoint) return 1;
             if (a.lenPoint < b.lenPoint) return -1;
             return a.length - b.length;
+            */
+            if(a.length !== b.length) return a.length - b.length;
+            if(a.lenHonor != b.lenHonor) return b.lenHonor - a.lenHonor
+            if(a.lenPoint !== b.lenPoint) return a.lenPoint - b.lenPoint;
+            return a.lenTop - b.lenTop;
         });
 
         return arr[0].getPartnerDef();
@@ -272,6 +279,13 @@ Player.prototype.resortCards = function (trump_suite, game_rank) {
             return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
         return aRank > bRank ? 1 : -1;
     });
+    
+    this.orgLength[Card.SUITE.SPADE] = this.spades.length;
+    this.orgLength[Card.SUITE.CLUB] = this.clubs.length;
+    this.orgLength[Card.SUITE.HEART] = this.hearts.length;
+    this.orgLength[Card.SUITE.DIAMOND] = this.diamonds.length;
+    
+    this.orgLength[Card.SUITE.JOKER] = this.trumps.length;
 };
 
 Player.prototype.showHand = function () {
@@ -731,17 +745,21 @@ Player.prototype.randomPlay = function (cards) {
 Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
+    var keepTop = false;
+    if(!pointFirst && this.aiLevel >= 2 && firstHand.isTrump && cardList[0].isTrump(game.trump, game.rank)) {
+        if(this.orgLength[Card.SUITE.JOKER] > 10) keepTop = true;
+    }
 
     var tmpCards = cardList.slice();
     switch(firstHand.type.cat) {
         case Hand.COMBINATION.SINGLE:
-            Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber);
+            Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
             break;
         case Hand.COMBINATION.PAIR:
         case Hand.COMBINATION.TRIPS:
         case Hand.COMBINATION.QUADS:
             for (var x = 0, n = firstHand.cardNumber / firstHand.type.len; x < n; x++) {
-                tmpCards = Card.selectSimpleHandByPoint(firstHand.type, cards, tmpCards, pointFirst, game.trump, game.rank);
+                tmpCards = Card.selectSimpleHandByPoint(firstHand.type, cards, tmpCards, pointFirst, game.trump, game.rank, keepTop);
             }
             break;
         case Hand.COMBINATION.TRACTOR2:
@@ -814,7 +832,8 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
             var card = cardList[cardList.length - 1];
             maxRank = card.trumpRank(game.trump, game.rank);
             if(maxRank > leadingHand.maxRank) {
-                if(cardList.length>1 && game.partner == null && game.cardsPlayed <= 10) {
+                var minPlayed = this.aiLevel >= 2 ? 6 : 10;
+                if(cardList.length>1 && game.partner == null && game.cardsPlayed <= minPlayed) {
                     var partnerDef = this.currentTable.game.partnerDef;
                     if (!partnerDef.noPartner) {
                         var defCard = partnerDef.getDefCard();
@@ -853,7 +872,12 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                 cards.push(cardList[cardList.length - 1]);
                 return true;
             } else {
-                Card.selectCardsByPoint(cards, cardList, false, game.trump, game.rank, 1);
+                var keepTop = false;
+                if(this.aiLevel >= 2 && firstHand.isTrump ) {
+                    if(this.orgLength[Card.SUITE.JOKER] > 10) keepTop = true;
+                }
+
+                Card.selectCardsByPoint(cards, cardList, false, game.trump, game.rank, 1, keepTop);
             }
 
             return false;
@@ -968,6 +992,13 @@ Player.prototype.recalStrong = function (cards) {
         return nCards;
     }
     
+    if(game.partner != null) {
+        if(this !== game.partner && this !== game.contractor) {
+            var defCard = game.partnerDef.getDefCard();
+            if(defCard.suite === cards[0].suite) return cards;
+        }
+    }
+    
     if(this.possibleOpponentRuff(game, cards[0].suite)) return cards;
     var nCards = [];
     for(var x=cardList.length-1,c; c=cardList[x]; x--) {
@@ -1051,7 +1082,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
                 if (round.isWinning(game, this)) {
                     var pointFirst = true;
                     if(!firstHand.isTrump && this.aiLevel >= 2) {
-                        pointFirst = !this.possibleOpponentRuff(game, suite);
+                        if(firstHand.cardNumber < 2) {
+                            pointFirst = !this.possibleOpponentRuff(game, suite);
+                        }
                     }
                     this.followPlay(cards, cardList, pointFirst);
                 } else {
