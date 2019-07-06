@@ -352,10 +352,79 @@ Card.getTotalCardNumber = function (cards, k) {
     return num;
 };
 
+Card.removeStrongHands = function (cardList, trump, gameRank) {
+    if(cardList.length <= 4) return cardList;
+    
+    var tmpCards = cardList.slice();
+    var isTrump = cardList[0].isTrump(trump, gameRank);
+    var stat, rnks, sHand, tractors, card;
+                
+    stat = new HandStat(tmpCards, trump, gameRank);
+    if(stat.totalQuads > 0) {
+        rnks = stat.sortedRanks(4);
+		    card = stat.findCardByDupNum(rnks[rnks.length-1], 4);
+      	tmpCards.splice(card.indexOf(tmpCards), 4);
+      	return Card.removeStrongHands(tmpCards, trump, gameRank);
+    }
+
+    var m = 3;
+    tractors = stat.getTractors(3);
+    if(tractors.length < 1) {
+        m = 2;
+        tractors = stat.getTractors(2);
+    }
+    if(tractors.length > 0) {
+    		var simHand = tractors[0];
+    		if(simHand.type.len === tmpCards.length) return tmpCards;
+    		
+    		var sRank = simHand.minRank;
+    		for (var x = 0; x < simHand.type.len; x += m) {
+      			card = stat.findCardByDupNum(sRank, m);
+      			tmpCards.splice(card.indexOf(tmpCards), m);
+      			sRank++;
+    		}
+    		return Card.removeStrongHands(tmpCards, trump, gameRank);
+    }
+	
+    return tmpCards;
+};
+
+Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, num, keepTop) {
+    var tmpCards = cardList.slice();
+    var lst = cardList.slice();
+    if(keepTop && lst.length > num) lst.splice(lst.length-1, 1);
+    lst = Card.removeStrongHands(lst, trump, gameRank);
+    var stat = new HandStat(lst, trump, gameRank);
+    lst.sort(function (a, b) {
+        if (a.equals(b)) return 0;
+        if (a.isHonor(trump, gameRank)) return 1;
+        if (b.isHonor(trump, gameRank)) return -1;
+        var aPoint = a.getPoint();
+        var bPoint = b.getPoint();
+        if (aPoint !== bPoint) return pointFirst ? bPoint - aPoint : aPoint - bPoint; 
+        var aDup = stat.stat[a.key(trump, gameRank)];
+        var bDup = stat.stat[b.key(trump, gameRank)];
+        if (aDup !== bDup) {
+            return aDup - bDup;
+        }
+        return a.trumpRank(trump, gameRank) - b.trumpRank(trump, gameRank);
+    });
+    for (var x = 0, c; x < num; x++) {
+        c = lst[x];
+        cards.push(c);
+        tmpCards.splice(c.indexOf(tmpCards), 1);
+    }
+
+    //if(keepTop) console.log('<<<' + Card.showCards(cards));
+    return tmpCards;
+};
+
 Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank, num, keepTop) {
     var tmpCards = cardList.slice();
     var stat = new HandStat(tmpCards, trump, gameRank);
-    var lst = cardList.slice(0, keepTop ? cardList.length-1 : cardList.length);
+    var lst = cardList.slice();
+    if(keepTop && lst.length > num) lst.splice(lst.length-1, 1);
+
     //if(keepTop) console.log('>>>' + Card.showCards(lst));
     lst.sort(function (a, b) {
         if (a.equals(b)) return 0;

@@ -474,7 +474,14 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     if (allCards.length < num) {
         allCards = allCards.concat(this.trumps);
     }
+    
+    var defCard = null;
+    if(this.aiLevel >= 2 && game.partner == null) {
+        defCard = game.partnerDef.getDefCard();
+    }
     allCards.sort(function (a, b) {
+        if(a.equals(defCard)) return 1;
+        if(b.equals(defCard)) return -1;
         var aPoint = a.getPoint();
         var bPoint = b.getPoint();
 
@@ -753,7 +760,11 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     var tmpCards = cardList.slice();
     switch(firstHand.type.cat) {
         case Hand.COMBINATION.SINGLE:
-            Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
+            if(this.aiLevel >= 2) {
+                Card.selectCardsSmart(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
+            } else {
+                Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
+            }
             break;
         case Hand.COMBINATION.PAIR:
         case Hand.COMBINATION.TRIPS:
@@ -876,8 +887,11 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                 if(this.aiLevel >= 2 && firstHand.isTrump ) {
                     if(this.orgLength[Card.SUITE.JOKER] > 10) keepTop = true;
                 }
-
-                Card.selectCardsByPoint(cards, cardList, false, game.trump, game.rank, 1, keepTop);
+                if(this.aiLevel >= 2) {
+                    Card.selectCardsSmart(cards, cardList, false, game.trump, game.rank, 1, keepTop);
+                } else {
+                    Card.selectCardsByPoint(cards, cardList, false, game.trump, game.rank, 1, keepTop);
+                }
             }
 
             return false;
@@ -992,7 +1006,7 @@ Player.prototype.recalStrong = function (cards) {
         return nCards;
     }
     
-    if(game.partner != null) {
+    if(game.partner != null && game.partner !== game.contractor) {
         if(this !== game.partner && this !== game.contractor) {
             var defCard = game.partnerDef.getDefCard();
             if(defCard.suite === cards[0].suite) return cards;
