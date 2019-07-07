@@ -79,6 +79,7 @@ function Player(o) {
         this.sock = p.sock;
         this.name = p.name;
         this.lang = p.lang;
+        this.property = p.property;
     };
 
     this.toRobot = function (keepMinutes) {
@@ -102,6 +103,11 @@ function Player(o) {
             if (p.currentTable == null || p.currentTable.dismissed) return;
             p.id = null;
             p.name = 'Robot';
+            p.property = {
+                credit: 0,
+                priority: 0,
+                aiLevel: 0
+            };
             if (!p.currentTable.dismiss()) {
                 Server.addRobot(p);
             }
@@ -1096,6 +1102,20 @@ Player.prototype.recalStrong = function (cards) {
     return nCards.length > 0 ? nCards : cards;
 };
 
+Player.prototype.playTopTrump = function (cards, game) {
+    if(this.trumps.length < 1 || game.trump === Card.SUITE.JOKER) return false;
+    var card = this.trumps[this.trumps.length - 1];
+    var xRank = card.trumpRank(game.trump, game.rank);
+    var players = this.currentTable.players;
+    for(var x=0,p; p=players[x]; x++) {
+        if(p === this || p.trumps.length < 1) continue;
+        if(p.trumps[p.trumps.length-1].trumpRank(game.trump, game.rank) > xRank) return false;
+    }
+    
+    cards.push(card);
+    return true;
+};
+
 Player.prototype.autoPlayCards = function (isLeading) {
     this.aiLevel = 0;
     if(this.id) {
@@ -1103,7 +1123,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
     } else {
         this.aiLevel = this.currentTable.getAiLevel();
     }
-    
+    console.log('ai ' + this.aiLevel);
     var cards = [];
     var game = this.currentTable.game;
     var round = game.currentRound;
@@ -1140,6 +1160,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
                 }
             } else {
                 if (this === game.partner) {
+                    if(this.aiLevel >= 2 && this.playTopTrump(cards, game)) {
+                        return cards;
+                    }
                     this.passToPartner(cards);
                 } else if (this === game.contractor) {
                     this.drawTrump(cards);
