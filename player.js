@@ -928,7 +928,7 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                     }
                 }
                 
-                if(this.aiLevel >= 2 && (game.currentRound.allFriendsLeft(game, this) || !this.possibleOpponentRuff(game, firstHand.suite))) {
+                if(this.aiLevel >= 2 && (game.currentRound.allFriendsLeft(game, this) || this.noOpponentCanBeat(game, firstHand.suite))) {
                     var tmpCards = [];
                     for(var x=cardList.length-1, c; c=cardList[x]; x--) {
                         if(c.trumpRank(game.trump, game.rank) <= leadingHand.maxRank) break;
@@ -1012,6 +1012,49 @@ Player.prototype.suggestedCards = function () {
     var cards = this.autoPlayCards(false);
     if (cards.length < firstHand.cardNumber) return null;
     return Card.cardsToString(cards);
+};
+
+Player.prototype.noOpponentCanBeat = function (game, suite) {
+    var players = this.currentTable.players;
+    var startIdx = this.currentTable.getSeat(this);
+    if(startIdx >= players.length) startIdx = 0;
+    var firstPlayer = game.leadingPlayer;
+    
+    if(game.partner != null) {
+        for(var x = startIdx, p; ; x++) {
+            if(x === players.length) x = 0;
+            p = players[x];
+            if(p === firstPlayer) break;
+            if(this === game.contractor || this === game.partner) {
+                if(p === game.contractor || p === game.partner) continue;
+                if(p.voids[suite]) {
+                    if(p.hasTrump()) return false;
+                } else {
+                    return false;
+                }
+            } else {
+                if(p === game.contractor || p === game.partner) {
+                    if(p.voids[suite]) {
+                        if(p.hasTrump()) return false;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+    } else {
+        for(var x = startIdx, p; ; x++) {
+            if(x === players.length) x = 0;
+            p = players[x];
+            if(p === firstPlayer) break;
+            if(p.voids[suite]) {
+                if(p.hasTrump()) return false;
+            } else {
+                return false;
+            }
+        }
+    }
+    return true;
 };
 
 Player.prototype.possibleOpponentRuff = function (game, suite) {
@@ -1123,7 +1166,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
     } else {
         this.aiLevel = this.currentTable.getAiLevel();
     }
-    console.log('ai ' + this.aiLevel);
+
     var cards = [];
     var game = this.currentTable.game;
     var round = game.currentRound;
