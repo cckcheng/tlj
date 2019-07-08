@@ -736,7 +736,7 @@ Player.prototype.randomPlay = function (cards) {
         arrSuite.push(suit);
     }
 
-    if(arr.length > 1 && this.aiLevel >= 2) {
+    if(arr.length >= 1 && this.aiLevel >= 2) {
         var suite = null;
         if(this === game.contractor) {
             if(game.partner != null) {
@@ -769,30 +769,45 @@ Player.prototype.randomPlay = function (cards) {
                 }
             }
             
+            var j = 0;
             if(arr1.length > 0) {
-                this.playHonorOrPoint(cards, this.getCardsBySuite(arr1[0]), game);
+                if(arr1.length > 1) j = Math.floor(Math.random() * (arr1.length));
+                this.playHonorOrPoint(cards, this.getCardsBySuite(arr1[j]), game);
                 return;
             }
             if(arr2.length > 0) {
-                this.playHonorOrPoint(cards, this.getCardsBySuite(arr2[0]), game);
+                if(arr2.length > 1) j = Math.floor(Math.random() * (arr2.length));
+                this.playHonorOrPoint(cards, this.getCardsBySuite(arr2[j]), game);
                 return;
             }
             if(arr3.length > 0) {
-                Card.selectCardsByPoint(cards, this.getCardsBySuite(arr3[0]), false, game.trump, game.rank, 1);
+                if(arr3.length > 1) j = Math.floor(Math.random() * (arr3.length));
+                Card.selectCardsByPoint(cards, this.getCardsBySuite(arr3[j]), false, game.trump, game.rank, 1);
                 return;
             }
         }
     }
 
+    var x = 0;
     if (arr.length < 1) {
         if (this.trumps.length > 0) {
             arr.push(this.trumps);
         } else {
             arr.push(this.getCardsBySuite(exSuite));
         }
+    } else if(this.aiLevel >= 2) {
+        if(arr.length > 1) x = Math.floor(Math.random() * (arr.length));
+        var s = arrSuite[x];
+        if(this.possibleOpponentRuff(game, s)) {
+            Card.selectCardsByPoint(cards, this.getCardsBySuite(s), false, game.trump, game.rank, 1);
+        } else {
+            this.playHonorOrPoint(cards, this.getCardsBySuite(s), game);
+        }
+        
+        return;
     }
 
-    var x = Math.floor(Math.random() * (arr.length));
+    if(arr.length > 1) x = Math.floor(Math.random() * (arr.length));
     var y = Math.floor(Math.random() * (arr[x].length));
 
     var card = arr[x][y];
@@ -1019,6 +1034,7 @@ Player.prototype.noOpponentCanBeat = function (game, suite) {
     var startIdx = this.currentTable.getSeat(this);
     if(startIdx >= players.length) startIdx = 0;
     var firstPlayer = game.leadingPlayer;
+    var isTrump = suite === Card.SUITE.JOKER;
     
     if(game.partner != null) {
         for(var x = startIdx, p; ; x++) {
@@ -1027,17 +1043,25 @@ Player.prototype.noOpponentCanBeat = function (game, suite) {
             if(p === firstPlayer) break;
             if(this === game.contractor || this === game.partner) {
                 if(p === game.contractor || p === game.partner) continue;
-                if(p.voids[suite]) {
+                if(isTrump) {
                     if(p.hasTrump()) return false;
                 } else {
-                    return false;
-                }
-            } else {
-                if(p === game.contractor || p === game.partner) {
                     if(p.voids[suite]) {
                         if(p.hasTrump()) return false;
                     } else {
                         return false;
+                    }
+                }
+            } else {
+                if(p === game.contractor || p === game.partner) {
+                    if(isTrump) {
+                        if(p.hasTrump()) return false;
+                    } else {
+                        if(p.voids[suite]) {
+                            if(p.hasTrump()) return false;
+                        } else {
+                            return false;
+                        }
                     }
                 }
             }
@@ -1047,10 +1071,14 @@ Player.prototype.noOpponentCanBeat = function (game, suite) {
             if(x === players.length) x = 0;
             p = players[x];
             if(p === firstPlayer) break;
-            if(p.voids[suite]) {
+            if(isTrump) {
                 if(p.hasTrump()) return false;
             } else {
-                return false;
+                if(p.voids[suite]) {
+                    if(p.hasTrump()) return false;
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -1254,6 +1282,12 @@ Player.prototype.autoPlayCards = function (isLeading) {
                         firstHand.cardNumber);
             } else {
                 if (game.isSameSide(this, leadingPlayer) && round.isWinning(game, this)) {
+                    if(this.aiLevel >= 2) {
+                        if(this.possibleOpponentRuff(game, suite)) {
+                            this.ruff(cards);
+                            return cards;
+                        }
+                    }
                     this.duckCards(cards, suite, true, firstHand.cardNumber);
                 } else {
                     this.ruff(cards);
