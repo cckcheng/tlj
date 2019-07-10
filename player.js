@@ -748,10 +748,6 @@ Player.prototype.randomPlay = function (cards) {
                 }
             }
         } else {
-            if(this.getCardsBySuite(exSuite).length>0) {
-                arrSuite.push(exSuite);
-            }
-            
             var arr1 = [];  // first choice: partner ruff possible, opponent not 
             var arr2 = [];  // second choice: opponent unable ruff
             var arr3 = [];  // third choice: both partner and opponent possible ruff
@@ -780,6 +776,13 @@ Player.prototype.randomPlay = function (cards) {
                 this.playHonorOrPoint(cards, this.getCardsBySuite(arr2[j]), game);
                 return;
             }
+
+            if(this.getCardsBySuite(exSuite).length>0) {
+                if(this.possiblePartnerRuff(game, exSuite) || !this.possibleOpponentRuff(game, exSuite)) {
+                    arr3.push(exSuite);
+                }
+            }
+            
             if(arr3.length > 0) {
                 if(arr3.length > 1) j = Math.floor(Math.random() * (arr3.length));
                 Card.selectCardsByPoint(cards, this.getCardsBySuite(arr3[j]), false, game.trump, game.rank, 1);
