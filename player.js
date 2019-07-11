@@ -721,11 +721,97 @@ Player.prototype.playHonorOrPoint = function(cards, cardList, game) {
     Card.selectCardsByPoint(cards, cardList, true, game.trump, game.rank, 1);
 };
 
+Player.prototype.findPairAndPlay = function (cards, game) {
+    var allCards = [];
+    allCards = allCards.concat(this.spades);
+    allCards = allCards.concat(this.hearts);
+    allCards = allCards.concat(this.diamonds);
+    allCards = allCards.concat(this.clubs);
+    allCards = allCards.concat(this.trumps);
+    
+    var stat = new HandStat(allCards, game.trump, game.rank);
+    if(stat.totalPairs < 1) return false;
+    var rnks = stat.sortedRanks(2);
+    var card = stat.findCardByDupNum(rnks[rnks.length - 1], 2);
+    cards.push(card);
+    cards.push(card);
+    return true;
+};
+
+Player.prototype.opponentHasTrump = function(game) {
+    var players = this.currentTable.players;
+    if(this === game.contractor || this === game.partner) {
+        for(var x=0,p; p=players[x]; x++) {
+            if(p === game.contractor || p === game.partner) continue;
+            if(p.hasTrump()) return true;
+        }
+    } else {
+        if(game.contractor.hasTrump()) return true;
+        if(game.partner != null && game.partner.hasTrump()) return true;
+    }
+    
+    return false;
+};
+
+Player.prototype.playPairOrTop = function (cards, cardList, game, isTrump) {
+    var stat = new HandStat(cardList, game.trump, game.rank);
+    if(stat.totalPairs < 1) {
+        cards.push(cardList[cardList.length - 1]);
+        return;
+    }
+    
+    var rnks = stat.sortedRanks(2);
+    var sHand = new SimpleHand(Hand.SIMPLE_TYPE.PAIR, rnks[rnks.length - 1], isTrump);
+    cc = Hand.makeCards(sHand, cardList, game.trump, game.rank);
+    cc.forEach(function (c) {
+        cards.push(c);
+    });
+};
+
+Player.prototype.endPlay = function (cards, game) {
+    var allCards = [];
+    allCards = allCards.concat(this.spades);
+    allCards = allCards.concat(this.hearts);
+    allCards = allCards.concat(this.diamonds);
+    allCards = allCards.concat(this.clubs);
+    
+    if(allCards.length < 1) {
+        // all trumps left
+        this.playPairOrTop(cards, this.trumps, game, true);
+        return;
+    }
+    
+    if(this.opponentHasTrump(game)) {
+        var total = this.totalCardLeft();
+        if(this.trumps.length >= total / 2) {
+            this.playPairOrTop(cards, this.trumps, game, true);
+        } else {
+            if(this.findPairAndPlay(cards, game)) return;
+            allCards.sort(Card.compare);
+            var xCard = allCards[allCards.length - 1];
+            cards.push(xCard);
+        }
+    } else {
+        allCards.sort(Card.compare);
+        var xCard = allCards[allCards.length - 1];
+        if(xCard.trumpRank(game.trump, game.rank) === 13) {
+            cards.push(xCard);
+        } else {
+            if(this.findPairAndPlay(cards, game)) return;
+            cards.push(xCard);
+        }
+    }
+};
+
 Player.prototype.randomPlay = function (cards) {
     // not totally random
     var game = this.currentTable.game;
-    var exSuite = game.partnerDef.suite;
+    if(this.aiLevel >= 2 && this.totalCardLeft() < 10) {
+        this.endPlay(cards, game);
+        return;
+    }
 
+    var exSuite = game.partnerDef.suite;
     var arr = [];
     var arrSuite = [];
     for (var i = 0, suit, lst; suit = Card.SUITES[i]; i++) {
@@ -777,17 +863,23 @@ Player.prototype.randomPlay = function (cards) {
                 return;
             }
 
-            if(this.getCardsBySuite(exSuite).length>0) {
-                if(this.possiblePartnerRuff(game, exSuite) || !this.possibleOpponentRuff(game, exSuite)) {
-                    arr3.push(exSuite);
-                }
-            }
-            
             if(arr3.length > 0) {
                 if(arr3.length > 1) j = Math.floor(Math.random() * (arr3.length));
                 Card.selectCardsByPoint(cards, this.getCardsBySuite(arr3[j]), false, game.trump, game.rank, 1);
                 return;
             }
+
+            var lst = this.getCardsBySuite(exSuite); 
+            if(lst.length>0) {
+                if(this.possiblePartnerRuff(game, exSuite) || !this.possibleOpponentRuff(game, exSuite)) {
+                    Card.selectCardsByPoint(cards, lst, false, game.trump, game.rank, 1);
+                    return;
+                }
+            }
+            
+            if(this.findPairAndPlay(cards, game)) {
+                return;
+            }           
         }
     }
 
@@ -1202,7 +1294,8 @@ Player.prototype.autoPlayCards = function (isLeading) {
     var game = this.currentTable.game;
     var round = game.currentRound;
     if (isLeading) {
-        if (this.totalCardLeft() < 2) {
+        var nLeft = this.totalCardLeft();
+        if (nLeft < 2) {
             this.playAllCards(cards);
             return cards;
         }
