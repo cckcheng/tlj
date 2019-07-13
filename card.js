@@ -166,6 +166,10 @@ Card.compare = function (a, b) {
 	return a.suite > b.suite ? 1 : -1;
 };
 
+Card.compareRank = function (a, b) {
+		return a.rank - b.rank;
+};
+
 Card.compareNumber = function (a, b) {
     return a - b;
 };
