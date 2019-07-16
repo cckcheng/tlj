@@ -486,6 +486,9 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     if(this.aiLevel >= 2 && game.partner == null) {
         defCard = game.partnerDef.getDefCard();
     }
+
+    var stat = this.aiLevel >= 2 ? new HandStat(allCards, game.trump, game.rank) : null;
+
     allCards.sort(function (a, b) {
         if(a.equals(defCard)) return 1;
         if(b.equals(defCard)) return -1;
@@ -498,6 +501,15 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
             var aTrump = a.isTrump(game.trump, game.rank);
             var bTrump = b.isTrump(game.trump, game.rank);
             if (aTrump !== bTrump) return aTrump ? 1 : -1;
+
+            if(stat) {
+                var aDup = stat.stat[a.key(game.trump, game.rank)];
+                var bDup = stat.stat[b.key(game.trump, game.rank)];
+                if (aDup !== bDup) {
+                    return aDup - bDup;
+                }
+            }
+
             return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
         }
         return pointFirst ? bPoint - aPoint : aPoint - bPoint;
