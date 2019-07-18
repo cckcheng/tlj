@@ -294,7 +294,7 @@ Table.prototype.startGame = function (testOnly) {
                 };
             }
         }
-        console.log(p.name + ': AI '  + p.property.aiLevel);
+//        console.log(p.name + ': AI '  + p.property.aiLevel);
     }
 
     if(broadJson) {
@@ -611,6 +611,9 @@ function gameOver(t) {
         t.broadcastGameInfo(json, null, langInfo);
     }, 2000, t);
 
+    console.log(new Date().toLocaleString() + ', ' + t.game.contractPoint + '|' + t.game.collectedPoint
+         + ' ' + t.game.playerStatusEn);
+    
     if (matchOver) {
         t.dismissed = true;
         var summary = t.matchSummary();
