@@ -1439,6 +1439,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
                     }
                     this.passToPartner(cards);
                 } else if (this === game.contractor) {
+                    if(this.aiLevel >= 2) {
+                        if(this.playHonor(cards, game)) return cards;
+                    }
                     this.drawTrump(cards);
                 } else {
                     this.randomPlay(cards);
