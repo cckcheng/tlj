@@ -29,7 +29,18 @@ function Game(players, deckNumber) {
     this.cardsPlayed = 0;
     this.currentRound = null;
     this.partnerDef = null;
+    
+    this.cardsPlayed = {
+        Card.SUITE.CLUB: 0,
+        Card.SUITE.DIAMOND: 0,
+        Card.SUITE.HEART: 0,
+        Card.SUITE.SPADE: 0
+    };
 
+    this.updateCardsPlayed = function(suite, len) {
+        this.cardsPlayed[suite] += len;
+    };
+    
     this.setPartnerDef = function (def) {
         if (this.partnerDef != null) return;
         if(def == null) {
@@ -737,6 +748,10 @@ function Round(players, trump, gameRank) {
             firstHand = hand;
             leadingHand = hand;
             this.cardNumber = cards.length;
+            if(!hand.isTrump) {
+                var game = player.currentTable.game;
+                game.updateCardsPlayed(hand.suite, cards.length);
+            }
         } else if (hand.compareTo(leadingHand, firstHand) > 0) {
             leadingHand = hand;
         }

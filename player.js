@@ -644,6 +644,12 @@ Player.prototype.passToPartner = function (cards) {
         this.randomPlay(cards);
         return false;
     }
+
+    if(this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
+        this.endPlay(cards, game);
+        return;
+    }
+
     var cardList = this.getCardsBySuite(partnerDef.suite);
     if (cardList.length < 1) {
         this.randomPlay(cards);
@@ -710,6 +716,12 @@ Player.prototype.drawTrump = function (cards) {
         });
         return;
     }
+
+    if(this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
+        this.endPlay(cards, game);
+        return;
+    }
+
     var ntLen = this.ntLength();
     if (ntLen < 10 && this.trumps.length > 1) {
         // draw trumps, from high to low
@@ -718,6 +730,43 @@ Player.prototype.drawTrump = function (cards) {
     }
 
     this.randomPlay(cards);
+};
+
+Player.prototype.playHonor = function(cards, game) {
+    var allCards = [];
+    allCards = allCards.concat(this.spades);
+    allCards = allCards.concat(this.hearts);
+    allCards = allCards.concat(this.diamonds);
+    allCards = allCards.concat(this.clubs);
+    
+    if(allCards.length < 1) return false;
+
+    var stat = new HandStat(allCards, game.trump, game.rank);
+    if(stat.totalPairs > 1) {
+        var rnks = stat.sortedRanks(2);
+        var xRnk = rnks[rnks.length - 1];
+        if(xRnk === 13) {
+            var card = stat.findCardByDupNum(xRnk, 2);
+            cards.push(card);
+            cards.push(card);        
+            return true;
+        }
+    }
+    
+    allCards.sort(Card.compareRank);
+    var x = allCards.length - 1;
+    var xCard = allCards[x];
+    while(xCard.isHonor(game.trump, game.rank)) {
+        if(!this.possibleOpponentRuff(game, xCard.suite) && game.cardsPlayed[xCard.suite] <= Config.MAX_SAFE_CARDS_PLAYED) {
+            cards.push(xCard);
+            return true;
+        }
+        x--;
+        if(x<0) break;
+        xCard = allCards[x];
+    }
+    
+    return false;
 };
 
 Player.prototype.playHonorOrPoint = function(cards, cardList, game) {
@@ -796,6 +845,8 @@ Player.prototype.playPairOrTop = function (cards, cardList, game, isTrump) {
 };
 
 Player.prototype.endPlay = function (cards, game) {
+    if(this.playTopTrump(cards, game)) return;
+
     var allCards = [];
     allCards = allCards.concat(this.spades);
     allCards = allCards.concat(this.hearts);
@@ -831,7 +882,26 @@ Player.prototype.endPlay = function (cards, game) {
         var xCard = allCards[allCards.length - 1];
         if(xCard.trumpRank(game.trump, game.rank) === 13) {
             cards.push(xCard);
+            if(allCards.length > 1) {
+                if(allCards[allCards.length - 2].equals(xCard)) {
+                    cards.push(xCard);
+                }
+            } 
         } else {
+            if(this.partnerHasTrump(game)) {
+                var suite = null;
+                if(this === game.contractor) {
+                    suite = this.choosePartnerVoidSuite(game, game.partner, null);
+                } else if(this === game.partner) {
+                    suite = this.choosePartnerVoidSuite(game, game.contractor, null);
+                }
+                if(suite != null) {
+                    var cardList = this.getCardsBySuite(suite);
+                    Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
+                    return;
+                }
+            }
+            
             if(this.findPairAndPlay(cards, game)) return;
             cards.push(xCard);
         }
@@ -1305,7 +1375,10 @@ Player.prototype.recalStrong = function (cards) {
 
 Player.prototype.playTopTrump = function (cards, game) {
     if(this.trumps.length < 1 || game.trump === Card.SUITE.JOKER) return false;
+    if(!this.opponentHasTrump(game)) return false;
+
     var card = this.trumps[this.trumps.length - 1];
+    if(card.rank < Card.RANK.SmallJoker) return false;
     var xRank = card.trumpRank(game.trump, game.rank);
     var players = this.currentTable.players;
     for(var x=0,p; p=players[x]; x++) {
@@ -1360,8 +1433,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
                 }
             } else {
                 if (this === game.partner) {
-                    if(this.aiLevel >= 2 && this.playTopTrump(cards, game)) {
-                        return cards;
+                    if(this.aiLevel >= 2) {
+                        if(this.playTopTrump(cards, game)) return cards;
+                        if(this.playHonor(cards, game)) return cards;
                     }
                     this.passToPartner(cards);
                 } else if (this === game.contractor) {

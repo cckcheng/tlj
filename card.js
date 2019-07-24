@@ -167,7 +167,7 @@ Card.compare = function (a, b) {
 };
 
 Card.compareRank = function (a, b) {
-		return a.rank - b.rank;
+		return a.rank !== b.rank ? a.rank - b.rank : (a.suite > b.suite ? 1 : -1);
 };
 
 Card.compareNumber = function (a, b) {
