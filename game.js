@@ -26,16 +26,15 @@ function Game(players, deckNumber) {
 
     this.holeCards = [];
     this.rounds = [];
-    this.cardsPlayed = 0;
+    this.cardNumberPlayed = 0;
     this.currentRound = null;
     this.partnerDef = null;
     
-    this.cardsPlayed = {
-        Card.SUITE.CLUB: 0,
-        Card.SUITE.DIAMOND: 0,
-        Card.SUITE.HEART: 0,
-        Card.SUITE.SPADE: 0
-    };
+    this.cardsPlayed = {};
+    this.cardsPlayed[Card.SUITE.CLUB] = 0;
+    this.cardsPlayed[Card.SUITE.DIAMOND] = 0;
+    this.cardsPlayed[Card.SUITE.HEART] = 0;
+    this.cardsPlayed[Card.SUITE.SPADE] = 0;
 
     this.updateCardsPlayed = function(suite, len) {
         this.cardsPlayed[suite] += len;
@@ -922,7 +921,7 @@ Game.prototype.getHandType = function (player, cards) {
 Game.prototype.startNewRound = function () {
     if(this.currentRound != null) {
         this.leadingPlayer = this.currentRound.getNextLeadingPlayer();
-        this.cardsPlayed += this.currentRound.getFirstHand().cardNumber;
+        this.cardNumberPlayed += this.currentRound.getFirstHand().cardNumber;
     }
     this.currentRound = new Round(this.players, this.trump, this.rank);
     this.rounds.push(this.currentRound);
