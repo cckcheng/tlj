@@ -54,7 +54,13 @@ function Game(players, deckNumber) {
     };
 
     this.isSameSide = function (player1, player2) {
-        if (this.partner == null) return false;
+        if (this.partner == null) {
+            if(player1.aiLevel < 2) return false;
+            if(player2 === this.contractor) {
+                return player1.isDeadPartner();
+            }
+            return false;
+        }
         return (player1 === this.contractor || player1 === this.partner) ===
             (player2 === this.contractor || player2 === this.partner);
     };

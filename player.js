@@ -618,6 +618,22 @@ Player.prototype.playPartnerCards = function (cards) {
     return cards.length > 0;
 };
 
+Player.prototype.isDeadPartner = function () {
+    var game = this.currentTable.game;
+    var partnerDef = game.partnerDef;
+    if (partnerDef.noPartner) return false;
+    var defCard = partnerDef.getDefCard();
+    var cardList = this.getCardsBySuite(defCard.suite);
+    if (cardList.length < 1) return false;
+    var n = 0;
+    for (var x = 0, c; c = cardList[x]; x++) {
+        if (c.equals(defCard)) n++;
+    }
+
+    if (n < 1) return false;
+    return partnerDef.keyCardCount + n === 4;
+};
+
 Player.prototype.shouldPlayPartner = function () {
     var game = this.currentTable.game;
     var partnerDef = game.partnerDef;
@@ -1016,12 +1032,18 @@ Player.prototype.randomPlay = function (cards) {
     }
 };
 
+Player.prototype.shouldKeepTopTrump = function(game){
+    if(this.orgLength[Card.SUITE.JOKER] < Config.AVERAGE_TRUMP_LENGTH - 1) return false;
+    var xCard = this.trumps[this.trumps.length - 1];
+    return xCard.trumpRank(game.trump, game.rank) > 13;  // true if game rank cards and jokers
+};
+
 Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
     var keepTop = false;
     if(!pointFirst && this.aiLevel >= 2 && firstHand.isTrump && cardList[0].isTrump(game.trump, game.rank)) {
-        if(this.orgLength[Card.SUITE.JOKER] > 10) keepTop = true;
+        keepTop = this.shouldKeepTopTrump(game);
     }
 
     var tmpCards = cardList.slice();
@@ -1128,7 +1150,7 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                                 return false;
                             }
                             
-                            if(game.cardsPlayed > minPlayed && this.shouldPlayPartner()) {
+                            if(game.cardNumberPlayed > minPlayed && this.shouldPlayPartner()) {
                                 cards.push(card);
                                 return true;
                             }
@@ -1157,7 +1179,7 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
             } else {
                 var keepTop = false;
                 if(this.aiLevel >= 2 && firstHand.isTrump ) {
-                    if(this.orgLength[Card.SUITE.JOKER] > 10) keepTop = true;
+                    keepTop = this.shouldKeepTopTrump(game);
                 }
                 if(this.aiLevel >= 2) {
                     Card.selectCardsSmart(cards, cardList, false, game.trump, game.rank, 1, keepTop);
@@ -1489,7 +1511,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
             } else {
                 if (game.isSameSide(this, leadingPlayer) && round.isWinning(game, this)) {
                     if(this.aiLevel >= 2) {
-                        if(this.possibleOpponentRuff(game, suite)) {
+                        if(!round.getLeadingHand().isTrump && this.possibleOpponentRuff(game, suite)) {
                             this.ruff(cards);
                             return cards;
                         }
