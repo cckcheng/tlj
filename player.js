@@ -661,7 +661,7 @@ Player.prototype.passToPartner = function (cards) {
         return false;
     }
 
-    if(this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
+    if(game.partner != null && this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
         this.endPlay(cards, game);
         return;
     }
