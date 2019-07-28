@@ -1534,7 +1534,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
                         firstHand.cardNumber);
             } else {
                 if (game.isSameSide(this, leadingPlayer) && round.isWinning(game, this)) {
-                    if(this.aiLevel >= 2) {
+                    if(firstHand.cardNumber < 3 && this.aiLevel >= 2) {
                         if(!round.getLeadingHand().isTrump && this.possibleOpponentRuff(game, suite)) {
                             this.ruff(cards);
                             return cards;

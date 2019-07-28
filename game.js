@@ -844,7 +844,6 @@ function Round(players, trump, gameRank) {
     this.isWinning = function (game, exPlayer) {
         if (firstHand.isFlop) return true;
         if (this.allFriendsLeft(game, exPlayer)) return true;
-        // TODO, check if following players are all same side
         return !hasPossibleHighers(leadingHand, exPlayer);
     };
 
