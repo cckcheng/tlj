@@ -686,23 +686,21 @@ Player.prototype.passToPartner = function (cards) {
 };
 
 Player.prototype.choosePartnerVoidSuite = function (game, partner, pSuite) {
-    if(pSuite && partner.voids[pSuite]) return pSuite;
-    var arr = [];
+    var voidSuite = pSuite;
+    var len = pSuite ? game.cardsPlayed[pSuite] : 0;
     for (var i = 0, suit, lst; suit = Card.SUITES[i]; i++) {
         if (suit === pSuite) continue;
         lst = this.getCardsBySuite(suit);
-        if (lst.length < 1) continue;
-        arr.push(suit);
+        if (lst.length > 0 && partner.voids[suit]) {
+            var sLen = game.cardsPlayed[suit];
+            if(len < 1 || sLen < len) {
+                voidSuite = suit;
+                len = sLen;
+            }
+        }
     }
-
-    if (arr.length < 1) return pSuite;
-    if(arr.length == 1) {
-        return partner.voids[arr[0]] ? arr[0] : pSuite;
-    }
-    var x = Math.floor(Math.random() * (arr.length));
-    if(partner.voids[arr[x]]) return arr[x];
-    x = (x===0 ? 1 : 0);  // should be only two suit available
-    return partner.voids[arr[x]] ? arr[x] : pSuite;
+    
+    return voidSuite;
 };
 
 Player.prototype.getAllSuites = function () {
@@ -860,6 +858,25 @@ Player.prototype.playPairOrTop = function (cards, cardList, game, isTrump) {
     });
 };
 
+Player.prototype.endPlayTrump = function (cards, game) {
+    var stat = new HandStat(this.trumps, game.trump, game.rank);
+    if(stat.totalPairs < 1) {
+        if(this.partnerHasTrump(game)) {
+            cards.push(this.trumps[0]);
+        } else {
+            cards.push(this.trumps[this.trumps.length - 1]);
+        }
+        return;
+    }
+    
+    var rnks = stat.sortedRanks(2);
+    var sHand = new SimpleHand(Hand.SIMPLE_TYPE.PAIR, rnks[rnks.length - 1], true);
+    cc = Hand.makeCards(sHand, this.trumps, game.trump, game.rank);
+    cc.forEach(function (c) {
+        cards.push(c);
+    });
+};
+
 Player.prototype.endPlay = function (cards, game) {
     if(this.playTopTrump(cards, game)) return;
 
@@ -871,22 +888,24 @@ Player.prototype.endPlay = function (cards, game) {
     
     if(allCards.length < 1) {
         // all trumps left
-        if(this.partnerHasTrump(game)) {
-            cards.push(this.trumps[0]);
-        } else {
-            this.playPairOrTop(cards, this.trumps, game, true);
-        }
+//        if(this.partnerHasTrump(game)) {
+//            cards.push(this.trumps[0]);
+//        } else {
+//            this.playPairOrTop(cards, this.trumps, game, true);
+//        }
+        this.endPlayTrump(cards, game);
         return;
     }
     
     if(this.opponentHasTrump(game)) {
         var total = this.totalCardLeft();
         if(this.trumps.length >= total / 2) {
-            if(this.partnerHasTrump(game)) {
-                cards.push(this.trumps[0]);
-            } else {
-                this.playPairOrTop(cards, this.trumps, game, true);
-            }
+//            if(this.partnerHasTrump(game)) {
+//                cards.push(this.trumps[0]);
+//            } else {
+//                this.playPairOrTop(cards, this.trumps, game, true);
+//            }
+            this.endPlayTrump(cards, game);
         } else {
             if(this.findPairAndPlay(cards, game)) return;
             allCards.sort(Card.compareRank);
@@ -917,7 +936,12 @@ Player.prototype.endPlay = function (cards, game) {
                     return;
                 }
             }
-            
+
+            if(this.trumps.length > 1) {
+                this.endPlayTrump(cards, game);
+                return;
+            }
+
             if(this.findPairAndPlay(cards, game)) return;
             cards.push(xCard);
         }
