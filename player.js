@@ -7,6 +7,10 @@ var Table = require('./table');
 var Server = require('./server');
 const {Game, Hand, SimpleHand} = require('./game');
 
+Player.init = function() {
+    Config = require('./conf');
+};
+
 function Player(o) {
     if (o) {
         this.id = o.id;
