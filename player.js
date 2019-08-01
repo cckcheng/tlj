@@ -888,23 +888,27 @@ Player.prototype.endPlay = function (cards, game) {
     
     if(allCards.length < 1) {
         // all trumps left
-//        if(this.partnerHasTrump(game)) {
-//            cards.push(this.trumps[0]);
-//        } else {
-//            this.playPairOrTop(cards, this.trumps, game, true);
-//        }
         this.endPlayTrump(cards, game);
         return;
     }
     
     if(this.opponentHasTrump(game)) {
+        if(game.contractor !== game.partner && this.partnerHasTrump(game)) {
+            var suite = null;
+            if(this === game.contractor) {
+                suite = this.choosePartnerVoidSuite(game, game.partner, null);
+            } else if(this === game.partner) {
+                suite = this.choosePartnerVoidSuite(game, game.contractor, null);
+            }
+            if(suite != null) {
+                var cardList = this.getCardsBySuite(suite);
+                Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
+                return;
+            }
+        }
+
         var total = this.totalCardLeft();
         if(this.trumps.length >= total / 2) {
-//            if(this.partnerHasTrump(game)) {
-//                cards.push(this.trumps[0]);
-//            } else {
-//                this.playPairOrTop(cards, this.trumps, game, true);
-//            }
             this.endPlayTrump(cards, game);
         } else {
             if(this.findPairAndPlay(cards, game)) return;
@@ -923,7 +927,7 @@ Player.prototype.endPlay = function (cards, game) {
                 }
             } 
         } else {
-            if(this.partnerHasTrump(game)) {
+            if(game.contractor !== game.partner && this.partnerHasTrump(game)) {
                 var suite = null;
                 if(this === game.contractor) {
                     suite = this.choosePartnerVoidSuite(game, game.partner, null);
