@@ -841,7 +841,7 @@ Player.prototype.partnerHasTrump = function(game) {
     if(this === game.partner) return game.contractor.hasTrump();
     
     for(var x=0,p; p=players[x]; x++) {
-        if(p === game.contractor || p === game.partner) continue;
+        if(p === this || p === game.contractor || p === game.partner) continue;
         if(p.hasTrump()) return true;
     }
     return false;
