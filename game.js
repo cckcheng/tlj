@@ -1,8 +1,8 @@
 module.exports = {Game, Hand, SimpleHand};
 
+var Config = require('./conf');
 var Card = require('./card');
 var Deck = require('./deck');
-var Table = require('./table');
 var HandStat = require('./stat');
 
 function Game(players, deckNumber) {
@@ -765,7 +765,7 @@ function Round(players, trump, gameRank) {
         var isLastHand = this.playList.length === players.length;
         if (isLastHand) {
             leadingHand.player.addPoints(points);
-//            if (Table.Debugging) {
+//            if (Config.DEBUGGING) {
                 console.log(this.displayAll());
 //            }
         }
@@ -902,7 +902,7 @@ Game.prototype.setTrump = function (suite) {
     this.trump = suite;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.resortCards(this.trump, this.rank);
-        if (Table.Debugging) {
+        if (Config.DEBUGGING) {
             console.log('*** seat #' + (x + 1) + ':');
             console.log(p.showHand());
         }
@@ -912,10 +912,6 @@ Game.prototype.setTrump = function (suite) {
     this.leadingPlayer = this.contractor;
     this.rounds = [];
     this.startNewRound();
-};
-
-Game.prototype.judge = function () {
-
 };
 
 Game.prototype.getHandType = function (player, cards) {

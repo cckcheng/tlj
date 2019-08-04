@@ -3,7 +3,6 @@ module.exports = Player;
 var Config = require('./conf');
 var Card = require('./card');
 var HandStat = require('./stat');
-var Table = require('./table');
 var Server = require('./server');
 const {Game, Hand, SimpleHand} = require('./game');
 
@@ -97,7 +96,7 @@ function Player(o) {
 
         var timeout = 10;
         if (keepMinutes == null) {
-            timeout = Table.MAX_IDLE_MINUTES * 60000;
+            timeout = Config.MAX_IDLE_MINUTES * 60000;
         } else if (keepMinutes > 0) {
             timeout = keepMinutes * 60000;
         }
@@ -332,7 +331,7 @@ Player.prototype.pushJson = function (json) {
     setImmediate(function (p) {
         // this seems no differents
         try {
-            if (Table.Debugging) {
+            if (Config.DEBUGGING) {
                 p.sock.write(JSON.stringify(json) + '\n');
             } else {
                 p.sock.write(Server.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
@@ -359,7 +358,7 @@ Player.prototype.pushData = function () {
 
     var game = this.currentTable.game;
     if (game == null) {
-        var sec = Table.PAUSE_SECONDS_BETWEEN_GAME;
+        var sec = Config.PAUSE_SECONDS_BETWEEN_GAME;
         if (this.currentTable.resumeTime != null) {
             sec = Math.round((this.currentTable.resumeTime - (new Date()).getTime()) / 1000);
         }
@@ -423,7 +422,7 @@ Player.prototype.pushData = function () {
     if (this.currentTable.game.stage === Game.BIDDING_STAGE) {
         json = Object.assign({
             trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
-            minBid: Table.SHOW_MINBID ? this.minBid : -1
+            minBid: Config.SHOW_MINBID ? this.minBid : -1
         }, json);
     } else {
         var obj = {
@@ -439,7 +438,7 @@ Player.prototype.pushData = function () {
             obj.trump = game.trump;
             if (game.holeCards.length < 1) {
                 obj.act = 'bury';
-                obj.acttime = Table.TIMEOUT_SECONDS_BURYCARDS;
+                obj.acttime = Config.TIMEOUT_SECONDS_BURYCARDS;
             } else if(game.partnerDef == null) {
                 obj.act = 'partner';
             } else {
@@ -2056,8 +2055,7 @@ Player.prototype.buryCards = function (strCards) {
     game.holeCards = cards;
 
     strCards = Card.cardsToString(cards);
-    if (Table.Debugging)
-        console.log("hole cards: " + strCards);
+    if (Config.DEBUGGING) console.log("hole cards: " + strCards);
     this.pushJson({
         action: 'bury',
         cards: strCards
@@ -2286,8 +2284,7 @@ Player.prototype.evaluate = function () {
     handStrongth += additionPoints;
 
     this.minBid = 200 + Math.round((40 - handStrongth) * 0.5) * 5;
-    if (Table.Debugging)
-        console.log('minBid: ' + this.minBid + "\n");
+    if (Config.DEBUGGING) console.log('minBid: ' + this.minBid + "\n");
 };
 
 Player.prototype.sendMessage = function (msg) {

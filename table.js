@@ -7,7 +7,6 @@ const {Game, Hand, SimpleHand} = require('./game');
 
 Table.init = function() {
     Config = require('./conf');
-    Table.Debugging = false;
     Table.FastMode = false;
     Table.HOLE_POINT_TIMES = 4;
     Table.SHOW_MINBID = Config.SHOW_MINBID ? true : false;
@@ -15,9 +14,9 @@ Table.init = function() {
     Table.PAUSE_SECONDS_BETWEEN_ROUND = Config.PAUSE_SECONDS_BETWEEN_ROUND;
     Table.TIMEOUT_SECONDS_BURYCARDS = Config.TIMEOUT_SECONDS_BURYCARDS;
     Table.MAX_IDLE_MINUTES = Config.MAX_IDLE_MINUTES;
-}
 
-Table.init();
+    console.log("NEW AI Level: " + Config.AI_LEVEL);
+}
 
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
@@ -161,7 +160,7 @@ Table.prototype.dismiss = function () {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
     }
-    var pauseMinutes = Table.Debugging ? 5 : Config.TABLE_IDLE_MINUTES;  // 5 minutes, set to 30 minutes when release
+    var pauseMinutes = Config.DEBUGGING ? 5 : Config.TABLE_IDLE_MINUTES;  // 5 minutes, set to 30 minutes when release
     this.pauseTimer = setTimeout(function (t) {
         t.pauseTimer = null;
         t.terminate();
