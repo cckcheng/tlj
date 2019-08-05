@@ -1181,7 +1181,7 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                                 return false;
                             }
                             
-                            if(game.cardNumberPlayed > minPlayed && this.shouldPlayPartner()) {
+                            if(game.cardNumberPlayed >= minPlayed && this.shouldPlayPartner()) {
                                 cards.push(card);
                                 return true;
                             }
@@ -1196,16 +1196,29 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                     }
                 }
                 
-                if(this.aiLevel >= 2 && (game.currentRound.allFriendsLeft(game, this) || this.noOpponentCanBeat(game, firstHand.suite))) {
-                    var tmpCards = [];
-                    for(var x=cardList.length-1, c; c=cardList[x]; x--) {
-                        if(c.trumpRank(game.trump, game.rank) <= leadingHand.maxRank) break;
-                        tmpCards.push(c);
+                if(this.aiLevel >= 2) {
+                    if(game.currentRound.allFriendsLeft(game, this) || this.noOpponentCanBeat(game, firstHand.suite)) {
+                        var tmpCards = [];
+                        for(var x=cardList.length-1, c; c=cardList[x]; x--) {
+                            if(c.trumpRank(game.trump, game.rank) <= leadingHand.maxRank) break;
+                            tmpCards.push(c);
+                        }
+                        Card.selectCardsByPoint(cards, tmpCards, true, game.trump, game.rank, 1);
+                        return true;
                     }
-                    Card.selectCardsByPoint(cards, tmpCards, true, game.trump, game.rank, 1);
-                    return true;
+
+                    if(!leadingHand.isTrump && this.possibleOpponentRuff(game, firstHand.suite)) {
+                        var x = cardList.length - 1;
+                        while(card.getPoint() > 0) {
+                            x--;
+                            if(x<0) break;
+                            card = cardList[x];
+                        }
+                        cards.push(card);
+                        return card.trumpRank(game.trump, game.rank) > leadingHand.maxRank;
+                    }
                 }
-                cards.push(cardList[cardList.length - 1]);
+                cards.push(card);
                 return true;
             } else {
                 var keepTop = false;
@@ -1357,6 +1370,11 @@ Player.prototype.possibleOpponentRuff = function (game, suite) {
                     if(p.voids[suite] && p.hasTrump()) return true;
                 }
             }
+        }
+        
+        var partnerDef = this.currentTable.game.partnerDef;
+        if(!partnerDef.noPartner && firstPlayer === game.partner && suite === partnerDef.suite && this !== game.contractor) {
+            return game.contractor.hasTrump();
         }
     } else {
         for(var x = startIdx, p; ; x++) {

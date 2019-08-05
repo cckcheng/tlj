@@ -615,7 +615,7 @@ function gameOver(t) {
         t.broadcastGameInfo(json, null, langInfo);
     }, 2000, t);
 
-    console.log(new Date().toLocaleString() + ', ' + t.game.contractPoint + '|' + t.game.collectedPoint
+    console.log(new Date().toLocaleString() + ', #' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
          + ' ' + t.game.playerStatusEn);
     
     if (matchOver) {
