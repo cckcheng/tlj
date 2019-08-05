@@ -916,7 +916,25 @@ Player.prototype.endPlay = function (cards, game) {
         } else {
             if(this.findPairAndPlay(cards, game)) return;
             allCards.sort(Card.compareRank);
-            var xCard = allCards[allCards.length - 1];
+            var x = allCards.length - 1;
+            var xCard = allCards[x];
+            var tCard = xCard;
+            var tSuite = tCard.suite;
+            while(x>=0) {
+                if(!this.possibleOpponentRuff(game, tSuite)) {
+                    cards.push(tCard);
+                    return;
+                }
+                if(x < 1) break;
+                x--;
+                tCard = allCards[x];
+                while(tCard.suite === tSuite) {
+                    if(x < 1) break;
+                    x--;
+                    tCard = allCards[x];
+                }
+                tSuite = tCard.suite;
+            }
             cards.push(xCard);
         }
     } else {
