@@ -919,21 +919,28 @@ Player.prototype.endPlay = function (cards, game) {
             var x = allCards.length - 1;
             var xCard = allCards[x];
             var tCard = xCard;
-            var tSuite = tCard.suite;
-            while(x>=0) {
-                if(!this.possibleOpponentRuff(game, tSuite)) {
+            var checkedSuites = [];
+            do {
+                if(!this.possibleOpponentRuff(game, tCard.suite)) {
                     cards.push(tCard);
                     return;
                 }
                 if(x < 1) break;
+                checkedSuites.push(tCard.suite);
                 x--;
                 tCard = allCards[x];
-                while(tCard.suite === tSuite) {
-                    if(x < 1) break;
+                while(checkedSuites.includes(tCard.suite)) {
                     x--;
+                    if(x < 0) break;
                     tCard = allCards[x];
                 }
-                tSuite = tCard.suite;
+            } while(x>=0);
+            
+            x = allCards.length - 1;
+            while(xCard.getPoint() > 0) {
+                if(x < 1) break;
+                x--;
+                xCard = allCards[x];
             }
             cards.push(xCard);
         }
@@ -1228,8 +1235,8 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
                     if(!leadingHand.isTrump && this.possibleOpponentRuff(game, firstHand.suite)) {
                         var x = cardList.length - 1;
                         while(card.getPoint() > 0) {
+                            if(x < 1) break;
                             x--;
-                            if(x<0) break;
                             card = cardList[x];
                         }
                         cards.push(card);
@@ -1391,7 +1398,8 @@ Player.prototype.possibleOpponentRuff = function (game, suite) {
         }
         
         var partnerDef = this.currentTable.game.partnerDef;
-        if(!partnerDef.noPartner && firstPlayer === game.partner && suite === partnerDef.suite && this !== game.contractor) {
+        if(this !== firstPlayer && !partnerDef.noPartner && firstPlayer === game.partner && suite === partnerDef.suite && this !== game.contractor) {
+            if(game.currentRound.allFriendsLeft(game, this)) return false;
             return game.contractor.hasTrump();
         }
     } else {
