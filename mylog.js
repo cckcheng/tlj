@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Config = require('./conf');
 
 var curLogFile = "";
 var writerStream;
@@ -11,26 +12,29 @@ function getCurrentLogName() {
     return 'log' + dt.getFullYear() + (m<10 ? '0' : '') + m + (d<10 ? '0' : '') + d + '.txt';
 }
 
+function createWriter(fileName) {
+    if(!fs.existsSync(Config.LOG_PATH)) {
+        fs.mkdirSync(Config.LOG_PATH);
+    }
+    writerStream = fs.createWriteStream(Config.LOG_PATH + fileName, {
+        flags: 'a'
+    });
+    curLogFile = fileName;
+}
+
 module.exports = {
     log: function(str) {
         var newLogFile = getCurrentLogName();
         if(writerStream) {
             if(newLogFile !== curLogFile) {
                 writerStream.end();
-                
-                writerStream = fs.createWriteStream(newLogFile, {
-                    flags: 'a'
-                });
-                curLogFile = newLogFile;
+                createWriter(newLogFile);
             }
         } else {
-            writerStream = fs.createWriteStream(newLogFile, {
-                flags: 'a'
-            });
-            curLogFile = newLogFile;
+            createWriter(newLogFile);
         }
         
-        writerStream.write(str);
+        writerStream.write(str + '\n');
     },
     
     close: function() {

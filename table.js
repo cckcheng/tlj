@@ -1,8 +1,10 @@
 module.exports = Table;
 
 var Server = require('./server');
+var Player = require('./player');
 var Card = require('./card');
 var Config = require('./conf');
+var Mylog = require('./mylog');
 const {Game, Hand, SimpleHand} = require('./game');
 
 Table.init = function() {
@@ -26,6 +28,7 @@ function Table(o) {
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
     this.dismissed = false;
+    this.allowJoin = o ? o.allowJoin : true;
     var pos = 0;
     while (pos < SEAT_NUMBER) {
         this._positions.push(pos++);
@@ -94,22 +97,27 @@ function Table(o) {
 Table.MATCH_TYPE = {
     FULL: {
         title: 'Full(2->A)',
+        maxGame: 18,
         ranks: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     },
     HALF: {
         title: 'Half(8->A)',
+        maxGame: 10,
         ranks: [8, 9, 10, 11, 12, 13, 14]
     },
     POINTS: {
         title: 'All Points(5/10/K)',
+        maxGame: 6,
         ranks: [5, 10, 13, 14]
     },
     FREE: {
         title: 'Free(2->5)',
+        maxGame: 6,
         ranks: [2, 3, 4, 5]
     },
     EXPRESS: {
         title: 'Express(10->A)',
+        maxGame: 8,
         ranks: [10, 11, 12, 13, 14]
     }
 };
@@ -863,6 +871,65 @@ Table.prototype.getNextRank = function (rank, delta) {
     }
 
     return this.matchType.ranks[nextIdx];
+};
+
+Table.prototype.canJoin = function (player, onlinePlayers, activePlayers) {
+    var maxGame = this.matchType.maxGame;
+    var gameLimit = maxGame > 10 ? maxGame / 3 : maxGame / 2;
+    if(this.games.length > gameLimit) return false;
+    
+    var maxRank = this.matchType.ranks[0];
+    var robot = null;
+    for(var x=0,p; p=this.players[x]; x++) {
+        if(p.matchInfo.currentRank > maxRank) {
+            maxRank = p.matchInfo.currentRank;
+        }
+        if(robot == null && p.isRobot()) robot = p;
+    }
+    if(robot == null) return false;
+    var halfIndex = Math.floor(this.matchType.ranks.length / 2);
+    if(maxRank > this.matchType.ranks[halfIndex]) return false;
+    
+    var sockId = player.sock.remoteAddress + ':' + player.sock.remotePort;
+    robot.replaceRobot(player);
+    onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
+    if(!this.resume(player)) return false;
+    
+    this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
+    return true;
+};
+
+Table.joinPlayer = function(player, runningTables, onlinePlayers, activePlayers) {
+    for(var x=runningTables.length-1, t; x>=0 && (t=runningTables[x]); x--) {
+        if(!t.allowJoin) continue;
+        if(t.canJoin(player, onlinePlayers, activePlayers)) return;
+    }
+    
+    if (runningTables.length >= Config.MAX_TABLES) {
+        if(player.lang === 'zh') {
+            player.sendMessage("没有空桌. 请稍候...");
+        } else {
+            player.sendMessage("No table available. Please wait...");
+        }
+        return;
+    }
+
+    var mType = Table.MATCH_TYPE[Config.tableType];
+    if (mType == null) {
+        mType = Table.MATCH_TYPE.FREE;
+    }
+
+    var table = new Table({matchType: mType, allowJoin: true});
+    runningTables.push(table);
+    table.addPlayer(player);
+
+    for (var x = 0, robot; x < SEAT_NUMBER-1; x++) {
+        robot = new Player();
+        table.addPlayer(robot);
+    }
+    table.startGame();
+
+    Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables: ' + runningTables.length);
 };
 
 // record match info per player

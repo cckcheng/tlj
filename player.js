@@ -78,6 +78,10 @@ function Player(o) {
         };
     };
     
+    this.isRobot = function() {
+        return this.id == null && this.sock == null;
+    };
+    
     this.replaceRobot = function (p) {
         this.id = p.id;
         this.sock = p.sock;
@@ -94,7 +98,7 @@ function Player(o) {
             this.currentTable.broadcastGameInfo({action: 'out', seat: this.currentTable.getSeat(this)});
         }
 
-        var timeout = 10;
+        var timeout = Config.DEFAULT_KEEP_SECONDS ? Config.DEFAULT_KEEP_SECONDS * 1000 : 10;
         if (keepMinutes == null) {
             timeout = Config.MAX_IDLE_MINUTES * 60000;
         } else if (keepMinutes > 0) {
