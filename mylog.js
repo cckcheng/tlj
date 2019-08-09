@@ -14,16 +14,29 @@ function getCurrentLogName() {
 module.exports = {
     log: function(str) {
         var newLogFile = getCurrentLogName();
-        if(newLogFile !== curLogFile) {
-            if(writerStream) {
+        if(writerStream) {
+            if(newLogFile !== curLogFile) {
                 writerStream.end();
+                
+                writerStream = fs.createWriteStream(newLogFile, {
+                    flags: 'a'
+                });
+                curLogFile = newLogFile;
             }
-            
+        } else {
             writerStream = fs.createWriteStream(newLogFile, {
                 flags: 'a'
             });
+            curLogFile = newLogFile;
         }
         
         writerStream.write(str);
+    },
+    
+    close: function() {
+        if(writerStream) {
+            writerStream.end();
+            writerStream = null;
+        }
     }
 };

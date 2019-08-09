@@ -604,11 +604,14 @@ Player.prototype.playPartnerCards = function (cards) {
     var defCard = partnerDef.getDefCard();
     var cardList = this.getCardsBySuite(defCard.suite);
     if (cardList.length < 1) return false;
+    if(this.possibleOpponentRuff(game, partnerDef.suite)) return false;
+
     for (var x = 0, c; c = cardList[x]; x++) {
         if (c.equals(defCard)) cards.push(c);
     }
 
     if (cards.length < 1) {
+        if(this === game.partner && game.cardsPlayed[partnerDef.suite] > Config.MAX_SAFE_CARDS_PLAYED) return false;
         var viceCard = partnerDef.getViceCard(this.currentTable.game.rank);
         for (var x = 0, c; c = cardList[x]; x++) {
             if (c.equals(viceCard)) {
