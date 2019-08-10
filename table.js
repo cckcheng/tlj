@@ -1,6 +1,5 @@
 module.exports = Table;
 
-var Server = require('./server');
 var Player = require('./player');
 var Core = require('./core');
 var Card = require('./card');
@@ -27,7 +26,8 @@ const ADD_SECONDS = 2;
 
 Table.init();
 
-function Table(o) {
+function Table(o, mainServer) {
+    this.mainServer = mainServer;
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
     this.dismissed = false;
@@ -187,12 +187,12 @@ Table.prototype.terminate = function () {
         if (p == null) continue;
         if (p.sock == null && p.id != null) {
             // need delete the player from activePlayers
-            Server.removePlayer(p);
+            this.mainServer.removePlayer(p);
         }
     }
 
     console.log(new Date().toLocaleString() + ', table ended');
-    Server.removeTable(this);
+    this.mainServer.removeTable(this);
 };
 
 Table.prototype.resume = function (player) {
@@ -876,7 +876,7 @@ Table.prototype.getNextRank = function (rank, delta) {
     return this.matchType.ranks[nextIdx];
 };
 
-Table.prototype.canJoin = function (player, onlinePlayers, activePlayers) {
+Table.prototype.canJoin = function (player) {
     var maxGame = this.matchType.maxGame;
     var gameLimit = maxGame > 10 ? maxGame / 3 : maxGame / 2;
     if(this.games.length > gameLimit) return false;
@@ -895,20 +895,21 @@ Table.prototype.canJoin = function (player, onlinePlayers, activePlayers) {
     
     var sockId = player.sock.remoteAddress + ':' + player.sock.remotePort;
     robot.replaceRobot(player);
-    onlinePlayers[sockId] = activePlayers[player.id] = player = robot;
+    this.mainServer.onlinePlayers[sockId] = this.mainServer.activePlayers[player.id] = player = robot;
     if(!this.resume(player)) return false;
     
     this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
     return true;
 };
 
-Table.joinPlayer = function(player, runningTables, onlinePlayers, activePlayers) {
-    for(var x=runningTables.length-1, t; x>=0 && (t=runningTables[x]); x--) {
+Table.joinPlayer = function(player) {
+    var mServer = player.mainServer;
+    for(var x=mServer.runningTables.length-1, t; x>=0 && (t=mServer.runningTables[x]); x--) {
         if(!t.allowJoin) continue;
-        if(t.canJoin(player, onlinePlayers, activePlayers)) return;
+        if(t.canJoin(player)) return;
     }
     
-    if (runningTables.length >= Config.MAX_TABLES) {
+    if (mServer.runningTables.length >= Config.MAX_TABLES) {
         if(player.lang === 'zh') {
             player.sendMessage("没有空桌. 请稍候...");
         } else {
@@ -923,16 +924,16 @@ Table.joinPlayer = function(player, runningTables, onlinePlayers, activePlayers)
     }
 
     var table = new Table({matchType: mType, allowJoin: true});
-    runningTables.push(table);
+    mServer.runningTables.push(table);
     table.addPlayer(player);
 
     for (var x = 0, robot; x < SEAT_NUMBER-1; x++) {
-        robot = new Player();
+        robot = new Player(null, mServer);
         table.addPlayer(robot);
     }
     table.startGame();
 
-    Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables: ' + runningTables.length);
+    Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables: ' + mServer.runningTables.length);
 };
 
 // record match info per player

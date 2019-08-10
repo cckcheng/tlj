@@ -4,14 +4,14 @@ var Config = require('./conf');
 var Core = require('./core');
 var Card = require('./card');
 var HandStat = require('./stat');
-var Server = require('./server');
 const {Game, Hand, SimpleHand} = require('./game');
 
 Player.init = function() {
     Config = require('./conf');
 };
 
-function Player(o) {
+function Player(o, mainServer) {
+    this.mainServer = mainServer;
     if (o) {
         this.id = o.id;
         this.sock = o.sock;
@@ -107,7 +107,7 @@ function Player(o) {
         }
         this.idleTimer = setTimeout(function (p) {
             if (p.sock != null) return;
-            Server.removePlayer(p);
+            this.mainServer.removePlayer(p);
             p.idleTimer = null;
             if (p.currentTable == null || p.currentTable.dismissed) return;
             p.id = null;
@@ -118,7 +118,7 @@ function Player(o) {
                 aiLevel: 0
             };
             if (!p.currentTable.dismiss()) {
-                Server.addRobot(p);
+                this.mainServer.addRobot(p);
             }
         }, timeout, this);
     };
