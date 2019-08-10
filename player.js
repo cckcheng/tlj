@@ -1,6 +1,7 @@
 module.exports = Player;
 
 var Config = require('./conf');
+var Core = require('./core');
 var Card = require('./card');
 var HandStat = require('./stat');
 var Server = require('./server');
@@ -338,7 +339,7 @@ Player.prototype.pushJson = function (json) {
             if (Config.DEBUGGING) {
                 p.sock.write(JSON.stringify(json) + '\n');
             } else {
-                p.sock.write(Server.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
+                p.sock.write(Core.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
             }
         } catch (err) {
             console.log(new Date().toLocaleString() + ', ' + err.message);

@@ -2,6 +2,7 @@ module.exports = Table;
 
 var Server = require('./server');
 var Player = require('./player');
+var Core = require('./core');
 var Card = require('./card');
 var Config = require('./conf');
 var Mylog = require('./mylog');
@@ -277,7 +278,7 @@ Table.prototype.startGame = function (testOnly) {
             p.matchInfo = new MatchInfo(this, p);
         }
     } else {
-        Server.shuffleArray(this.players);
+        Core.shuffleArray(this.players);
         // init game info
         for (var x = 0, p; p = this.players[x]; x++) {
             p.matchInfo.reset();
