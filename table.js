@@ -24,6 +24,8 @@ const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const ADD_SECONDS = 2;
 
+Table.init();
+
 function Table(o) {
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];

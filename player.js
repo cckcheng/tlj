@@ -1172,7 +1172,7 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     }
 };
 
-Player.prototype.tryBeatLeading = function (cards, cardList) {
+Player.prototype.tryBeatLeading = function (cards, cardList, sameSide) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
     if (firstHand.isFlop) {
@@ -1283,6 +1283,10 @@ Player.prototype.tryBeatLeading = function (cards, cardList) {
             break;
     }
 
+    if(sameSide && firstHand.cardNumber > 1 && this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
+        this.followPlay(cards, cardList, true);
+        return false;
+    }
     this.followPlay(cards, cardList, false);
     var tHand = new Hand(this, cards, game.trump, game.rank);
     return tHand.compareTo(leadingHand, firstHand) > 0;
@@ -1580,7 +1584,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
                     }
                     this.followPlay(cards, cardList, pointFirst);
                 } else {
-                    this.tryBeatLeading(cards, cardList);
+                    this.tryBeatLeading(cards, cardList, true);
                 }
             } else {
                 this.tryBeatLeading(cards, cardList);
@@ -1591,6 +1595,11 @@ Player.prototype.autoPlayCards = function (isLeading) {
                         game.isSameSide(this, leadingPlayer) && round.isWinning(game, this),
                         firstHand.cardNumber);
             } else {
+                if(this.aiLevel >= 2 && firstHand.cardNumber > 1 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY
+                        && game.isSameSide(this, leadingPlayer)) {
+                    this.duckCards(cards, suite, true, firstHand.cardNumber);
+                    return cards;
+                }
                 if (game.isSameSide(this, leadingPlayer) && round.isWinning(game, this)) {
                     if(firstHand.cardNumber < 3 && this.aiLevel >= 2) {
                         if(!round.getLeadingHand().isTrump && this.possibleOpponentRuff(game, suite)) {
@@ -1609,9 +1618,16 @@ Player.prototype.autoPlayCards = function (isLeading) {
             });
 
             if (cards.length < firstHand.cardNumber) {
-                this.duckCards(cards, suite,
-                        game.isSameSide(this, leadingPlayer) && round.isWinning(game, this),
-                        firstHand.cardNumber - cards.length);
+                var pointFirst = game.isSameSide(this, leadingPlayer);
+                if(pointFirst) {
+                    if(this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
+                        this.duckCards(cards, suite, true, firstHand.cardNumber - cards.length);
+                    } else {
+                        this.duckCards(cards, suite, round.isWinning(game, this), firstHand.cardNumber - cards.length);
+                    }
+                } else {
+                    this.duckCards(cards, suite, false, firstHand.cardNumber - cards.length);
+                }
             }
         }
     }
