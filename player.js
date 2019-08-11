@@ -1,7 +1,7 @@
 module.exports = Player;
 
 var Config = require('./conf');
-var Core = require('./core');
+var Func = require('./func');
 var Card = require('./card');
 var HandStat = require('./stat');
 const {Game, Hand, SimpleHand} = require('./game');
@@ -107,7 +107,7 @@ function Player(o, mainServer) {
         }
         this.idleTimer = setTimeout(function (p) {
             if (p.sock != null) return;
-            this.mainServer.removePlayer(p);
+            p.mainServer.removePlayer(p);
             p.idleTimer = null;
             if (p.currentTable == null || p.currentTable.dismissed) return;
             p.id = null;
@@ -118,7 +118,7 @@ function Player(o, mainServer) {
                 aiLevel: 0
             };
             if (!p.currentTable.dismiss()) {
-                this.mainServer.addRobot(p);
+                p.mainServer.addRobot(p);
             }
         }, timeout, this);
     };
@@ -339,7 +339,7 @@ Player.prototype.pushJson = function (json) {
             if (Config.DEBUGGING) {
                 p.sock.write(JSON.stringify(json) + '\n');
             } else {
-                p.sock.write(Core.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
+                p.sock.write(Func.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
             }
         } catch (err) {
             console.log(new Date().toLocaleString() + ', ' + err.message);

@@ -21,3 +21,7 @@ function MyServer() {
 var myServer = new MyServer();
 
 console.log(myServer.Core.test(myServer));
+
+var Deck = require('./deck');
+var deck = new Deck(4);
+

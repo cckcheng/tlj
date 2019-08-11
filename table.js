@@ -1,7 +1,7 @@
 module.exports = Table;
 
 var Player = require('./player');
-var Core = require('./core');
+var Func = require('./func');
 var Card = require('./card');
 var Config = require('./conf');
 var Mylog = require('./mylog');
@@ -278,7 +278,7 @@ Table.prototype.startGame = function (testOnly) {
             p.matchInfo = new MatchInfo(this, p);
         }
     } else {
-        Core.shuffleArray(this.players);
+        Func.shuffleArray(this.players);
         // init game info
         for (var x = 0, p; p = this.players[x]; x++) {
             p.matchInfo.reset();
@@ -923,7 +923,7 @@ Table.joinPlayer = function(player) {
         mType = Table.MATCH_TYPE.FREE;
     }
 
-    var table = new Table({matchType: mType, allowJoin: true});
+    var table = new Table({matchType: mType, allowJoin: true}, mServer);
     mServer.runningTables.push(table);
     table.addPlayer(player);
 

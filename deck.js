@@ -1,10 +1,10 @@
 module.exports = Deck;
 
+var Func = require('./func');
 var Card = require('./card');
-var Core = require('./core');
 
 function Deck(decks) {
-	this.deckNumber = decks;
+	  this.deckNumber = decks;
 
     this._wholeDeck = [];
     for (var i = 0; i < this.deckNumber; i++) {
@@ -17,7 +17,8 @@ function Deck(decks) {
         this._wholeDeck.push(new Card(Card.SUITE.JOKER, Card.RANK.SmallJoker));
         this._wholeDeck.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
     }
-    Core.shuffleArray(this._wholeDeck);
+    
+    Func.shuffleArray(this._wholeDeck);
 }
 
 Deck.prototype.deal = function (players) {
