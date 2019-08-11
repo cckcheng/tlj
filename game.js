@@ -1,6 +1,7 @@
 module.exports = {Game, Hand, SimpleHand};
 
 var Config = require('./conf');
+var Mylog = require('./mylog');
 var Card = require('./card');
 var Deck = require('./deck');
 var HandStat = require('./stat');
@@ -599,7 +600,7 @@ function Round(players, trump, gameRank) {
     };
 
     function findHighers(cards, hand_type, minRank) {
-//        console.log(Card.showCards(cards));
+//        Mylog.log(Card.showCards(cards));
         if (cards == null || cards.length < 1)
             return false;
         if (hand_type.cat === Hand.COMBINATION.SINGLE) {
@@ -653,11 +654,11 @@ function Round(players, trump, gameRank) {
                 break;
             default:
                 // should never run into here
-                console.log('ERROR: invalid hand type: ' + hand_type.cat);
+                Mylog.log('ERROR: invalid hand type: ' + hand_type.cat);
                 return false;
         }
 
-//        console.log(sortedRanks);
+//        Mylog.log(sortedRanks);
         if (sortedRanks.length * unit < hand_type.len) return false;
         var preRnk = 0;
         var count = unit;
@@ -766,7 +767,7 @@ function Round(players, trump, gameRank) {
         if (isLastHand) {
             leadingHand.player.addPoints(points);
 //            if (Config.DEBUGGING) {
-                console.log(this.displayAll());
+                Mylog.log(this.displayAll());
 //            }
         }
 
@@ -903,8 +904,8 @@ Game.prototype.setTrump = function (suite) {
     for (var x = 0, p; p = this.players[x]; x++) {
         p.resortCards(this.trump, this.rank);
         if (Config.DEBUGGING) {
-            console.log('*** seat #' + (x + 1) + ':');
-            console.log(p.showHand());
+            Mylog.log('*** seat #' + (x + 1) + ':');
+            Mylog.log(p.showHand());
         }
     }
 

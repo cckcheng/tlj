@@ -4,6 +4,7 @@ var Config = require('./conf');
 var Func = require('./func');
 var Card = require('./card');
 var HandStat = require('./stat');
+var Mylog = require('./mylog');
 const {Game, Hand, SimpleHand} = require('./game');
 
 Player.init = function() {
@@ -342,7 +343,7 @@ Player.prototype.pushJson = function (json) {
                 p.sock.write(Func.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
             }
         } catch (err) {
-            console.log(new Date().toLocaleString() + ', ' + err.message);
+            Mylog.log(new Date().toLocaleString() + ', ' + err.message);
         }
     }, this);
 };
@@ -1137,7 +1138,7 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
             break;
         case Hand.COMBINATION.MIXED:
             if (firstHand.subHands == null) {
-                console.log(new Date().toLocaleString() + ', ERROR: MIXED_HAND subHands=null, ' + Card.showCards(firstHand.cards));
+                Mylog.log(new Date().toLocaleString() + ', ERROR: MIXED_HAND subHands=null, ' + Card.showCards(firstHand.cards));
                 Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, firstHand.cardNumber);
             } else {
                 for (var x = firstHand.subHands.length - 1, subH; x >= 0; x--) {
@@ -1167,7 +1168,7 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
             }
             break;
         default:
-            console.log(new Date().toLocaleString() + ', UNKNOWN HAND COMBINATION:' + firstHand.type.cat);
+            Mylog.log(new Date().toLocaleString() + ', UNKNOWN HAND COMBINATION:' + firstHand.type.cat);
             Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, firstHand.cardNumber);
             break;
     }
@@ -1879,14 +1880,14 @@ Player.prototype.playCards = function (strCards) {
     if (isLeading) {
         if (cards.length > 0) {
             hand = new Hand(this, cards, game.trump, game.rank);
-//            console.log('hand type: ' + hand.type.cat);
-//            console.log('is flop: ' + hand.isFlop);
+//            Mylog.log('hand type: ' + hand.type.cat);
+//            Mylog.log('is flop: ' + hand.isFlop);
             if (hand.type.cat === Hand.COMBINATION.MIX_SUITE) {
                 cards = this.autoPlayCards(isLeading);
                 hand = null;
             } else {
                 if (!game.isLeadingHandValid(hand)) {
-                    console.log('invalid leading: ' + strCards);
+                    Mylog.log('invalid leading: ' + strCards);
                     var orgLen = cards.length;
                     var orgCards = Card.showCards(cards);
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
@@ -1917,7 +1918,7 @@ Player.prototype.playCards = function (strCards) {
 
     if (cards.length < 1) {
         // temp: to avoid exception, should not run to here if normal
-        console.log(new Date().toLocaleString() + ', Exception:  player.playCards(), isLeading: ' + isLeading);
+        Mylog.log(new Date().toLocaleString() + ', Exception:  player.playCards(), isLeading: ' + isLeading);
         this.randomPlay(cards);
     }
 
@@ -2091,7 +2092,7 @@ Player.prototype.buryCards = function (strCards) {
 
         if (cards.length < len) {
             // should be very rare
-            console.log('AUTO-BURY: BURY POINT!');
+            Mylog.log('AUTO-BURY: BURY POINT!');
             i = 0;
             do {
                 sCount = arr[i];
@@ -2108,7 +2109,7 @@ Player.prototype.buryCards = function (strCards) {
 
             if (cards.length < len) {
                 // not likely to be here
-                console.log('AUTO-BURY: BURY TRUMP!!!');
+                Mylog.log('AUTO-BURY: BURY TRUMP!!!');
                 var maxLen = len - cards.length;
                 for (var x = 0; x < maxLen; x++) {
                     cards.push(this.trumps[x]);
@@ -2123,7 +2124,7 @@ Player.prototype.buryCards = function (strCards) {
     game.holeCards = cards;
 
     strCards = Card.cardsToString(cards);
-    if (Config.DEBUGGING) console.log("hole cards: " + strCards);
+    if (Config.DEBUGGING) Mylog.log("hole cards: " + strCards);
     this.pushJson({
         action: 'bury',
         cards: strCards
@@ -2230,7 +2231,7 @@ Player.prototype.evaluate = function () {
 //            if (aRank === bRank) return a.suite === b.suite ? 0 : (a.suite > b.suite ? 1 : -1);
 //            return aRank > bRank ? 1 : -1;
 //        });
-//        console.log(Card.showCards(iTrumps));
+//        Mylog.log(Card.showCards(iTrumps));
 
         var stat = new HandStat(iTrumps, cSuite, currentGameRank);
         point += stat.totalPairs * 2;
@@ -2248,7 +2249,7 @@ Player.prototype.evaluate = function () {
                 lRnk = rnk;
             }
         }
-//        console.log(point);
+//        Mylog.log(point);
         return point * 1.5;
     }
 
@@ -2352,7 +2353,7 @@ Player.prototype.evaluate = function () {
     handStrongth += additionPoints;
 
     this.minBid = 200 + Math.round((40 - handStrongth) * 0.5) * 5;
-    if (Config.DEBUGGING) console.log('minBid: ' + this.minBid + "\n");
+    if (Config.DEBUGGING) Mylog.log('minBid: ' + this.minBid + "\n");
 };
 
 Player.prototype.sendMessage = function (msg) {

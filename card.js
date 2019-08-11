@@ -419,7 +419,6 @@ Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, 
         tmpCards.splice(c.indexOf(tmpCards), 1);
     }
 
-    //if(keepTop) console.log('<<<' + Card.showCards(cards));
     return tmpCards;
 };
 
@@ -429,7 +428,6 @@ Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank
     var lst = cardList.slice();
     if(keepTop && lst.length > num) lst.splice(lst.length-1, 1);
 
-    //if(keepTop) console.log('>>>' + Card.showCards(lst));
     lst.sort(function (a, b) {
         if (a.equals(b)) return 0;
         if (a.isHonor(trump, gameRank)) return 1;
@@ -450,7 +448,6 @@ Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank
         tmpCards.splice(c.indexOf(tmpCards), 1);
     }
 
-    //if(keepTop) console.log('<<<' + Card.showCards(cards));
     return tmpCards;
 };
 

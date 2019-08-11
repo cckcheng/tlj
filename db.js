@@ -2,6 +2,7 @@ module.exports = SqlDb;
 
 var sqlite3 = require('sqlite3').verbose();
 var Config = require('./conf');
+var Mylog = require('./mylog');
 
 function SqlDb() {
 
@@ -18,7 +19,7 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     var q = 'Select country_code from ip2country where ip_from<= ? and ip_to>= ?';
     country_db.get(q, [ipVal, ipVal], (err, row) => {
         if (err) {
-            console.log(err.message);
+            Mylog.log(err.message);
             cb('-');
         } else {
             cb(row.country_code);
@@ -47,11 +48,11 @@ SqlDb.prototype.recordUser = function (player, o) {
         db.serialize(() => {
             db.run(q0, [o.id], function (err) {
                 if (err) {
-                    console.log(err.message);
+                    Mylog.log(err.message);
                 }
             }).run(q1, [o.name, o.lang, countryCode, o.ip, o.id], function (err) {
                 if (err) {
-                    console.log(err.message);
+                    Mylog.log(err.message);
                 }
             });
         });

@@ -1,5 +1,6 @@
 module.exports = HandStat;
 
+var Mylog = require('./mylog');
 const {Game, Hand, SimpleHand} = require('./game');
 var Card = require('./card');
 
@@ -50,7 +51,7 @@ function HandStat(cards, trump_suite, game_rank) {
             }
         }
 
-        console.log('Exception: findCardByDupNum, tRank=' + tRank + ", num=" + num + ";cards:" + Card.showCards(this.cards));
+        Mylog.log('Exception: findCardByDupNum, tRank=' + tRank + ", num=" + num + ";cards:" + Card.showCards(this.cards));
         return null;    // should never happen
     };
 }

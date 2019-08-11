@@ -1,10 +1,10 @@
 module.exports = Table;
 
+var Config = require('./conf');
+var Mylog = require('./mylog');
 var Player = require('./player');
 var Func = require('./func');
 var Card = require('./card');
-var Config = require('./conf');
-var Mylog = require('./mylog');
 const {Game, Hand, SimpleHand} = require('./game');
 
 Table.init = function() {
@@ -17,7 +17,7 @@ Table.init = function() {
     Table.TIMEOUT_SECONDS_BURYCARDS = Config.TIMEOUT_SECONDS_BURYCARDS;
     Table.MAX_IDLE_MINUTES = Config.MAX_IDLE_MINUTES;
 
-    console.log("NEW AI Level: " + Config.AI_LEVEL);
+    Mylog.log("NEW AI Level: " + Config.AI_LEVEL);
 }
 
 const SEAT_NUMBER = 6;
@@ -70,7 +70,7 @@ function Table(o, mainServer) {
                     + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
             pRank = rnk;
         }
-        console.log(summary);
+        Mylog.log(summary);
         return summary;
     };
 
@@ -180,7 +180,7 @@ Table.prototype.dismiss = function () {
 };
 
 Table.prototype.terminate = function () {
-    console.log(this.playerNames());
+    Mylog.log(this.playerNames());
     this.dismissed = true;
     for (var x = 0, p; x < this.players.length; x++) {
         p = this.players[x];
@@ -191,7 +191,7 @@ Table.prototype.terminate = function () {
         }
     }
 
-    console.log(new Date().toLocaleString() + ', table ended');
+    Mylog.log(new Date().toLocaleString() + ', table ended');
     this.mainServer.removeTable(this);
 };
 
@@ -256,7 +256,7 @@ Table.prototype.addPlayer = function (player) {
     }
 
     if (this.players.indexOf(player) >= 0) {
-        console('already in this table');
+        Mylog('already in this table');
         return true;
     }
 
@@ -309,7 +309,7 @@ Table.prototype.startGame = function (testOnly) {
                 };
             }
         }
-//        console.log(p.name + ': AI '  + p.property.aiLevel);
+//        Mylog.log(p.name + ': AI '  + p.property.aiLevel);
     }
 
     if(broadJson) {
@@ -403,7 +403,7 @@ Table.prototype.autoPlay = function (deemRobot) {
     }
 
     if (deemRobot == null) deemRobot = false;
-//    console.log('actionPlayerIdx: ' + this.actionPlayerIdx);
+//    Mylog.log('actionPlayerIdx: ' + this.actionPlayerIdx);
     var player = this.players[this.actionPlayerIdx];
     var waitSeconds = this.ROBOT_SECONDS;
     if (!deemRobot && player.sock != null) {
@@ -421,7 +421,7 @@ Table.prototype.autoPlay = function (deemRobot) {
         if (t.game.stage === Game.BIDDING_STAGE) {
             var currentPlayer = t.players[t.actionPlayerIdx];
             if (currentPlayer.canBid && currentPlayer.minBid < t.game.contractPoint) {
-//                console.log('minBid=' + currentPlayer.minBid + ',contractPoint ' + t.game.contractPoint);
+//                Mylog.log('minBid=' + currentPlayer.minBid + ',contractPoint ' + t.game.contractPoint);
                 t.game.contractPoint -= 5;
                 currentPlayer.matchInfo.lastBid = t.game.contractPoint;
                 t.game.contractor = currentPlayer;
@@ -626,7 +626,7 @@ function gameOver(t) {
         t.broadcastGameInfo(json, null, langInfo);
     }, 2000, t);
 
-    console.log(new Date().toLocaleString() + ', #' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
+    Mylog.log(new Date().toLocaleString() + ', #' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
          + ' ' + t.game.playerStatusEn);
     
     if (matchOver) {
@@ -795,7 +795,7 @@ Table.prototype.processPlayerAction = function (player, json) {
             var lastBid = json.bid;
             if (player.matchInfo.lastBid === 'pass') {
                 // this should never happen
-                console.log('Severe bug: passed player bid again');
+                Mylog.log('Severe bug: passed player bid again');
                 this.rotatePlayer();
                 findNextActivePlayer(this);
                 this.autoPlay();
