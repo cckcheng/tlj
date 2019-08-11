@@ -428,7 +428,7 @@ Player.prototype.pushData = function () {
     if (this.currentTable.game.stage === Game.BIDDING_STAGE) {
         json = Object.assign({
             trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
-            minBid: Config.SHOW_MINBID ? this.minBid : -1
+            minBid: Config.SHOW_MINBID || this.currentTable.showMinBid ? this.minBid : -1
         }, json);
     } else {
         var obj = {

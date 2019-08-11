@@ -32,6 +32,8 @@ function Table(o, mainServer) {
     this._positions = [];
     this.dismissed = false;
     this.allowJoin = o ? o.allowJoin : true;
+    this.showMinBid = o ? o.showMinBid : false;
+    
     var pos = 0;
     while (pos < SEAT_NUMBER) {
         this._positions.push(pos++);
