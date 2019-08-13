@@ -3,6 +3,7 @@ module.exports = SqlDb;
 var sqlite3 = require('sqlite3').verbose();
 var Config = require('./conf');
 var Mylog = require('./mylog');
+var Card = require('./card');
 
 function SqlDb() {
     this.country_db = new sqlite3.Database(Config.COUNTRY_DB);
@@ -59,6 +60,120 @@ SqlDb.prototype.recordUser = function (player, o) {
         });
     });
 };
+
+SqlDb.prototype.addTable = function(table) {
+    var mainDB = this.db;
+    var q = "insert into tables (match_type, created) values (?,datetime('now'))";
+    mainDB.run(q, [table.matchType.title], function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        } else {
+            q = "select last_insert_rowid() as tbid";
+            mainDB.get(q, [], (err, row) => {
+                if(err) {
+                } else {
+                    table.id = row.tbid;
+                }
+            });
+        }
+    });
+};
+
+SqlDb.prototype.addGame = function(table) {
+    var mainDB = this.db;
+    function record() {
+        var q = "insert into games (table_id, game, holecards0) values (?,?,?)";
+        mainDB.run(q, [table.id,table.games.length,Card.showCards(table.game.deck.remains)], function(err) {
+            if(err) {
+                Mylog.log(err.message);
+            }
+        });
+    }
+    
+    if(table.id != null ) {
+        record();
+    } else {
+        setTimeout(function () {
+            if(table.id == null) {
+                Mylog.log('FAIL: addGame, null table_id after 2s');
+            } else {
+                record();
+            }
+        }, 2000);
+    }
+};
+
+SqlDb.prototype.addGamePlayer = function(table, player, seat) {
+    var mainDB = this.db;
+    function record() {
+        var q = "insert into game_player (table_id, game, player_id, seat, cards, rank) values (?,?,?,?,?,?)";
+        mainDB.run(q, [table.id, table.games.length, player.id, seat, player.showHand(), player.matchInfo.currentRank], function(err) {
+            if(err) {
+                Mylog.log(err.message);
+            }
+        });
+    }
+
+    if(table.id != null ) {
+        record();
+    } else {
+        setTimeout(function () {
+            if(table.id == null) {
+                Mylog.log('FAIL: addGamePlayer, null table_id after 2s');
+            } else {
+                record();
+            }
+        }, 2000);
+    }
+};
+
+SqlDb.prototype.addRound = function(table, first_player, play_rec) {
+    var mainDB = this.db;
+    var q = "insert into rounds (table_id, game, lead_seat, play_rec) values (?,?,?,?)";
+    mainDB.run(q, [table.id, table.games.length, table.getSeat(first_player), play_rec], function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        }
+    });
+};
+
+SqlDb.prototype.updateGameInfo = function(table, def) {
+    var mainDB = this.db;
+    var game = table.game;
+    var q = "update games set contract=?,game_rank=?,trump=?,holecards1=?,partner_def=? where table_id=? and game=?";
+    mainDB.run(q, [game.contractPoint, game.rank, game.trump, Card.showCards(game.holeCards), def,
+                     table.id, table.games.length], function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        }
+    });
+    
+    var q1 = "update game_player set is_declarer=1 where table_id=? and game=? and seat=?";
+    mainDB.run(q1, [table.id, table.games.length, table.getSeat(game.contractor)], function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        }
+    });
+};
+
+SqlDb.prototype.recordGameResult = function(table) {
+    var mainDB = this.db;
+    var game = table.game;
+    var q = "update games set collected=?,result=? where table_id=? and game=?";
+    mainDB.run(q, [game.collectedPoint, game.result, table.id, table.games.length], function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        }
+    });
+    
+    var q1 = "update game_player set is_partner=1 where table_id=? and game=? and seat=?";
+    mainDB.run(q1, [table.id, table.games.length, table.getSeat(game.partner)], function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        }
+    });
+};
+
 /*
 var sqlDB = new SqlDb();
 var o = Object.assign({

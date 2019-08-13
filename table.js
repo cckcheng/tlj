@@ -28,6 +28,7 @@ Table.init();
 
 function Table(o, mainServer) {
     this.mainServer = mainServer;
+    this.id = null;
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
     this.dismissed = false;
@@ -55,6 +56,8 @@ function Table(o, mainServer) {
 
     this.status = 'running';
 
+    this.mainServer.myDB.addTable(this);
+    
     this.matchSummary = function () {
         var gameNum = this.games.length;
         if (gameNum < 1) return '';
@@ -287,9 +290,11 @@ Table.prototype.startGame = function (testOnly) {
         }
     }
 
+    this.mainServer.myDB.addGame(this);
     this.actionPlayerIdx = 0;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.evaluate();
+        this.mainServer.myDB.addGamePlayer(this, p, x+1);
     }
 
     if (!this.players[0].canBid && this.players[0].matchInfo.alert) {
@@ -488,6 +493,8 @@ function procDefinePartner(t, def) {
         seat: t.actionPlayerIdx + 1,
         def: def
     });
+    
+    t.mainServer.myDB.updateGameInfo(t, def);
     t.autoPlay();
 }
 
@@ -592,6 +599,7 @@ function gameOver(t) {
     zhSummary += t.game.zhSummary;
     enSummary += t.game.playerStatusEn;
     zhSummary += t.game.playerStatusZh;
+    t.mainServer.myDB.recordGameResult(t);
 
     var matchOver = false;
     for (var x = 0, p; p = t.players[x]; x++) {
