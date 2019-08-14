@@ -159,8 +159,8 @@ SqlDb.prototype.updateGameInfo = function(table, def) {
 SqlDb.prototype.recordGameResult = function(table) {
     var mainDB = this.db;
     var game = table.game;
-    var q = "update games set collected=?,result=? where table_id=? and game=?";
-    mainDB.run(q, [game.collectedPoint, game.result, table.id, table.games.length], function(err) {
+    var q = "update games set collected=?,result=?,summary=? where table_id=? and game=?";
+    mainDB.run(q, [game.collectedPoint, game.result, game.playerStatusEn, table.id, table.games.length], function(err) {
         if(err) {
             Mylog.log(err.message);
         }
