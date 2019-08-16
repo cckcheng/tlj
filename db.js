@@ -79,6 +79,16 @@ SqlDb.prototype.addTable = function(table) {
     });
 };
 
+SqlDb.prototype.addTableSummary = function(table) {
+    var mainDB = this.db;
+    var q = "update tables set ended=datetime('now'),total_game=?,summary=? where rowid=?";
+    mainDB.run(q, [table.games.length, table.matchSummary(), table.id], function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        }
+    });
+};
+
 SqlDb.prototype.addGame = function(table) {
     var mainDB = this.db;
     function record() {

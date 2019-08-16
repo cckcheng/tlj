@@ -55,13 +55,16 @@ function Table(o, mainServer) {
     this.ROBOT_SECONDS = Table.FastMode ? 0.1 : Config.ROBOT_SECONDS;
 
     this.status = 'running';
+    this.playerStatus = '';  // record player names and latest ranks
 
     this.mainServer.myDB.addTable(this);
     
     this.matchSummary = function () {
         var gameNum = this.games.length;
         if (gameNum < 1) return '';
-//        var summary = 'Total games: ' + gameNum + '\n';
+        
+        if(!this.matchOver) return this.playerStatus;
+
         var summary = '';
         this.players.sort(function (a, b) {
             return b.matchInfo.currentRank - a.matchInfo.currentRank;
@@ -75,7 +78,7 @@ function Table(o, mainServer) {
                     + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
             pRank = rnk;
         }
-        Mylog.log(summary);
+//        Mylog.log(summary);
         return summary;
     };
 
@@ -185,7 +188,7 @@ Table.prototype.dismiss = function () {
 };
 
 Table.prototype.terminate = function () {
-    Mylog.log(this.playerNames());
+//    Mylog.log(this.playerNames());
     this.dismissed = true;
     for (var x = 0, p; x < this.players.length; x++) {
         p = this.players[x];
@@ -196,7 +199,8 @@ Table.prototype.terminate = function () {
         }
     }
 
-    Mylog.log(new Date().toLocaleString() + ', table ended');
+    Mylog.log(new Date().toLocaleString() + ', table ended: ' + this.id);
+    this.mainServer.myDB.addTableSummary(this);    
     this.mainServer.removeTable(this);
 };
 
@@ -286,6 +290,7 @@ Table.prototype.startGame = function (testOnly) {
             p.robotCode = ROBOT_CODES.charAt(x);
             if(p.isRobot()) p.name = 'Robot' + p.robotCode;
         }
+        this.playerStatus = this.playerNames();
     } else {
         Func.shuffleArray(this.players);
         // init game info
@@ -604,19 +609,20 @@ function gameOver(t) {
     zhSummary += t.game.zhSummary;
     enSummary += t.game.playerStatusEn;
     zhSummary += t.game.playerStatusZh;
+    t.playerStatus = t.playerNames();
     t.mainServer.myDB.recordGameResult(t);
 
-    var matchOver = false;
+    t.matchOver = false;
     for (var x = 0, p; p = t.players[x]; x++) {
         if (p.messageTimer) {
             clearTimeout(p.messageTimer);
             p.messageTimer = null;
         }
         if (p.matchInfo.currentRank > t.maxRank) {
-            matchOver = true;
+            t.matchOver = true;
         }
     }
-    if (!matchOver) {
+    if (!t.matchOver) {
         enSummary += '\nNext game will start in ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds.';
         zhSummary += '\n下一局' + Table.PAUSE_SECONDS_BETWEEN_GAME + '秒后开始...';
     }
@@ -626,7 +632,7 @@ function gameOver(t) {
         seat: t.getSeat(t.game.contractor),
         hole: Card.cardsToString(t.game.holeCards),
         pt0: t.game.collectedPoint,
-        pause: matchOver ? 0 : Table.PAUSE_SECONDS_BETWEEN_GAME
+        pause: t.matchOver ? 0 : Table.PAUSE_SECONDS_BETWEEN_GAME
     };
     var langInfo = {
         en: {
@@ -644,7 +650,7 @@ function gameOver(t) {
     Mylog.log(new Date().toLocaleString() + ', #' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
          + ' ' + t.game.playerStatusEn);
     
-    if (matchOver) {
+    if (t.matchOver) {
         t.dismissed = true;
         var summary = t.matchSummary();
         setTimeout(function (t) {
