@@ -272,6 +272,8 @@ Table.prototype.addPlayer = function (player) {
     return true;
 };
 
+const ROBOT_CODES = 'ABCDEF';
+
 Table.prototype.startGame = function (testOnly) {
     this.status = 'running';
     this.game = new Game(this.players, this.deckNumber);
@@ -281,12 +283,15 @@ Table.prototype.startGame = function (testOnly) {
         // first game, init match info
         for (var x = 0, p; p = this.players[x]; x++) {
             p.matchInfo = new MatchInfo(this, p);
+            p.robotCode = ROBOT_CODES.charAt(x);
+            if(p.isRobot()) p.name = 'Robot' + p.robotCode;
         }
     } else {
         Func.shuffleArray(this.players);
         // init game info
         for (var x = 0, p; p = this.players[x]; x++) {
             p.matchInfo.reset();
+            p.timeoutTimes = 0;
         }
     }
 

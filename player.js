@@ -19,6 +19,7 @@ function Player(o, mainServer) {
         this.name = o.name;
     }
     if (this.sock == null) this.name = 'Robot';
+    this.robotCode = '';
     this.lang = 'en';   // default language, support 'zh' (Chinese)
     this.spades = [];
     this.hearts = [];
@@ -112,7 +113,7 @@ function Player(o, mainServer) {
             p.idleTimer = null;
             if (p.currentTable == null || p.currentTable.dismissed) return;
             p.id = null;
-            p.name = 'Robot';
+            p.name = 'Robot' + p.robotCode;
             p.property = {
                 credit: 0,
                 priority: 0,
