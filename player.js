@@ -762,38 +762,55 @@ Player.prototype.drawTrump = function (cards) {
     this.randomPlay(cards);
 };
 
-Player.prototype.playHonor = function(cards, game) {
-    var allCards = [];
-    allCards = allCards.concat(this.spades);
-    allCards = allCards.concat(this.hearts);
-    allCards = allCards.concat(this.diamonds);
-    allCards = allCards.concat(this.clubs);
-    
-    if(allCards.length < 1) return false;
-
-    var stat = new HandStat(allCards, game.trump, game.rank);
-    if(stat.totalPairs > 1) {
-        var rnks = stat.sortedRanks(2);
-        var xRnk = rnks[rnks.length - 1];
-        if(xRnk === 13) {
-            var card = stat.findCardByDupNum(xRnk, 2);
-            cards.push(card);
-            cards.push(card);        
-            return true;
+Player.prototype.tryAddViceHonor = function(cardList, cards, numHonorOwn, game) {
+    var suite = cards[0].suite;
+    var vices = [];
+    for(var x=cardList.length-numHonorOwn-1; x>=0 ; x--) {
+        if(cardList[x].rank === game.viceHonorRank) {
+            vices.push(cardList[x]);
+        } else {
+            break;
         }
     }
+    if(vices.length < 1) return;
+    var numHonorLeft = 4 - numHonorOwn - game.honorsPlayed[suite];
+    if(numHonorLeft < vices.length) {
+        vices.forEach(function (c) {
+            cards.addCard(c);
+        });
+    }
+};
+
+function addHonorCard(cardList, honors, honorRank) {
+    if(cardList.length < 1) return;
+    var xCard = cardList[cardList.length - 1];
+    if(xCard.rank === honorRank) honors.push(xCard);
+}
+
+Player.prototype.playHonor = function(cards, game) {
+    var honors = [];
+    addHonorCard(this.spades, honors, game.honorRank);
+    addHonorCard(this.hearts, honors, game.honorRank);
+    addHonorCard(this.diamonds, honors, game.honorRank);
+    addHonorCard(this.clubs, honors, game.honorRank);
+    if(honors.length < 1) return false;
     
-    allCards.sort(Card.compareRank);
-    var x = allCards.length - 1;
-    var xCard = allCards[x];
-    while(xCard.isHonor(game.trump, game.rank)) {
-        if(!this.possibleOpponentRuff(game, xCard.suite) && game.cardsPlayed[xCard.suite] <= Config.MAX_SAFE_CARDS_PLAYED) {
+    if(honors.length > 1) Func.shuffleArray(honors);
+    
+    for(var x = 0, xCard, cardList; xCard = honors[x]; x++) {
+        cardList = this.getCardsBySuite(xCard.suite);
+        if(cardList.length > 1 && cardList[cardList.length-2].rank === game.honorRank) {
             cards.push(xCard);
+            cards.push(xCard);
+            this.tryAddViceHonor(cardList, cards, 2, game);
             return true;
         }
-        x--;
-        if(x<0) break;
-        xCard = allCards[x];
+
+        if(!this.possibleOpponentRuff(game, xCard.suite) && game.cardsPlayed[xCard.suite] <= Config.MAX_SAFE_CARDS_PLAYED) {
+            cards.push(xCard);
+            this.tryAddViceHonor(cardList, cards, 1, game);
+            return true;
+        }
     }
     
     return false;

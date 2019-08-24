@@ -39,6 +39,7 @@ function Game(players, deckNumber) {
     };
     
     this.honorRank = 14;
+    this.viceHonorRank = 13;
     this.honorsPlayed = {
         C: 0,
         D: 0,
@@ -922,7 +923,12 @@ Game.prototype.enterPlayStage = function () {
     this.stage = Game.PLAYING_STAGE;
     this.rank = this.contractor.matchInfo.currentRank;
     this.leadingPlayer = this.contractor;
-    if(this.rank === 14) this.honorRank = 13;
+    if(this.rank === 14) {
+        this.honorRank = 13;
+        this.viceHonorRank = 12;
+    } else if(this.rank === 13) {
+        this.viceHonorRank = 12;
+    }
 };
 
 Game.prototype.setPartner = function (player) {
