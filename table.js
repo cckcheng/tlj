@@ -248,6 +248,11 @@ Table.prototype.resume = function (player) {
                 break;
             case 'break':
                 player.pushData();
+                if(this.games.length < 1) {
+                    player.sendMessage(
+                        player.lang === 'zh' ? '新桌，等待玩家加入...' : 'New table, please wait for other players...'
+                    );
+                }
                 break;
             case 'pending':
                 this.startGame();
@@ -277,6 +282,16 @@ Table.prototype.addPlayer = function (player) {
 };
 
 const ROBOT_CODES = 'ABCDEF';
+Table.prototype.initPlayerStatus = function () {
+    if(this.inited) return;
+    for (var x = 0, p; p = this.players[x]; x++) {
+        p.matchInfo = new MatchInfo(this, p);
+        p.robotCode = ROBOT_CODES.charAt(x);
+        if(p.isRobot()) p.name = 'Robot' + p.robotCode;
+    }
+    this.playerStatus = this.playerNames();
+    this.inited = true;  // only init once
+};
 
 Table.prototype.startGame = function (testOnly) {
     this.status = 'running';
@@ -285,12 +300,7 @@ Table.prototype.startGame = function (testOnly) {
 //    debugger;
     if (this.games.length === 1) {
         // first game, init match info
-        for (var x = 0, p; p = this.players[x]; x++) {
-            p.matchInfo = new MatchInfo(this, p);
-            p.robotCode = ROBOT_CODES.charAt(x);
-            if(p.isRobot()) p.name = 'Robot' + p.robotCode;
-        }
-        this.playerStatus = this.playerNames();
+        this.initPlayerStatus();
     } else {
         Func.shuffleArray(this.players);
         // init game info
@@ -326,7 +336,6 @@ Table.prototype.startGame = function (testOnly) {
                 };
             }
         }
-//        Mylog.log(p.name + ': AI '  + p.property.aiLevel);
     }
 
     if(broadJson) {
@@ -952,10 +961,35 @@ Table.joinPlayer = function(player) {
         robot = new Player(null, mServer);
         table.addPlayer(robot);
     }
-    table.startGame();
+
+    var waitSeconds = getSecondsToNextSyncTable();
+    if(waitSeconds > 0) {
+        table.initPlayerStatus();
+        table.status = 'break';
+        table.actionPlayerIdx = -1;
+        table.resumeTime = (new Date()).getTime() + waitSeconds * 1000;
+        table.resume(player);
+        table.goPause(waitSeconds);
+    } else {
+        table.startGame();
+    }
 
     Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables: ' + mServer.runningTables.length);
 };
+
+function getSecondsToNextSyncTable() {
+    var dt = new Date();
+    var minutes = dt.getHours() * 60 + dt.getMinutes();
+    for(var x=0, n=Config.SYNC_TABLE_TIME.length, delta; x<n; x++) {
+        delta = Config.SYNC_TABLE_TIME[x] - minutes;
+        if(delta > 0 && delta <= Config.SYNC_TABLE_WAIT_MINUTE) {
+            var seconds = delta * 60 - dt.getSeconds();
+            return seconds;
+        }
+    }
+    
+    return -1;
+}
 
 // record match info per player
 function MatchInfo(t, player) {

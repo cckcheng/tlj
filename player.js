@@ -334,7 +334,7 @@ Player.prototype.showHand = function () {
 Player.prototype.pushJson = function (json) {
     if (this.sock == null)
         return;
-
+//Mylog.log(JSON.stringify(json));
     setImmediate(function (p) {
         // this seems no differents
         try {
@@ -369,11 +369,14 @@ Player.prototype.pushData = function () {
         if (this.currentTable.resumeTime != null) {
             sec = Math.round((this.currentTable.resumeTime - (new Date()).getTime()) / 1000);
         }
+        
+        var period = sec > 90 ? Math.round(sec/60) + (this.lang === 'zh' ? '分钟' : ' minutes')
+                    : sec + (this.lang === 'zh' ? '秒' : ' seconds');
         json = Object.assign({
             action: 'init',
             game: this.currentTable.games.length,
-            info: this.lang === 'zh' ? '下一局' + sec + '秒后开始...'
-                    : 'Next game will start in ' + sec + ' seconds...',
+            info: this.lang === 'zh' ? '下一局' + period + '后开始...'
+                    : 'Next game will start in ' + period + '...',
             pause: sec,
             players: playerInfo,
             timeout: this.currentTable.TIMEOUT_SECONDS // default timeout
