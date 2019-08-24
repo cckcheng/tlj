@@ -31,14 +31,45 @@ function Game(players, deckNumber) {
     this.currentRound = null;
     this.partnerDef = null;
     
-    this.cardsPlayed = {};
-    this.cardsPlayed[Card.SUITE.CLUB] = 0;
-    this.cardsPlayed[Card.SUITE.DIAMOND] = 0;
-    this.cardsPlayed[Card.SUITE.HEART] = 0;
-    this.cardsPlayed[Card.SUITE.SPADE] = 0;
+    this.cardsPlayed = {
+        C: 0,
+        D: 0,
+        H: 0,
+        S: 0
+    };
+    
+    this.honorRank = 14;
+    this.honorsPlayed = {
+        C: 0,
+        D: 0,
+        H: 0,
+        S: 0,
+        BJ: 0,  // big joker
+        SJ: 0    // small joker
+    };
 
     this.updateCardsPlayed = function(suite, len) {
         this.cardsPlayed[suite] += len;
+    };
+    
+    this.recordHonorsPlayed = function(cards) {
+        for(var x=0,c; c=cards[x]; x++) {
+            if(c.rank === Card.RANK.SmallJoker) {
+                this.honorsPlayed.SJ++;
+                continue;
+            }
+            if (c.rank === Card.RANK.BigJoker) {
+                this.honorsPlayed.BJ++;
+                continue;
+            }
+            if(c.isTrump(this.trump, this.rank)) {
+                continue;
+            }
+            
+            if(c.rank === this.honorRank) {
+                this.honorsPlayed[c.suite]++;
+            }
+        }
     };
     
     this.setPartnerDef = function (def) {
@@ -750,17 +781,19 @@ function Round(players, trump, gameRank) {
             if (cards == null || cards.length < 1) return false;
             hand = new Hand(player, cards, trump, gameRank);
         }
+        var game = player.currentTable.game;
         if (firstHand == null) {
             firstHand = hand;
             leadingHand = hand;
             this.cardNumber = cards.length;
             if(!hand.isTrump) {
-                var game = player.currentTable.game;
                 game.updateCardsPlayed(hand.suite, cards.length);
             }
         } else if (hand.compareTo(leadingHand, firstHand) > 0) {
             leadingHand = hand;
         }
+        game.recordHonorsPlayed(cards);
+
         this.playList.push(hand);
         points += Card.getTotalPoints(hand.cards);
         var isLastHand = this.playList.length === players.length;
@@ -770,6 +803,7 @@ function Round(players, trump, gameRank) {
                 Mylog.log(this.displayAll());
             }
             player.mainServer.myDB.addRound(player.currentTable, firstHand.player, this.displayAll());
+//            console.log(JSON.stringify(game.honorsPlayed));
         }
 
         return isLastHand;
@@ -888,6 +922,7 @@ Game.prototype.enterPlayStage = function () {
     this.stage = Game.PLAYING_STAGE;
     this.rank = this.contractor.matchInfo.currentRank;
     this.leadingPlayer = this.contractor;
+    if(this.rank === 14) this.honorRank = 13;
 };
 
 Game.prototype.setPartner = function (player) {
