@@ -776,7 +776,7 @@ Player.prototype.tryAddViceHonor = function(cardList, cards, numHonorOwn, game) 
     var numHonorLeft = 4 - numHonorOwn - game.honorsPlayed[suite];
     if(numHonorLeft < vices.length) {
         vices.forEach(function (c) {
-            cards.addCard(c);
+            cards.push(c);
         });
     }
 };
