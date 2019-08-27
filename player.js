@@ -763,6 +763,7 @@ Player.prototype.drawTrump = function (cards) {
 };
 
 Player.prototype.tryAddViceHonor = function(cardList, cards, numHonorOwn, game) {
+    if(this.aiLevel < 3) return;
     var suite = cards[0].suite;
     var vices = [];
     for(var x=cardList.length-numHonorOwn-1; x>=0 ; x--) {
@@ -827,6 +828,7 @@ Player.prototype.playHonorOrPoint = function(cards, cardList, game) {
             if(!xCard.equals(c)) break;
             cards.push(c);
         }
+        this.tryAddViceHonor(cardList, cards, cards.length, game);
         return;
     }
     Card.selectCardsByPoint(cards, cardList, true, game.trump, game.rank, 1);
