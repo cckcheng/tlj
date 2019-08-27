@@ -502,31 +502,57 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
 
     var stat = this.aiLevel >= 2 ? new HandStat(allCards, game.trump, game.rank) : null;
 
-    allCards.sort(function (a, b) {
-        if(a.equals(defCard)) return 1;
-        if(b.equals(defCard)) return -1;
-        if (a.isHonor(game.trump, game.rank)) return 1;
-        if (b.isHonor(game.trump, game.rank)) return -1;
-        var aPoint = a.getPoint();
-        var bPoint = b.getPoint();
-
-        if (aPoint === bPoint) {
-            var aTrump = a.isTrump(game.trump, game.rank);
-            var bTrump = b.isTrump(game.trump, game.rank);
-            if (aTrump !== bTrump) return aTrump ? 1 : -1;
-
-            if(stat) {
+    if(this.aiLevel >= 3 && this.totalCardLeft() - num <= 4) {
+        var pointNeeded = game.contractPoint - game.collectedPoint;
+        var withDeclarer = pointNeeded > 40 ? 1 : -1;
+        allCards.sort(function (a, b) {
+            if(a.equals(defCard)) return -withDeclarer;
+            if(b.equals(defCard)) return withDeclarer;
+            var aPoint = a.getPoint();
+            var bPoint = b.getPoint();
+    
+            if (aPoint === bPoint) {
+                var aTrump = a.isTrump(game.trump, game.rank);
+                var bTrump = b.isTrump(game.trump, game.rank);
+                if (aTrump !== bTrump) return aTrump ? 1 : -1;
+    
                 var aDup = stat.stat[a.key(game.trump, game.rank)];
                 var bDup = stat.stat[b.key(game.trump, game.rank)];
                 if (aDup !== bDup) {
                     return aDup - bDup;
                 }
+    
+                return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
             }
-
-            return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
-        }
-        return pointFirst ? bPoint - aPoint : aPoint - bPoint;
-    });
+            return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+        });
+    } else {
+        allCards.sort(function (a, b) {
+            if(a.equals(defCard)) return 1;
+            if(b.equals(defCard)) return -1;
+            if (a.isHonor(game.trump, game.rank)) return 1;
+            if (b.isHonor(game.trump, game.rank)) return -1;
+            var aPoint = a.getPoint();
+            var bPoint = b.getPoint();
+    
+            if (aPoint === bPoint) {
+                var aTrump = a.isTrump(game.trump, game.rank);
+                var bTrump = b.isTrump(game.trump, game.rank);
+                if (aTrump !== bTrump) return aTrump ? 1 : -1;
+    
+                if(stat) {
+                    var aDup = stat.stat[a.key(game.trump, game.rank)];
+                    var bDup = stat.stat[b.key(game.trump, game.rank)];
+                    if (aDup !== bDup) {
+                        return aDup - bDup;
+                    }
+                }
+    
+                return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
+            }
+            return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+        });
+    }
 
     for (var x = 0; x < num; x++) {
         cards.push(allCards[x]);
@@ -1020,6 +1046,10 @@ Player.prototype.randomPlay = function (cards) {
         return;
     }
 
+    if(this.aiLevel >= 3 && this !== game.contractor) {
+        if(this.playTopTrump(cards, game)) return;
+    }
+    
     var exSuite = game.partnerDef.suite;
     var arr = [];
     var arrSuite = [];
@@ -1520,6 +1550,9 @@ Player.prototype.playTopTrump = function (cards, game) {
     }
     
     cards.push(card);
+    if(this.trumps.length > 1 && this !== game.partner) {
+        if(this.trumps[this.trumps.length - 2].equals(card)) cards.push(card);
+    }
     return true;
 };
 
