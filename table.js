@@ -654,7 +654,7 @@ function gameOver(t) {
 
     setTimeout(function (t) {
         t.broadcastGameInfo(json, null, langInfo);
-    }, 2000, t);
+    }, Config.PAUSE_SECONDS_BETWEEN_ROUND * 1000, t);
 
     Mylog.log(new Date().toLocaleString() + ', #' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
          + ' ' + t.game.playerStatusEn);
