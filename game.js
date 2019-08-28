@@ -847,6 +847,49 @@ function Round(players, trump, gameRank) {
 
         }
 
+        if(exPlayer.aiLevel >= 3){
+            var startIdx = exPlayer.currentTable.getSeat(exPlayer);
+            var game = exPlayer.currentTable.game;
+            if(startIdx >= players.length) startIdx = 0;
+            var firstPlayer = game.leadingPlayer;
+
+            var possibleBeat = false;
+            for(var x = startIdx, p; ; x++) {
+                if(x === players.length) x = 0;
+                p = players[x];
+                if(p === firstPlayer) break;
+                if(exPlayer === game.contractor || exPlayer === game.partner) {
+                    if(p === game.contractor || p === game.partner) continue;
+                    if(hand.isTrump) {
+                        if(p.hasTrump()) {
+                            possibleBeat = true;
+                            break;
+                        }
+                    } else {
+                        if(!p.voids[hand.suite] || p.hasTrump()) {
+                            possibleBeat = true;
+                            break;
+                        }
+                    }
+                } else {
+                    if(p === game.contractor || p === game.partner) {
+                        if(hand.isTrump) {
+                            if(p.hasTrump()) {
+                                possibleBeat = true;
+                                break;
+                            }
+                        } else {
+                            if(!p.voids[hand.suite] || p.hasTrump()) {
+                                possibleBeat = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if(!possibleBeat) return false;
+        }
+        
         var count = 0;
         for (var x = 0, p; p = players[x]; x++) {
             if (p === exPlayer) continue;

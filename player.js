@@ -516,12 +516,6 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
                 var bTrump = b.isTrump(game.trump, game.rank);
                 if (aTrump !== bTrump) return aTrump ? 1 : -1;
     
-                var aDup = stat.stat[a.key(game.trump, game.rank)];
-                var bDup = stat.stat[b.key(game.trump, game.rank)];
-                if (aDup !== bDup) {
-                    return aDup - bDup;
-                }
-    
                 return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
             }
             return pointFirst ? bPoint - aPoint : aPoint - bPoint;
