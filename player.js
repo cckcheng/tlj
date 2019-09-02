@@ -756,9 +756,11 @@ Player.prototype.drawTrump = function (cards) {
     }
 
     var game = this.currentTable.game;
+    var ntLen = this.ntLength();
     var stat = new HandStat(this.trumps, game.trump, game.rank);
     var rnks = stat.sortedRanks(2);
-    if (rnks.length > 0) {
+    var keepPairNum = this.aiLevel >= 3 && this === game.contractor && game.rank !== 10 && game.rank !== 13 && ntLen >= Config.THRESHOLD_NT_LEN ? 1 : 0;
+    if (rnks.length > keepPairNum) {
         var sHand = new SimpleHand(Hand.SIMPLE_TYPE.PAIR, rnks[rnks.length - 1], true);
         cc = Hand.makeCards(sHand, this.trumps, game.trump, game.rank);
         cc.forEach(function (c) {
@@ -772,8 +774,7 @@ Player.prototype.drawTrump = function (cards) {
         return;
     }
 
-    var ntLen = this.ntLength();
-    if (ntLen < 10 && this.trumps.length > 1) {
+    if (ntLen < Config.THRESHOLD_NT_LEN && this.trumps.length > 1) {
         // draw trumps, from high to low
         cards.push(this.trumps[this.trumps.length - 1]);
         return;
