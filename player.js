@@ -871,7 +871,57 @@ Player.prototype.playHonorOrPoint = function(cards, cardList, game) {
     Card.selectCardsByPoint(cards, cardList, !(this === game.contractor || this === game.parnter), game.trump, game.rank, 1);
 };
 
-Player.prototype.findPairAndPlay = function (cards, game) {
+Player.prototype.findPairAndPlay = function (cards, game, findInOrder) {
+    var stat,rnks,card;
+    if(findInOrder) {
+        // choose suite by cards played
+        var arr = [];
+        var stats = {};
+        if(this.spades.length > 1) {
+            stat = new HandStat(this.spades, game.trump, game.rank);
+            if(stat.totalPairs > 0) {
+                arr.push(Card.SUITE.SPADE);
+                stats[Card.SUITE.SPADE] = stat;
+            }
+        }
+        if(this.hearts.length > 1) {
+            stat = new HandStat(this.hearts, game.trump, game.rank);
+            if(stat.totalPairs > 0) {
+                arr.push(Card.SUITE.HEART);
+                stats[Card.SUITE.HEART] = stat;
+            }
+        }
+        if(this.clubs.length > 1) {
+            stat = new HandStat(this.clubs, game.trump, game.rank);
+            if(stat.totalPairs > 0) {
+                arr.push(Card.SUITE.CLUB);
+                stats[Card.SUITE.CLUB] = stat;
+            }
+        }
+        if(this.diamonds.length > 1) {
+            stat = new HandStat(this.diamonds, game.trump, game.rank);
+            if(stat.totalPairs > 0) {
+                arr.push(Card.SUITE.DIAMOND);
+                stats[Card.SUITE.DIAMOND] = stat;
+            }
+        }
+
+        if(arr.length < 1) return false;
+
+        arr.sort(function (a, b) {
+            var aPlayedNum = game.cardsPlayed[a];
+            var bPlayedNum = game.cardsPlayed[b];
+            if(bPlayedNum !== aPlayedNum) bPlayedNum - aPlayedNum;
+            return stats[b].totalPairs - stats[a].totalPairs;
+        });
+
+        stat = stats[arr[0]];        
+        rnks = stat.sortedRanks(2);
+        card = stat.findCardByDupNum(rnks[rnks.length - 1], 2);
+        cards.push(card);
+        cards.push(card);
+        return true;
+    } 
     var allCards = [];
     allCards = allCards.concat(this.spades);
     allCards = allCards.concat(this.hearts);
@@ -879,10 +929,10 @@ Player.prototype.findPairAndPlay = function (cards, game) {
     allCards = allCards.concat(this.clubs);
     allCards = allCards.concat(this.trumps);
     
-    var stat = new HandStat(allCards, game.trump, game.rank);
+    stat = new HandStat(allCards, game.trump, game.rank);
     if(stat.totalPairs < 1) return false;
-    var rnks = stat.sortedRanks(2);
-    var card = stat.findCardByDupNum(rnks[rnks.length - 1], 2);
+    rnks = stat.sortedRanks(2);
+    card = stat.findCardByDupNum(rnks[rnks.length - 1], 2);
     cards.push(card);
     cards.push(card);
     return true;
@@ -1082,6 +1132,10 @@ Player.prototype.randomPlay = function (cards) {
                     Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
                     return;
                 }
+            }
+                
+            if(this.aiLevel >= 3) {
+                if(this.findPairAndPlay(cards, game, true)) return;
             }
         } else {
             var arr1 = [];  // first choice: partner ruff possible, opponent not 
