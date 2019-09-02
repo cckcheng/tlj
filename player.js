@@ -26,8 +26,14 @@ function Player(o, mainServer) {
     this.diamonds = [];
     this.clubs = [];
     this.trumps = [];
-    this.voids = {};  // void suits
-    this.orgLength = {};  // void suits
+    this.voids = {  // record void suits
+        C: false,
+        D: false,
+        H: false,
+        S: false,
+        V: false
+    };
+    this.orgLength = {};  // original suite length
 
     this.property = {
         credit: 0,
@@ -649,6 +655,8 @@ Player.prototype.playPartnerCards = function (cards) {
                 break;
             }
         }
+    } else {
+        this.tryAddViceHonor(cardList, cards, cards.length, game);
     }
 
     return cards.length > 0;
@@ -674,6 +682,7 @@ Player.prototype.shouldPlayPartner = function () {
     var game = this.currentTable.game;
     var partnerDef = game.partnerDef;
     if (partnerDef.noPartner) return false;
+
     var defCard = partnerDef.getDefCard();
     var cardList = this.getCardsBySuite(defCard.suite);
     if (cardList.length < 1) return false;
@@ -809,12 +818,19 @@ function addHonorCard(cardList, honors, honorRank) {
     if(xCard.rank === honorRank) honors.push(xCard);
 }
 
-Player.prototype.playHonor = function(cards, game) {
+Player.prototype.playHonor = function(cards, game, maxSuiteLength) {
     var honors = [];
-    addHonorCard(this.spades, honors, game.honorRank);
-    addHonorCard(this.hearts, honors, game.honorRank);
-    addHonorCard(this.diamonds, honors, game.honorRank);
-    addHonorCard(this.clubs, honors, game.honorRank);
+    if(maxSuiteLength > 0) {
+        if(this.spades.length <= maxSuiteLength) addHonorCard(this.spades, honors, game.honorRank);
+        if(this.hearts.length <= maxSuiteLength) addHonorCard(this.hearts, honors, game.honorRank);
+        if(this.diamonds.length <= maxSuiteLength) addHonorCard(this.diamonds, honors, game.honorRank);
+        if(this.clubs.length <= maxSuiteLength) addHonorCard(this.clubs, honors, game.honorRank);
+    } else {
+        addHonorCard(this.spades, honors, game.honorRank);
+        addHonorCard(this.hearts, honors, game.honorRank);
+        addHonorCard(this.diamonds, honors, game.honorRank);
+        addHonorCard(this.clubs, honors, game.honorRank);
+    }
     if(honors.length < 1) return false;
     
     if(honors.length > 1) Func.shuffleArray(honors);
@@ -852,7 +868,7 @@ Player.prototype.playHonorOrPoint = function(cards, cardList, game) {
         this.tryAddViceHonor(cardList, cards, cards.length, game);
         return;
     }
-    Card.selectCardsByPoint(cards, cardList, true, game.trump, game.rank, 1);
+    Card.selectCardsByPoint(cards, cardList, !(this === game.contractor || this === game.parnter), game.trump, game.rank, 1);
 };
 
 Player.prototype.findPairAndPlay = function (cards, game) {
@@ -1263,6 +1279,15 @@ Player.prototype.tryBeatLeading = function (cards, cardList, sameSide) {
                                 return false;
                             }
                             
+                            if(this.isDeadPartner()) {
+                                if(viceCard.indexOf(cardList) >= 0) {
+                                    cards.push(viceCard);
+                                } else {
+                                    cards.push(card);
+                                }
+                                return true;
+                            }
+
                             if(game.cardNumberPlayed >= minPlayed && this.shouldPlayPartner()) {
                                 cards.push(card);
                                 return true;
@@ -1586,6 +1611,9 @@ Player.prototype.autoPlayCards = function (isLeading) {
         } else {
             if (game.partner == null) {
                 if (this === game.contractor) {
+                    if(this.aiLevel >= 3) {
+                        if(this.playHonor(cards, game, Config.MAX_SAFE_CARDS_PLAYED + 1)) return cards;
+                    }
                     this.passToPartner(cards);
                 } else if (this.shouldPlayPartner()) {
                     this.playPartnerCards(cards);
@@ -1969,7 +1997,10 @@ Player.prototype.playCards = function (strCards) {
 
     if (cards.length < 1) {
         // temp: to avoid exception, should not run to here if normal
-        Mylog.log(new Date().toLocaleString() + ', Exception:  player.playCards(), isLeading: ' + isLeading);
+        Mylog.log(new Date().toLocaleString() + ', Exception:  player.playCards(), isLeading: ' + isLeading
+           + ', this=' + this.name + ', contractor=' + game.contractor.name + ', partner=' + (game.partner == null ? 'null': game.partner.name));
+        Mylog.log('table_id: ' + this.currentTable.id + ', game: ' + this.currentTable.games.length);
+        Mylog.log(this.showHand());
         this.randomPlay(cards);
     }
 
