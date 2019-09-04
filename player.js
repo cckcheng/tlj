@@ -26,13 +26,7 @@ function Player(o, mainServer) {
     this.diamonds = [];
     this.clubs = [];
     this.trumps = [];
-    this.voids = {  // record void suits
-        C: false,
-        D: false,
-        H: false,
-        S: false,
-        V: false
-    };
+    this.voids = {};  // record void suits
     this.orgLength = {};  // original suite length
 
     this.property = {
@@ -640,7 +634,7 @@ Player.prototype.playPartnerCards = function (cards) {
     var defCard = partnerDef.getDefCard();
     var cardList = this.getCardsBySuite(defCard.suite);
     if (cardList.length < 1) return false;
-    if(this.possibleOpponentRuff(game, partnerDef.suite)) return false;
+    if(this.possibleOpponentRuff(game, defCard.suite, game.contractor)) return false;
 
     for (var x = 0, c; c = cardList[x]; x++) {
         if (c.equals(defCard)) cards.push(c);
@@ -708,7 +702,7 @@ Player.prototype.passToPartner = function (cards) {
 
     if(game.partner != null && this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
         this.endPlay(cards, game);
-        return;
+        return false;
     }
 
     var cardList = this.getCardsBySuite(partnerDef.suite);
@@ -1317,7 +1311,7 @@ Player.prototype.tryBeatLeading = function (cards, cardList, sameSide) {
             if(maxRank > leadingHand.maxRank) {
                 var minPlayed = this.aiLevel >= 2 ? 6 : 10;
                 if(cardList.length>1 && game.partner == null) {
-                    var partnerDef = this.currentTable.game.partnerDef;
+                    var partnerDef = game.partnerDef;
                     if (!partnerDef.noPartner) {
                         var defCard = partnerDef.getDefCard();
                         var viceCard = partnerDef.getViceCard(game.rank);
@@ -1516,7 +1510,7 @@ Player.prototype.noOpponentCanBeat = function (game, suite) {
     return true;
 };
 
-Player.prototype.possibleOpponentRuff = function (game, suite) {
+Player.prototype.possibleOpponentRuff = function (game, suite, exPlayer) {  // exPlayer - exclude specific player
     var players = this.currentTable.players;
     var startIdx = this.currentTable.getSeat(this);
     if(startIdx >= players.length) startIdx = 0;
@@ -1526,6 +1520,7 @@ Player.prototype.possibleOpponentRuff = function (game, suite) {
         for(var x = startIdx, p; ; x++) {
             if(x === players.length) x = 0;
             p = players[x];
+            if(p === exPlayer) continue;
             if(p === firstPlayer) break;
             if(this === game.contractor || this === game.partner) {
                 if(p === game.contractor || p === game.partner) continue;
@@ -1546,6 +1541,7 @@ Player.prototype.possibleOpponentRuff = function (game, suite) {
         for(var x = startIdx, p; ; x++) {
             if(x === players.length) x = 0;
             p = players[x];
+            if(p === exPlayer) continue;
             if(p === firstPlayer) break;
             if(p.voids[suite] && p.hasTrump()) return true;
         }
@@ -1578,10 +1574,8 @@ Player.prototype.possiblePartnerRuff = function (game, suite) {
 
 Player.prototype.recalStrong = function (cards) {
     var game = this.currentTable.game;
-    var honorRank = 14;
-    var viceRank = 13;
-    if(game.rank === 14) honorRank = 13;
-    if(game.rank >= 13) viceRank = 12;
+    var honorRank = game.honorRank;
+    var viceRank = game.viceHonorRank;
     var xRank = cards[cards.length-1].rank;
     var cardList = this.getCardsBySuite(cards[0].suite);
     if(xRank === honorRank) {
@@ -1594,14 +1588,15 @@ Player.prototype.recalStrong = function (cards) {
         return nCards;
     }
     
-    if(game.partner != null && game.partner !== game.contractor) {
+    if(game.partner != null) {
         if(this !== game.partner && this !== game.contractor) {
-            var defCard = game.partnerDef.getDefCard();
-            if(defCard.suite === cards[0].suite) return cards;
+            if(game.partnerDef.suite === cards[0].suite) return cards;
         }
+        if(this.possibleOpponentRuff(game, cards[0].suite)) return cards;
+    } else {
+        if(this.possibleOpponentRuff(game, cards[0].suite, game.partnerDef.suite === cards[0].suite ? game.contractor : null)) return cards;
     }
     
-    if(this.possibleOpponentRuff(game, cards[0].suite)) return cards;
     var nCards = [];
     for(var x=cardList.length-1,c; c=cardList[x]; x--) {
         if(c.rank < honorRank) break;
@@ -1670,7 +1665,7 @@ Player.prototype.autoPlayCards = function (isLeading) {
                     }
                     this.passToPartner(cards);
                 } else if (this.shouldPlayPartner()) {
-                    this.playPartnerCards(cards);
+                    if(!this.playPartnerCards(cards)) this.randomPlay(cards);
                 } else {
                     this.randomPlay(cards);
                 }
