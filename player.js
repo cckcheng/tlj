@@ -1520,8 +1520,8 @@ Player.prototype.possibleOpponentRuff = function (game, suite, exPlayer) {  // e
         for(var x = startIdx, p; ; x++) {
             if(x === players.length) x = 0;
             p = players[x];
-            if(p === exPlayer) continue;
             if(p === firstPlayer) break;
+            if(p === exPlayer) continue;
             if(this === game.contractor || this === game.partner) {
                 if(p === game.contractor || p === game.partner) continue;
                 if(p.voids[suite] && p.hasTrump()) return true;
@@ -1538,11 +1538,12 @@ Player.prototype.possibleOpponentRuff = function (game, suite, exPlayer) {  // e
             return game.contractor.hasTrump();
         }
     } else {
+    debugger;
         for(var x = startIdx, p; ; x++) {
             if(x === players.length) x = 0;
             p = players[x];
-            if(p === exPlayer) continue;
             if(p === firstPlayer) break;
+            if(p === exPlayer) continue;
             if(p.voids[suite] && p.hasTrump()) return true;
         }
     }
@@ -2269,7 +2270,7 @@ Player.prototype.promote = function (delta) {
 Player.prototype.evaluate = function () {
     var numGames = this.currentTable.games.length;
     if (numGames > 1) {
-      debugger;
+      //debugger;
         var lastGame = this.currentTable.games[numGames - 2];
         if (lastGame.contractor === this) {
             if (lastGame.result < -1) {
