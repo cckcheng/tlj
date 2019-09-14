@@ -57,7 +57,7 @@ function Table(o, mainServer) {
     this.status = 'running';
     this.playerStatus = '';  // record player names and latest ranks
 
-    this.mainServer.myDB.addTable(this);
+    if(this.mainServer) this.mainServer.myDB.addTable(this);
     
     this.matchSummary = function () {
         var gameNum = this.games.length;
@@ -291,6 +291,10 @@ Table.prototype.initPlayerStatus = function () {
     }
     this.playerStatus = this.playerNames();
     this.inited = true;  // only init once
+};
+
+Table.prototype.setPlayerMatchInfo = function (p) {
+    p.matchInfo = new MatchInfo(this, p);
 };
 
 Table.prototype.startGame = function (testOnly) {

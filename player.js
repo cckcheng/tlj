@@ -18,7 +18,7 @@ function Player(o, mainServer) {
         this.sock = o.sock;
         this.name = o.name;
     }
-    if (this.sock == null) this.name = 'Robot';
+    if (this.name == null) this.name = 'Robot';
     this.robotCode = '';
     this.lang = 'en';   // default language, support 'zh' (Chinese)
     this.spades = [];

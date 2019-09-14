@@ -22,8 +22,10 @@ function Game(players, deckNumber) {
     this.leadingPlayer = null;
     this.trump = null;
 
-    this.deck = new Deck(deckNumber);
-    this.deck.deal(this.players);
+    if(players != null) {
+        this.deck = new Deck(deckNumber);
+        this.deck.deal(this.players);
+    }
 
     this.holeCards = [];
     this.rounds = [];

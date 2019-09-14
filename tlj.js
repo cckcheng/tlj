@@ -26,6 +26,8 @@ while (players.length < 6) {
 
 table.startGame(true);
 
+if (true) process.exit(0);
+
 //var game = new Game(players, 4);
 //table.players.forEach(function (p) {
 //    console.log(p.showHand());
