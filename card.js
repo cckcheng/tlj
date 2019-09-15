@@ -371,8 +371,8 @@ Card.getTotalCardNumber = function (cards, k) {
     return num;
 };
 
-Card.removeStrongHands = function (cardList, trump, gameRank) {
-    if(cardList.length <= 4) return cardList;
+Card.removeStrongHands = function (cardList, trump, gameRank, numKeep) {
+    if(cardList.length - numKeep <= 3) return cardList;
     
     var tmpCards = cardList.slice();
     var isTrump = cardList[0].isTrump(trump, gameRank);
@@ -383,7 +383,7 @@ Card.removeStrongHands = function (cardList, trump, gameRank) {
         rnks = stat.sortedRanks(4);
 		    card = stat.findCardByDupNum(rnks[rnks.length-1], 4);
       	tmpCards.splice(card.indexOf(tmpCards), 4);
-      	return Card.removeStrongHands(tmpCards, trump, gameRank);
+      	return Card.removeStrongHands(tmpCards, trump, gameRank, numKeep);
     }
 
     var m = 3;
@@ -402,7 +402,7 @@ Card.removeStrongHands = function (cardList, trump, gameRank) {
       			tmpCards.splice(card.indexOf(tmpCards), m);
       			sRank++;
     		}
-    		return Card.removeStrongHands(tmpCards, trump, gameRank);
+    		return Card.removeStrongHands(tmpCards, trump, gameRank, numKeep);
     }
 	
     return tmpCards;
@@ -412,7 +412,8 @@ Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, 
     var tmpCards = cardList.slice();
     var lst = cardList.slice();
     if(keepTop && lst.length > num) lst.splice(lst.length-1, 1);
-    lst = Card.removeStrongHands(lst, trump, gameRank);
+    lst = Card.removeStrongHands(lst, trump, gameRank, num);
+    if(lst.length < num) lst = cardList.slice();  // unable to keep strong hand any more
     var stat = new HandStat(lst, trump, gameRank);
     lst.sort(function (a, b) {
         if (a.equals(b)) return 0;

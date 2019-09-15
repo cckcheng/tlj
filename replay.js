@@ -140,6 +140,7 @@ function readRounds(rows) {
     pIndex = table.players.indexOf(game.leadingPlayer);
     for(var x=0; x<6; x++,pIndex++) {
         if(pIndex >= 6) pIndex = 0;
+        debugger;
         game.players[pIndex].playCards();
     }
 }
