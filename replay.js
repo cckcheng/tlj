@@ -118,7 +118,7 @@ function readRounds(rows) {
     game.rounds = [];
     game.startNewRound();
 
-    var leadingSeat, recs;
+    var leadingSeat, recs, player;
     for(var x=0,row,cardsRec,n=toRound ? toRound : rows.length; x<n && (row = rows[x]); x++) {
         cardsRec = row['play_rec'];
         //console.log(cardsRec + ' => ' + convertCardsRecord(cardsRec));
@@ -127,7 +127,23 @@ function readRounds(rows) {
         recs = convertCardsRecord(cardsRec).split(';');
         for(var seat = leadingSeat,i=0,rec; i<6 && (rec=recs[i]); seat++,i++) {
             if(seat > 6) seat = 1;
-            game.players[seat-1].playCards(rec);
+            player = game.players[seat-1];
+            player.playCards(rec);
+
+            if (game.partner == null) {
+                if (game.partnerDef.partnerMatch(player.matchInfo.playedCards)) {
+                    game.partner = player;
+                    for (var mm = 0, p; p = game.players[mm]; mm++) {
+                        if (p === game.contractor) continue;
+                        if (p === game.partner) {
+                            if (p.matchInfo.points < 0) game.collectedPoint -= p.matchInfo.points;
+                        } else {
+                            game.collectedPoint += p.matchInfo.points;
+                        }
+                        p.matchInfo.points = 0;
+                    }
+                }
+            }
         }
     }
 

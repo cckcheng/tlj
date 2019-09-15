@@ -1538,7 +1538,7 @@ Player.prototype.possibleOpponentRuff = function (game, suite, exPlayer) {  // e
             return game.contractor.hasTrump();
         }
     } else {
-    debugger;
+        //debugger;
         for(var x = startIdx, p; ; x++) {
             if(x === players.length) x = 0;
             p = players[x];

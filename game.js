@@ -861,7 +861,7 @@ function Round(players, trump, gameRank) {
                 if(x === players.length) x = 0;
                 p = players[x];
                 if(p === firstPlayer) break;
-                if(exPlayer === game.contractor || exPlayer === game.partner) {
+                if(game.partner == null || exPlayer === game.contractor || exPlayer === game.partner) {
                     if(p === game.contractor || p === game.partner) continue;
                     if(hand.isTrump) {
                         if(p.hasTrump()) {
@@ -909,6 +909,8 @@ function Round(players, trump, gameRank) {
 
     this.allFriendsLeft = function (game, player) {
         if (this.playList.length === players.length - 1) return true;    // is last play
+        if(game.partner == null) return false;
+
         if (player === game.contractor || player === game.partner) {
             if (game.partnerDef.noPartner) return false;
             for (var x = 0, hand; hand = this.playList[x]; x++) {
