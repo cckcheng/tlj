@@ -802,11 +802,12 @@ function Round(players, trump, gameRank) {
         var isLastHand = this.playList.length === players.length;
         if (isLastHand) {
             leadingHand.player.addPoints(points);
-            if (Config.DEBUGGING) {
-                Mylog.log(this.displayAll());
+            if(player.mainServer) {
+                player.mainServer.myDB.addRound(player.currentTable, firstHand.player, this.displayAll());
+            } else {
+                // for replay
+                console.log(this.displayAll());
             }
-            player.mainServer.myDB.addRound(player.currentTable, firstHand.player, this.displayAll());
-//            console.log(JSON.stringify(game.honorsPlayed));
         }
 
         return isLastHand;

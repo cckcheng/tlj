@@ -196,7 +196,22 @@ Card.cardsToString = function (cards) {
 
 Card.fromString = function(s){
     if (s == null || s.length < 2) return null;
-    return new Card(s.charAt(0), parseInt(s.substr(1)));
+    if(!/[CDHSV][0-9]{1,2}/.test(s)) return null;
+    var ch0 = s.charAt(0);
+    var rnk = parseInt(s.substr(1));
+    switch(ch0) {
+        case 'C':
+        case 'D':
+        case 'H':
+        case 'S':
+            if(rnk < 2 || rnk > 14) return null;
+            break;
+        case 'V':
+            if(rnk !== Card.RANK.SmallJoker && rnk !== Card.RANK.BigJoker) return null;
+            break;
+          
+    }
+    return new Card(ch0, rnk);
 };
 
 Card.stringToArray = function (strCards, trump_suite, game_rank) {
@@ -206,9 +221,9 @@ Card.stringToArray = function (strCards, trump_suite, game_rank) {
     var cards = [];
     var ss = strCards.split(',');
     ss.forEach(function (s) {
-        if (s.length < 2)
-            return;
-        cards.push(new Card(s.charAt(0), parseInt(s.substr(1))));
+        var c = Card.fromString(s.trim());
+        if(c == null) return;
+        cards.push(c);
     });
 
     cards.sort(function (a, b) {

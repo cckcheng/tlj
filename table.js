@@ -293,8 +293,9 @@ Table.prototype.initPlayerStatus = function () {
     this.inited = true;  // only init once
 };
 
-Table.prototype.setPlayerMatchInfo = function (p) {
-    p.matchInfo = new MatchInfo(this, p);
+Table.prototype.setPlayerMatchInfo = function (player) {
+    player.matchInfo = new MatchInfo(this, player);
+    player.currentTable = this;
 };
 
 Table.prototype.startGame = function (testOnly) {
