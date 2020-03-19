@@ -912,9 +912,10 @@ Table.prototype.getNextRank = function (rank, delta) {
 };
 
 Table.prototype.canJoin = function (player) {
+
     var maxGame = this.matchType.maxGame;
     var gameLimit = maxGame > 10 ? maxGame / 3 : maxGame / 2;
-    if(this.games.length > gameLimit) return false;
+//    if(this.games.length > gameLimit) return false;
     
     var maxRank = this.matchType.ranks[0];
     var robot = null;
@@ -926,13 +927,12 @@ Table.prototype.canJoin = function (player) {
     }
     if(robot == null) return false;
     var halfIndex = Math.floor(this.matchType.ranks.length / 2);
-    if(maxRank > this.matchType.ranks[halfIndex]) return false;
+//    if(maxRank > this.matchType.ranks[halfIndex]) return false;
     
     var sockId = player.sock.remoteAddress + ':' + player.sock.remotePort;
     robot.replaceRobot(player);
     this.mainServer.onlinePlayers[sockId] = this.mainServer.activePlayers[player.id] = player = robot;
     if(!this.resume(player)) return false;
-    
     this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
     return true;
 };
