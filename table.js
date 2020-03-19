@@ -938,6 +938,10 @@ Table.prototype.canJoin = function (player) {
 };
 
 Table.joinPlayer = function(player) {
+    if(!player.property.member) {
+        player.sendNotification(Config.MEMBERSHIP);
+        return;
+    }
     var mServer = player.mainServer;
     for(var x=mServer.runningTables.length-1, t; x>=0 && (t=mServer.runningTables[x]); x--) {
         if(!t.allowJoin) continue;

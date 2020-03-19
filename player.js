@@ -30,6 +30,7 @@ function Player(o, mainServer) {
     this.orgLength = {};  // original suite length
 
     this.property = {
+        member: true,  // membership, check when player login (this.setProperty())
         credit: 0,
         priority: 0,
         aiLevel: 0
@@ -79,6 +80,14 @@ function Player(o, mainServer) {
             priority: rec['priority'],
             aiLevel: rec['ai_level']
         };
+        
+        var expireTime = rec['expire_time'];
+        if(expireTime == null) { 
+            this.property.member = false;
+            return;
+        }
+        var currentTime = new Date().toISOString();
+        this.property.member = currentTime <= expireTime;
     };
     
     this.isRobot = function() {
@@ -2509,4 +2518,25 @@ Player.prototype.sendMessage = function (msg) {
         });
         p.messageTimer = null;
     }, 10000, this);
+};
+
+// langMsg: {en: "", zh: "", ...}
+Player.prototype.sendNotification = function (langMsg) {
+    if (this.sock == null)
+        return;
+
+    if (this.messageTimer) {
+        clearTimeout(this.messageTimer);
+    }
+
+    var msg = langMsg[this.lang];
+    if(msg == null) msg = langMsg['en'];
+    if(msg == null) return;
+
+    var json = {
+        action: 'info',
+        info: msg
+    };
+
+    this.pushJson(json);
 };
