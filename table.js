@@ -95,6 +95,7 @@ function Table(o, mainServer) {
     };
     
     this.getAiLevel = function() {
+        if (!this.allowJoin) return 0;
         var ai = Config.AI_LEVEL;
         for(var x=0,p; p=this.players[x]; x++) {
             if(p.id && p.property.priority >= 5) {

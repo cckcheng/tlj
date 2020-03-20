@@ -30,7 +30,7 @@ function Player(o, mainServer) {
     this.orgLength = {};  // original suite length
 
     this.property = {
-        member: true,  // membership, check when player login (this.setProperty())
+        member: false,  // membership, check when player login (this.setProperty())
         credit: 0,
         priority: 0,
         aiLevel: 0
