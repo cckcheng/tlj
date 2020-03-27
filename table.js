@@ -548,7 +548,7 @@ function procPlayCards(t, cards) {
             for (var x = 0, p; p = t.players[x]; x++) {
                 if (p === game.contractor) continue;
                 if (p === game.partner) {
-                    if (p.matchInfo.points < 0) game.collectedPoint -= p.matchInfo.points;
+                    if (p.matchInfo.penalty < 0) game.collectedPoint -= p.matchInfo.penalty;
                 } else {
                     game.collectedPoint += p.matchInfo.points;
                 }
@@ -1010,6 +1010,7 @@ function MatchInfo(t, player) {
     this.contracts = 0; // contract times
     this.playedCards = ''; // cards played
     this.alert = null;
+    this.penalty = null;
 
     this.reset = function () {
         // call reset when start a new game
@@ -1017,6 +1018,7 @@ function MatchInfo(t, player) {
         this.points = 0;
         this.playedCards = '';
         this.alert = null;
+        this.penalty = null;
         if (this.player.messageTimer) {
             clearTimeout(this.player.messageTimer);
             this.player.messageTimer = null;
