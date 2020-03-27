@@ -2030,6 +2030,7 @@ Player.prototype.playCards = function (strCards) {
                     var orgCards = Card.showCards(cards);
                     cards = Hand.makeCards(this.mustLead, cards, game.trump, game.rank);
                     this.matchInfo.penalty = (cards.length - orgLen) * 10;
+                    this.matchInfo.totalPenalty += this.matchInfo.penalty;
                     this.matchInfo.alert = {
                         'zh': this.name + ': 甩牌失败,罚' + (-this.matchInfo.penalty) + '分',
                         'en': this.name + ': Invalid Flop, penalty: ' + (-this.matchInfo.penalty) + ' points'
