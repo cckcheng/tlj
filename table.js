@@ -18,7 +18,7 @@ Table.init = function() {
     Table.MAX_IDLE_MINUTES = Config.MAX_IDLE_MINUTES;
 
     Mylog.log("NEW AI Level: " + Config.AI_LEVEL);
-}
+};
 
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
@@ -34,7 +34,7 @@ function Table(o, mainServer) {
     this.dismissed = false;
     this.allowJoin = o ? o.allowJoin : true;
     this.showMinBid = o ? o.showMinBid : false;
-    
+
     var pos = 0;
     while (pos < SEAT_NUMBER) {
         this._positions.push(pos++);
@@ -58,11 +58,11 @@ function Table(o, mainServer) {
     this.playerStatus = '';  // record player names and latest ranks
 
     if(this.mainServer) this.mainServer.myDB.addTable(this);
-    
+
     this.matchSummary = function () {
         var gameNum = this.games.length;
         if (gameNum < 1) return '';
-        
+
         if(!this.matchOver) return this.playerStatus;
 
         var summary = '';
@@ -93,7 +93,7 @@ function Table(o, mainServer) {
         });
         return s.substr(2);
     };
-    
+
     this.getAiLevel = function() {
         if (!this.allowJoin) return 0;
         var ai = Config.AI_LEVEL;
@@ -201,7 +201,7 @@ Table.prototype.terminate = function () {
     }
 
     Mylog.log(new Date().toLocaleString() + ', table ended: ' + this.id);
-    this.mainServer.myDB.addTableSummary(this);    
+    this.mainServer.myDB.addTableSummary(this);
     this.mainServer.removeTable(this);
 };
 
@@ -518,7 +518,7 @@ function procDefinePartner(t, def) {
         seat: t.actionPlayerIdx + 1,
         def: def
     });
-    
+
     t.mainServer.myDB.updateGameInfo(t, def);
     t.autoPlay();
 }
@@ -664,7 +664,7 @@ function gameOver(t) {
 
     Mylog.log(new Date().toLocaleString() + ', #' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
          + ' ' + t.game.playerStatusEn);
-    
+
     if (t.matchOver) {
         t.dismissed = true;
         var summary = t.matchSummary();
@@ -917,7 +917,7 @@ Table.prototype.canJoin = function (player) {
     var maxGame = this.matchType.maxGame;
     var gameLimit = maxGame > 10 ? maxGame / 3 : maxGame / 2;
 //    if(this.games.length > gameLimit) return false;
-    
+
     var maxRank = this.matchType.ranks[0];
     var robot = null;
     for(var x=0,p; p=this.players[x]; x++) {
@@ -929,7 +929,7 @@ Table.prototype.canJoin = function (player) {
     if(robot == null) return false;
     var halfIndex = Math.floor(this.matchType.ranks.length / 2);
 //    if(maxRank > this.matchType.ranks[halfIndex]) return false;
-    
+
     var sockId = player.sock.remoteAddress + ':' + player.sock.remotePort;
     robot.replaceRobot(player);
     this.mainServer.onlinePlayers[sockId] = this.mainServer.activePlayers[player.id] = player = robot;
@@ -948,7 +948,7 @@ Table.joinPlayer = function(player) {
         if(!t.allowJoin) continue;
         if(t.canJoin(player)) return;
     }
-    
+
     if (mServer.runningTables.length >= Config.MAX_TABLES) {
         if(player.lang === 'zh') {
             player.sendMessage("没有空桌. 请稍候...");
@@ -997,7 +997,7 @@ function getSecondsToNextSyncTable() {
             return seconds;
         }
     }
-    
+
     return -1;
 }
 
@@ -1025,7 +1025,7 @@ function MatchInfo(t, player) {
             clearTimeout(this.player.messageTimer);
             this.player.messageTimer = null;
         }
-        
+
         this.player.voids = {};
     };
 
