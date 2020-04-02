@@ -138,6 +138,17 @@ Card.prototype.trumpRank = function (trump_suite, game_rank) {
     return this.rank < game_rank ? this.rank : this.rank - 1;
 };
 
+// rank by value
+Card.prototype.valueRank = function (trump_suite, game_rank) {
+    if (this.rank === game_rank) {
+        return this.suite === trump_suite ? 15 : 14;
+    }
+
+    var point = this.getPoint();
+    if (point === 0) return this.trumpRank(trump_suite, game_rank);
+    return point < 10 ? 13 : 14; // 5 ==> A, 10 or K ==> A+1
+};
+
 Card.prototype.key = function (trump_suite, game_rank) {
     return this.suite + this.trumpRank(trump_suite, game_rank);
 };
@@ -209,7 +220,7 @@ Card.fromString = function(s){
         case 'V':
             if(rnk !== Card.RANK.SmallJoker && rnk !== Card.RANK.BigJoker) return null;
             break;
-          
+
     }
     return new Card(ch0, rnk);
 };
@@ -373,11 +384,11 @@ Card.getTotalCardNumber = function (cards, k) {
 
 Card.removeStrongHands = function (cardList, trump, gameRank, numKeep) {
     if(cardList.length - numKeep <= 3) return cardList;
-    
+
     var tmpCards = cardList.slice();
     var isTrump = cardList[0].isTrump(trump, gameRank);
     var stat, rnks, sHand, tractors, card;
-                
+
     stat = new HandStat(tmpCards, trump, gameRank);
     if(stat.totalQuads > 0) {
         rnks = stat.sortedRanks(4);
@@ -395,7 +406,7 @@ Card.removeStrongHands = function (cardList, trump, gameRank, numKeep) {
     if(tractors.length > 0) {
     		var simHand = tractors[0];
     		if(simHand.type.len === tmpCards.length) return tmpCards;
-    		
+
     		var sRank = simHand.minRank;
     		for (var x = 0; x < simHand.type.len; x += m) {
       			card = stat.findCardByDupNum(sRank, m);
@@ -404,7 +415,7 @@ Card.removeStrongHands = function (cardList, trump, gameRank, numKeep) {
     		}
     		return Card.removeStrongHands(tmpCards, trump, gameRank, numKeep);
     }
-	
+
     return tmpCards;
 };
 
@@ -415,20 +426,44 @@ Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, 
     lst = Card.removeStrongHands(lst, trump, gameRank, num);
     if(lst.length < num) lst = cardList.slice();  // unable to keep strong hand any more
     var stat = new HandStat(lst, trump, gameRank);
-    lst.sort(function (a, b) {
-        if (a.equals(b)) return 0;
-        if (a.isHonor(trump, gameRank)) return 1;
-        if (b.isHonor(trump, gameRank)) return -1;
-        var aPoint = a.getPoint();
-        var bPoint = b.getPoint();
-        if (aPoint !== bPoint) return pointFirst ? bPoint - aPoint : aPoint - bPoint; 
-        var aDup = stat.stat[a.key(trump, gameRank)];
-        var bDup = stat.stat[b.key(trump, gameRank)];
-        if (aDup !== bDup) {
-            return aDup - bDup;
-        }
-        return a.trumpRank(trump, gameRank) - b.trumpRank(trump, gameRank);
-    });
+
+    if (pointFirst) {
+        lst.sort(function (a, b) {
+            if (a.equals(b)) return 0;
+            if (a.isHonor(trump, gameRank)) return 1;
+            if (b.isHonor(trump, gameRank)) return -1;
+            var aPoint = a.getPoint();
+            var bPoint = b.getPoint();
+            if (aPoint !== bPoint) return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+            var aDup = stat.stat[a.key(trump, gameRank)];
+            var bDup = stat.stat[b.key(trump, gameRank)];
+            if (aDup !== bDup) {
+                return aDup - bDup;
+            }
+            return a.trumpRank(trump, gameRank) - b.trumpRank(trump, gameRank);
+        });
+    } else {
+        lst.sort(function (a, b) {
+            if (a.equals(b)) return 0;
+            var aPoint = a.getPoint();
+            var bPoint = b.getPoint();
+            if (aPoint !== bPoint) {
+                // sort by value
+                var aValue = a.valueRank();
+                var bValue = b.valueRank();
+                return aValue === bValue ? a.rank - b.rank : aValue - bValue;
+            }
+            if (a.isHonor(trump, gameRank)) return 1;
+            if (b.isHonor(trump, gameRank)) return -1;
+            var aDup = stat.stat[a.key(trump, gameRank)];
+            var bDup = stat.stat[b.key(trump, gameRank)];
+            if (aDup !== bDup) {
+                return aDup - bDup;
+            }
+            return a.trumpRank(trump, gameRank) - b.trumpRank(trump, gameRank);
+        });
+    }
+
     for (var x = 0, c; x < num; x++) {
         c = lst[x];
         cards.push(c);

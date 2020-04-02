@@ -32,14 +32,14 @@ function Game(players, deckNumber) {
     this.cardNumberPlayed = 0;
     this.currentRound = null;
     this.partnerDef = null;
-    
+
     this.cardsPlayed = {
         C: 0,
         D: 0,
         H: 0,
         S: 0
     };
-    
+
     this.honorRank = 14;
     this.viceHonorRank = 13;
     this.honorsPlayed = {
@@ -54,7 +54,7 @@ function Game(players, deckNumber) {
     this.updateCardsPlayed = function(suite, len) {
         this.cardsPlayed[suite] += len;
     };
-    
+
     this.recordHonorsPlayed = function(cards) {
         for(var x=0,c; c=cards[x]; x++) {
             if(c.rank === Card.RANK.SmallJoker) {
@@ -68,13 +68,13 @@ function Game(players, deckNumber) {
             if(c.isTrump(this.trump, this.rank)) {
                 continue;
             }
-            
+
             if(c.rank === this.honorRank) {
                 this.honorsPlayed[c.suite]++;
             }
         }
     };
-    
+
     this.setPartnerDef = function (def) {
         if (this.partnerDef != null) return;
         if(def == null) {
@@ -892,7 +892,13 @@ function Round(players, trump, gameRank) {
             }
             if(!possibleBeat) return false;
         }
-        
+
+        if (hand.isTrump) {
+            if (hand.maxRank < 14) return true;
+        } else {
+            if (hand.maxRank < 12) return true;
+        }
+
         var count = 0;
         for (var x = 0, p; p = players[x]; x++) {
             if (p === exPlayer) continue;
