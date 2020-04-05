@@ -939,7 +939,7 @@ Table.prototype.canJoin = function (player) {
 };
 
 Table.joinPlayer = function(player) {
-    if(!player.property.member) {
+    if (!player.premium && !player.property.member) {
         player.sendNotification(Config.MEMBERSHIP);
         return;
     }

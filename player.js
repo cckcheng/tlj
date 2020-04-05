@@ -13,10 +13,13 @@ Player.init = function() {
 
 function Player(o, mainServer) {
     this.mainServer = mainServer;
+
+    this.premium = false;
     if (o) {
         this.id = o.id;
         this.sock = o.sock;
         this.name = o.name;
+        if (o.premium) this.premium = o.premium;
     }
     if (this.name == null) this.name = 'Robot';
     this.robotCode = '';
