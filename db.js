@@ -44,11 +44,13 @@ SqlDb.prototype.recordUser = function (player, o) {
     });
 
     this.getCountryCode(o.ip, function (countryCode) {
-        var q0 = "insert or ignore into users (player_id,start_time) values (?,datetime('now'))";
+        var port = player.sock.localPort;
+        var q0 = port !== Config.PORT_IOS ? "insert or ignore into users (player_id,port,start_time) values (?,?,datetime('now'))"
+           : "insert or ignore into users (player_id,port,start_time,expire_time) values (?,?,datetime('now'),datetime('now','+1 month'))";
         var q1 = "update users set player_name=?,lang=?,country_code=?,last_time=datetime('now')"
                 + ",ip=? where player_id=?";
         mainDB.serialize(() => {
-            mainDB.run(q0, [o.id], function (err) {
+            mainDB.run(q0, [o.id, player.sock.localPort], function (err) {
                 if (err) {
                     Mylog.log(err.message);
                 }
