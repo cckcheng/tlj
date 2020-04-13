@@ -34,17 +34,23 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
 };
 
 SqlDb.prototype.recordUser = function (player, o) {
+    var port = player.sock.localPort;
     var mainDB = this.db;
     var q = "select * from users where player_id=?";
     mainDB.get(q, [o.id], (err, row) => {
         if (err) {
         } else {
-            if(row && player) player.setProperty(row);
+            if(row) {
+                if(player) player.setProperty(row);
+            } else {
+                if(port === Config.PORT_IOS) {
+                    player.property.member = true;
+                } 
+            }
         }
     });
 
     this.getCountryCode(o.ip, function (countryCode) {
-        var port = player.sock.localPort;
         var q0 = port !== Config.PORT_IOS ? "insert or ignore into users (player_id,port,start_time) values (?,?,datetime('now'))"
            : "insert or ignore into users (player_id,port,start_time,expire_time) values (?,?,datetime('now'),datetime('now','+1 month'))";
         var q1 = "update users set player_name=?,lang=?,country_code=?,last_time=datetime('now')"
