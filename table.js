@@ -1007,17 +1007,15 @@ Table.joinPlayer = function(player, category) {
         player.sendNotification(Config.MEMBERSHIP);
         return;
     }
-    for(var x=mServer.runningTables.length-1, t; x>=0 && (t=mServer.runningTables[x]); x--) {
-        if(!t.allowJoin) continue;
+    
+    var avlTables = mServer.allTables[category];
+    for(var x=avlTables.length-1, t; x>=0 && (t=avlTables[x]); x--) {
+        if(!t.allowJoin || t.passCode > 0) continue;
         if(t.canJoin(player)) return;
     }
 
-    if (mServer.runningTables.length >= Config.MAX_TABLES) {
-        if(player.lang === 'zh') {
-            player.sendMessage("没有空桌. 请稍候...");
-        } else {
-            player.sendMessage("No table available. Please wait...");
-        }
+    if (avlTables.length >= Config.TABLE_LIMIT[category]) {
+        player.sendNotification(Table.Messages.AllTableFull);
         return;
     }
 
@@ -1028,6 +1026,7 @@ Table.joinPlayer = function(player, category) {
 
     var table = new Table({matchType: mType, allowJoin: true}, mServer, category);
     mServer.runningTables.push(table);
+    mServer.allTables[category].push(table);
     table.addPlayer(player);
 
     for (var x = 0, robot; x < SEAT_NUMBER-1; x++) {
@@ -1066,7 +1065,7 @@ Table.Messages = {
     
     AllTableFull: {
         en: 'No table available. Please wait...',
-        zh: '桌全满，请稍候'
+        zh: '没有空桌. 请稍候...'
     }
 };
 
