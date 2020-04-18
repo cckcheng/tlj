@@ -81,6 +81,7 @@ SqlDb.prototype.addTable = function(table) {
                 if(err) {
                 } else {
                     table.id = row.tbid;
+                    table.updateTableList('add');
                 }
             });
         }

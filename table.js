@@ -26,9 +26,11 @@ const ADD_SECONDS = 2;
 
 Table.init();
 
-function Table(o, mainServer) {
+function Table(o, mainServer, category) {
     this.mainServer = mainServer;
+
     this.id = null;
+    this.category = category ? category : 'NOVICE';
     this.players = new Array(SEAT_NUMBER);
     this._positions = [];
     this.dismissed = false;
@@ -46,12 +48,13 @@ function Table(o, mainServer) {
         this.matchType = Table.MATCH_TYPE.FULL;
     }
 
+    this.timerScale = this.matchType.timerScale > 0 ? this.matchType.timerScale : 1;
     this.maxRank = this.matchType.ranks[this.matchType.ranks.length - 1];
     this.deckNumber = o.deckNumber || DECK_NUMBER;
 
     this.games = [];
 
-    this.TIMEOUT_SECONDS = Table.FastMode ? Config.FAST_TIMEOUT_SECONDS : Config.TIMEOUT_SECONDS;     // default: 32 seconds (30s for client side + 2s)
+    this.TIMEOUT_SECONDS = Table.FastMode ? Config.FAST_TIMEOUT_SECONDS : Config.TIMEOUT_SECONDS;
     this.ROBOT_SECONDS = Table.FastMode ? 0.1 : Config.ROBOT_SECONDS;
 
     this.status = 'running';
@@ -59,6 +62,25 @@ function Table(o, mainServer) {
 
     if(this.mainServer) this.mainServer.myDB.addTable(this);
 
+    this.updateTableList = function(action_type) {
+        if(this.mainServer == null) return;
+        var tableList = this.mainServer.tableListById;
+        if(tableList == null) {
+            tableList = this.mainServer.tableListById = {};
+        }
+        switch(action_type) {
+            case 'add':
+                tableList[this.id] = this;
+                break;
+            case 'remove':
+                delete tableList[this.id];
+                if(this.passCode > 0) {
+                    delete this.mainServer.protectedTables[this.passCode];
+                }
+                break;
+        }
+    };
+    
     this.matchSummary = function () {
         var gameNum = this.games.length;
         if (gameNum < 1) return '';
@@ -125,6 +147,7 @@ Table.MATCH_TYPE = {
     FREE: {
         title: 'Free(2->5)',
         maxGame: 6,
+        timerScale: 2,
         ranks: [2, 3, 4, 5]
     },
     EXPRESS: {
@@ -202,6 +225,7 @@ Table.prototype.terminate = function () {
 
     Mylog.log(new Date().toLocaleString() + ', table ended: ' + this.id);
     this.mainServer.myDB.addTableSummary(this);
+    this.updateTableList('remove');
     this.mainServer.removeTable(this);
 };
 
@@ -442,7 +466,7 @@ Table.prototype.autoPlay = function (deemRobot) {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
-            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+            waitSeconds = this.TIMEOUT_SECONDS * this.timerScale + ADD_SECONDS;
         }
     }
 
@@ -488,14 +512,14 @@ function procSetTrump(t, trump) {
         seat: t.actionPlayerIdx + 1,
         gameRank: t.game.rank,
         contract: t.game.contractPoint,
-        acttime: Table.TIMEOUT_SECONDS_BURYCARDS,
+        acttime: Math.floor(Table.TIMEOUT_SECONDS_BURYCARDS * t.timerScale),
         trump: t.game.trump
     });
 
     t.game.contractor.pushJson({
         action: 'add_remains',
         cards: Card.cardsToString(t.game.deck.remains),
-        acttime: Table.TIMEOUT_SECONDS_BURYCARDS
+        acttime: Math.floor(Table.TIMEOUT_SECONDS_BURYCARDS * t.timerScale)
     });
 
     t.buryCards();
@@ -729,7 +753,7 @@ Table.prototype.declareTrump = function () {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
-            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+            waitSeconds = this.TIMEOUT_SECONDS * this.timerScale + ADD_SECONDS;
         }
     }
 
@@ -750,7 +774,7 @@ Table.prototype.buryCards = function () {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
-            waitSeconds = Table.TIMEOUT_SECONDS_BURYCARDS + ADD_SECONDS;
+            waitSeconds = Table.TIMEOUT_SECONDS_BURYCARDS * this.timerScale + ADD_SECONDS;
         }
     }
 
@@ -771,7 +795,7 @@ Table.prototype.definePartner = function () {
         if (player.isOut()) {
             waitSeconds *= 2;
         } else {
-            waitSeconds = this.TIMEOUT_SECONDS + ADD_SECONDS;
+            waitSeconds = this.TIMEOUT_SECONDS * this.timerScale + ADD_SECONDS;
         }
     }
 
@@ -796,11 +820,11 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
     });
 };
 
-Table.prototype.broadcastMessage = function (langMessage) {
+Table.prototype.broadcastMessage = function (langMessage, args) {
     var t = this;
     this.players.forEach(function (p) {
         if (p.currentTable !== t) return;
-        p.sendMessage(langMessage[p.lang]);
+        p.sendMessage(args ? langMessage[p.lang].format(args) : langMessage[p.lang]);
     });
 };
 
@@ -935,15 +959,54 @@ Table.prototype.canJoin = function (player) {
     this.mainServer.onlinePlayers[sockId] = this.mainServer.activePlayers[player.id] = player = robot;
     if(!this.resume(player)) return false;
     this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
+    this.broadcastMessage(Table.Messages.PlayerIn, player.name);
     return true;
 };
 
-Table.joinPlayer = function(player) {
+Table.joinPlayer = function(player, category) {
+    var mServer = player.mainServer;
+    if(category == null) category = 'novice';
+    category = category.toUpperCase();
+    if(mServer.allTables[category] == null) {
+        mServer.allTables[category] = [];
+    }
+
+    switch(category) {
+        case 'PRACTICE':
+            var lenTables = mServer.allTables[category].length;
+            if (lenTables > 0) {
+                var lastTable = mServer.allTables[category][lenTables-1];
+                if(lastTable.allowJoin && lastTable.canJoin(player)) return;
+            }
+            if (lenTables >= Config.TABLE_LIMIT[category]) {
+                player.sendNotification(Table.Messages.AllTableFull);
+                return;
+            }
+
+            var mType = Table.MATCH_TYPE.FREE;
+            var table = new Table({matchType: mType, allowJoin: true, showMinBid: true}, mServer, category);
+            mServer.runningTables.push(table);
+            mServer.allTables[category].push(table);
+            table.addPlayer(player);
+        
+            var robot;
+            for (var x = 0; x < 5; x++) {
+                robot = new Player(null, mServer);
+                table.addPlayer(robot);
+            }
+            table.startGame();
+            return;
+        case 'NOVICE':
+            break;
+        default:
+            Mylog.log("category= " + category);
+            return;
+    }
+
     if (!player.premium && !player.property.member) {
         player.sendNotification(Config.MEMBERSHIP);
         return;
     }
-    var mServer = player.mainServer;
     for(var x=mServer.runningTables.length-1, t; x>=0 && (t=mServer.runningTables[x]); x--) {
         if(!t.allowJoin) continue;
         if(t.canJoin(player)) return;
@@ -963,7 +1026,7 @@ Table.joinPlayer = function(player) {
         mType = Table.MATCH_TYPE.FREE;
     }
 
-    var table = new Table({matchType: mType, allowJoin: true}, mServer);
+    var table = new Table({matchType: mType, allowJoin: true}, mServer, category);
     mServer.runningTables.push(table);
     table.addPlayer(player);
 
@@ -987,6 +1050,26 @@ Table.joinPlayer = function(player) {
     Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables: ' + mServer.runningTables.length);
 };
 
+Table.Messages = {
+    PlayerIn: {
+        en: '{0} in',
+        zh: '{0}来了'
+    },
+    PlayerOut: {
+        en: '{0} out',
+        zh: '{0}走了'
+    },
+    PlayerWatching: {
+        en: '{0} is watching',
+        zh: '{0}在旁观'
+    },
+    
+    AllTableFull: {
+        en: 'No table available. Please wait...',
+        zh: '桌全满，请稍候'
+    }
+};
+
 function getSecondsToNextSyncTable() {
     var dt = new Date();
     var minutes = dt.getHours() * 60 + dt.getMinutes();
@@ -999,6 +1082,23 @@ function getSecondsToNextSyncTable() {
     }
 
     return -1;
+}
+
+function setTableCode(t) {
+    if(t.mainServer == null) return;
+    var maxCode = 999999;
+    var minCode = 100000;
+    if(t.mainServer.protectedTables == null) {
+        t.mainServer.protectedTables = {};
+    }
+    var tabCode;
+    do {
+        tabCode = Math.floor(Math.random() * maxCode);
+        if(tabCode < minCode) tabCode += minCode;
+    } while(t.mainServer.protectedTables[tabCode] != null);
+
+    t.mainServer.protectedTables[tabCode] = t;
+    t.passCode = tabCode;
 }
 
 // record match info per player

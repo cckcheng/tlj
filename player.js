@@ -392,7 +392,7 @@ Player.prototype.pushData = function () {
                     : 'Next game will start in ' + period + '...',
             pause: sec,
             players: playerInfo,
-            timeout: this.currentTable.TIMEOUT_SECONDS // default timeout
+            timeout: Math.floor(this.currentTable.TIMEOUT_SECONDS * this.currentTable.timerScale) // default timeout
         }, this.matchInfo.toJson(seat));
         this.pushJson(json);
         return;
@@ -430,7 +430,7 @@ Player.prototype.pushData = function () {
         stage: game.stage,
         contract: game.contractPoint,
         players: playerInfo,
-        timeout: this.currentTable.TIMEOUT_SECONDS, // default timeout
+        timeout: Math.floor(this.currentTable.TIMEOUT_SECONDS * this.currentTable.timerScale), // default timeout
         S: S,
         H: H,
         D: D,
@@ -461,7 +461,7 @@ Player.prototype.pushData = function () {
             obj.trump = game.trump;
             if (game.holeCards.length < 1) {
                 obj.act = 'bury';
-                obj.acttime = Config.TIMEOUT_SECONDS_BURYCARDS;
+                obj.acttime = Math.floor(Config.TIMEOUT_SECONDS_BURYCARDS * this.currentTable.timerScale);
             } else if(game.partnerDef == null) {
                 obj.act = 'partner';
             } else {
