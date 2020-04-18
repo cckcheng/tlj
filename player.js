@@ -156,11 +156,11 @@ function Player(o, mainServer) {
     };
 
     this.isOut = function () {
-        if (this.timeoutTimes === 2) {
+        if (this.timeoutTimes === Config.PLAYER_TIMEOUT_TIMES) {
             this.pushJson({action: 'robot'});
             this.timeoutTimes = 9;
         }
-        return this.timeoutTimes >= 2;
+        return this.timeoutTimes >= Config.PLAYER_TIMEOUT_TIMES;
     };
 
     this.getCardsBySuite = function (suite) {
