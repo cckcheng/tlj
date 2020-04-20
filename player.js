@@ -357,7 +357,7 @@ Player.prototype.pushJson = function (json) {
             }
         } catch (err) {
             Mylog.log(new Date().toLocaleString() + ', ' + err.message);
-            p.toRobot(5);
+            p.toRobot(0.001);
         }
     }, this);
 };

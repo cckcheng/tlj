@@ -65,9 +65,6 @@ function Table(o, mainServer, category) {
     this.updateTableList = function(action_type) {
         if(this.mainServer == null) return;
         var tableList = this.mainServer.tableListById;
-        if(tableList == null) {
-            tableList = this.mainServer.tableListById = {};
-        }
         switch(action_type) {
             case 'add':
                 tableList[this.id] = this;
@@ -76,6 +73,9 @@ function Table(o, mainServer, category) {
                 delete tableList[this.id];
                 if(this.passCode > 0) {
                     delete this.mainServer.protectedTables[this.passCode];
+                } 
+                if(this.mainServer.pendingReboot && Object.keys(tableList).length < 1) {
+                    mainServer.stop();                
                 }
                 break;
         }
@@ -985,7 +985,6 @@ Table.joinPlayer = function(player, category) {
 
             var mType = Table.MATCH_TYPE.FREE;
             var table = new Table({matchType: mType, allowJoin: true, showMinBid: true}, mServer, category);
-            mServer.runningTables.push(table);
             mServer.allTables[category].push(table);
             table.addPlayer(player);
         
@@ -1025,7 +1024,6 @@ Table.joinPlayer = function(player, category) {
     }
 
     var table = new Table({matchType: mType, allowJoin: true}, mServer, category);
-    mServer.runningTables.push(table);
     mServer.allTables[category].push(table);
     table.addPlayer(player);
 
@@ -1046,7 +1044,8 @@ Table.joinPlayer = function(player, category) {
         table.startGame();
     }
 
-    Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables: ' + mServer.runningTables.length);
+    Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables ('
+        + category + '): ' + Object.keys(mServer.allTables[category]).length);
 };
 
 Table.Messages = {
