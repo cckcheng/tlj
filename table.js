@@ -16,8 +16,6 @@ Table.init = function() {
     Table.PAUSE_SECONDS_BETWEEN_ROUND = Config.PAUSE_SECONDS_BETWEEN_ROUND;
     Table.TIMEOUT_SECONDS_BURYCARDS = Config.TIMEOUT_SECONDS_BURYCARDS;
     Table.MAX_IDLE_MINUTES = Config.MAX_IDLE_MINUTES;
-
-    Mylog.log("NEW AI Level: " + Config.AI_LEVEL);
 };
 
 const SEAT_NUMBER = 6;
@@ -117,8 +115,7 @@ function Table(o, mainServer, category) {
     };
 
     this.getAiLevel = function() {
-        if (!this.allowJoin) return 0;
-        var ai = Config.AI_LEVEL;
+        var ai = Config.AI_LEVEL[this.category];
         for(var x=0,p; p=this.players[x]; x++) {
             if(p.id && p.property.priority >= 5) {
                 if(p.property.aiLevel > ai) ai = p.property.aiLevel;
@@ -834,7 +831,7 @@ Table.prototype.processPlayerAction = function (player, json) {
         player.pushJson({action: 'ack'});   // prevent client connection check error
         return;    // late response
     }
-
+    
     clearTimeout(this.autoTimer);
     this.autoTimer = null;
 

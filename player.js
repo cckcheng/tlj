@@ -344,8 +344,7 @@ Player.prototype.showHand = function () {
 };
 
 Player.prototype.pushJson = function (json) {
-    if (this.sock == null)
-        return;
+    if (this.sock == null || this.sock.destroyed) return false;
 //Mylog.log(JSON.stringify(json));
     setImmediate(function (p) {
         // this seems no differents
@@ -360,6 +359,8 @@ Player.prototype.pushJson = function (json) {
             p.toRobot(0.001);
         }
     }, this);
+    
+    return true;
 };
 
 Player.prototype.pushData = function () {
