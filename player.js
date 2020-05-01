@@ -118,7 +118,10 @@ function Player(o, mainServer) {
             timeout = Config.MAX_IDLE_MINUTES * 60000;
         } else if (keepMinutes > 0) {
             timeout = keepMinutes * 60000;
+        } else if (keepMinutes < 0) {
+            timeout = 10;
         }
+
         this.idleTimer = setTimeout(function (p) {
             if (p.sock != null) return;
             p.mainServer.removePlayer(p);
@@ -132,7 +135,7 @@ function Player(o, mainServer) {
                 aiLevel: 0
             };
             if (!p.currentTable.dismiss()) {
-                p.mainServer.addRobot(p);
+                p.currentTable.robots.push(p);
             }
         }, timeout, this);
     };
@@ -356,7 +359,7 @@ Player.prototype.pushJson = function (json) {
             }
         } catch (err) {
             Mylog.log(new Date().toLocaleString() + ', ' + err.message);
-            p.toRobot(0.001);
+            p.toRobot(-1);
         }
     }, this);
     

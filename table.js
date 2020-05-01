@@ -30,6 +30,7 @@ function Table(o, mainServer, category) {
     this.id = null;
     this.category = category ? category : 'NOVICE';
     this.players = new Array(SEAT_NUMBER);
+    this.robots = [];
     this._positions = [];
     this.dismissed = false;
     this.allowJoin = o ? o.allowJoin : true;
@@ -285,7 +286,7 @@ Table.prototype.resume = function (player) {
     return true;
 };
 
-Table.prototype.addPlayer = function (player) {
+Table.prototype.addPlayer = function (player, isRobot) {
     if (this._positions.length < 1) {
         // no seat available
         return false;
@@ -300,6 +301,8 @@ Table.prototype.addPlayer = function (player) {
     this.players[this._positions[pos]] = player;
     this._positions.splice(pos, 1);
     player.currentTable = this;
+    
+    if(isRobot) this.robots.push(player);
     return true;
 };
 
@@ -934,22 +937,22 @@ Table.prototype.getNextRank = function (rank, delta) {
 };
 
 Table.prototype.canJoin = function (player) {
+    if(this.robots.length < 1) return false;
 
     var maxGame = this.matchType.maxGame;
     var gameLimit = maxGame > 10 ? maxGame / 3 : maxGame / 2;
 //    if(this.games.length > gameLimit) return false;
 
     var maxRank = this.matchType.ranks[0];
-    var robot = null;
     for(var x=0,p; p=this.players[x]; x++) {
         if(p.matchInfo.currentRank > maxRank) {
             maxRank = p.matchInfo.currentRank;
         }
-        if(robot == null && p.isRobot()) robot = p;
     }
-    if(robot == null) return false;
     var halfIndex = Math.floor(this.matchType.ranks.length / 2);
 //    if(maxRank > this.matchType.ranks[halfIndex]) return false;
+
+    var robot = this.robots.pop();
 
     var sockId = player.sock.remoteAddress + ':' + player.sock.remotePort;
     robot.replaceRobot(player);
@@ -986,9 +989,9 @@ Table.joinPlayer = function(player, category) {
             table.addPlayer(player);
         
             var robot;
-            for (var x = 0; x < 5; x++) {
+            for (var x = 0; x < SEAT_NUMBER-1; x++) {
                 robot = new Player(null, mServer);
-                table.addPlayer(robot);
+                table.addPlayer(robot, true);
             }
             table.startGame();
             return;
@@ -1026,7 +1029,7 @@ Table.joinPlayer = function(player, category) {
 
     for (var x = 0, robot; x < SEAT_NUMBER-1; x++) {
         robot = new Player(null, mServer);
-        table.addPlayer(robot);
+        table.addPlayer(robot, true);
     }
 
     var waitSeconds = getSecondsToNextSyncTable();
