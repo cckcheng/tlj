@@ -963,10 +963,38 @@ Table.prototype.canJoin = function (player) {
     return true;
 };
 
-Table.joinPlayer = function(player, category) {
-    var mServer = player.mainServer;
-    if(category == null) category = 'novice';
+Table.createTable = function(player, category, o) {
+    if(category == null || category == '') category = 'novice';
     category = category.toUpperCase();
+    var mServer = player.mainServer;
+    if(mServer.allTables[category] == null) {
+        mServer.allTables[category] = [];
+    }
+    var mType = Table.MATCH_TYPE[o.tableType];
+    if (mType == null) {
+        mType = Table.MATCH_TYPE.FREE;
+    }
+
+    var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
+    mServer.allTables[category].push(table);
+    table.addPlayer(player);
+
+    var robot;
+    for (var x = 0; x < SEAT_NUMBER-1; x++) {
+        robot = new Player(null, mServer);
+        table.addPlayer(robot, true);
+    }
+    
+    if(o.private) setTableCode(table);
+    Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables ('
+        + category + '): ' + Object.keys(mServer.allTables[category]).length);
+    return table;
+};
+
+Table.joinPlayer = function(player, category) {
+    if(category == null || category == '') category = 'novice';
+    category = category.toUpperCase();
+    var mServer = player.mainServer;
     if(mServer.allTables[category] == null) {
         mServer.allTables[category] = [];
     }
@@ -983,16 +1011,9 @@ Table.joinPlayer = function(player, category) {
                 return;
             }
 
-            var mType = Table.MATCH_TYPE.FREE;
-            var table = new Table({matchType: mType, allowJoin: true, showMinBid: true}, mServer, category);
-            mServer.allTables[category].push(table);
-            table.addPlayer(player);
-        
-            var robot;
-            for (var x = 0; x < SEAT_NUMBER-1; x++) {
-                robot = new Player(null, mServer);
-                table.addPlayer(robot, true);
-            }
+            var table = Table.createTable(player, category, {
+                tableType: 'FREE', allowJoin: true, showMinBid: true
+            });
             table.startGame();
             return;
         case 'NOVICE':
@@ -1018,19 +1039,9 @@ Table.joinPlayer = function(player, category) {
         return;
     }
 
-    var mType = Table.MATCH_TYPE[Config.tableType];
-    if (mType == null) {
-        mType = Table.MATCH_TYPE.FREE;
-    }
-
-    var table = new Table({matchType: mType, allowJoin: true}, mServer, category);
-    mServer.allTables[category].push(table);
-    table.addPlayer(player);
-
-    for (var x = 0, robot; x < SEAT_NUMBER-1; x++) {
-        robot = new Player(null, mServer);
-        table.addPlayer(robot, true);
-    }
+    var table = Table.createTable(player, category, {
+        tableType: Config.tableType, allowJoin: true, showMinBid: false
+    });
 
     var waitSeconds = getSecondsToNextSyncTable();
     if(waitSeconds > 0) {
@@ -1043,9 +1054,6 @@ Table.joinPlayer = function(player, category) {
     } else {
         table.startGame();
     }
-
-    Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables ('
-        + category + '): ' + Object.keys(mServer.allTables[category]).length);
 };
 
 Table.Messages = {
