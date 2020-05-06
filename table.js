@@ -243,7 +243,7 @@ Table.prototype.terminate = function () {
 
 Table.prototype.resume = function (player) {
     if (this.dismissed) return false;
-    if (player.currentTable !== this) return false;
+    if (player == null || player.currentTable !== this) return false;
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
         this.pauseTimer = null;
@@ -277,7 +277,7 @@ Table.prototype.resume = function (player) {
             case 'running':
                 player.pushData();
 
-                if (player && player === this.players[this.actionPlayerIdx]) {
+                if (player === this.players[this.actionPlayerIdx]) {
                     if (this.autoTimer != null) {
 //                        this.autoTimer.refresh(); // probably no need
                     }
@@ -950,6 +950,14 @@ Table.prototype.getNextRank = function (rank, delta) {
     return this.matchType.ranks[nextIdx];
 };
 
+Table.prototype.linkPlayer = function (player) {
+    if(this.robots.length < 1) return false;
+    var robot = this.robots.pop();
+    robot.replaceRobot(player);
+    this.mainServer.activePlayers[player.id] = robot;
+    return true;
+};
+
 Table.prototype.canJoin = function (player) {
     if(this.robots.length < 1) return false;
 
@@ -968,9 +976,8 @@ Table.prototype.canJoin = function (player) {
 
     var robot = this.robots.pop();
 
-    var sockId = player.sock.remoteAddress + ':' + player.sock.remotePort;
     robot.replaceRobot(player);
-    this.mainServer.onlinePlayers[sockId] = this.mainServer.activePlayers[player.id] = player = robot;
+    this.mainServer.activePlayers[player.id] = player = robot;
     if(!this.resume(player)) return false;
     this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
     this.broadcastMessage(Table.Messages.PlayerIn, player.name);
@@ -993,15 +1000,18 @@ Table.createTable = function(player, category, o) {
     
     var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
     mServer.allTables[category].push(table);
-    table.addPlayer(player);
+//    table.addPlayer(player);
 
     var robot;
-    for (var x = 0; x < SEAT_NUMBER-1; x++) {
+    for (var x = 0; x < SEAT_NUMBER; x++) {
         robot = new Player(null, mServer);
         table.addPlayer(robot, true);
     }
     
     if(o.private) setTableCode(table);
+
+    table.initPlayerStatus();
+    table.linkPlayer(player);
     Mylog.log(new Date().toLocaleString() + ', ' + mType.title + ' table created, total tables ('
         + category + '): ' + Object.keys(mServer.allTables[category]).length);
     return table;
@@ -1060,7 +1070,6 @@ Table.joinPlayer = function(player, category) {
 
     var waitSeconds = getSecondsToNextSyncTable();
     if(waitSeconds > 0) {
-        table.initPlayerStatus();
         table.status = 'break';
         table.actionPlayerIdx = -1;
         table.resumeTime = (new Date()).getTime() + waitSeconds * 1000;
