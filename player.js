@@ -349,13 +349,14 @@ Player.prototype.showHand = function () {
 Player.prototype.pushJson = function (json) {
     if (this.sock == null || this.sock.destroyed) return false;
 //Mylog.log(JSON.stringify(json));
+    var tmpSock = this.sock;
     setImmediate(function (p) {
         // this seems no differents
         try {
             if (Config.DEBUGGING) {
-                p.sock.write(JSON.stringify(json) + '\n');
+                tmpSock.write(JSON.stringify(json) + '\n');
             } else {
-                p.sock.write(Func.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
+                tmpSock.write(Func.confusedData(Buffer.from(JSON.stringify(json)).toString('base64')) + '\n');
             }
         } catch (err) {
             Mylog.log(new Date().toLocaleString() + ', ' + err.message);

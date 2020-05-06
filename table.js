@@ -115,6 +115,15 @@ function Table(o, mainServer, category) {
         return s.substr(2);
     };
 
+    this.realPlayerNames = function () {
+        var s = '';
+        this.players.forEach(function (p) {
+            if(p.isRobot()) return;
+            s += ', ' + p.name;
+        });
+        return s.substr(2);
+    };
+
     this.getAiLevel = function() {
         var ai = Config.AI_LEVEL[this.category];
         for(var x=0,p; p=this.players[x]; x++) {
@@ -129,27 +138,32 @@ function Table(o, mainServer, category) {
 Table.MATCH_TYPE = {
     FULL: {
         title: 'Full(2->A)',
+        brief: '2->A',
         maxGame: 18,
         ranks: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     },
     HALF: {
         title: 'Half(8->A)',
+        brief: '8->A',
         maxGame: 10,
         ranks: [8, 9, 10, 11, 12, 13, 14]
     },
     POINTS: {
         title: 'All Points(5/10/K)',
+        brief: '5 10 K',
         maxGame: 6,
         ranks: [5, 10, 13, 14]
     },
     FREE: {
         title: 'Free(2->5)',
+        brief: '2->5',
         maxGame: 6,
         timerScale: 2,
         ranks: [2, 3, 4, 5]
     },
     EXPRESS: {
         title: 'Express(10->A)',
+        brief: '10->A',
         maxGame: 8,
         ranks: [10, 11, 12, 13, 14]
     }
@@ -967,14 +981,16 @@ Table.createTable = function(player, category, o) {
     if(category == null || category == '') category = 'novice';
     category = category.toUpperCase();
     var mServer = player.mainServer;
-    if(mServer.allTables[category] == null) {
-        mServer.allTables[category] = [];
-    }
     var mType = Table.MATCH_TYPE[o.tableType];
     if (mType == null) {
         mType = Table.MATCH_TYPE.FREE;
     }
 
+    if (mServer.allTables[category].length >= Config.TABLE_LIMIT[category]) {
+        player.sendNotification(Table.Messages.AllTableFull);
+        return null;
+    }
+    
     var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
     mServer.allTables[category].push(table);
     table.addPlayer(player);
@@ -995,9 +1011,6 @@ Table.joinPlayer = function(player, category) {
     if(category == null || category == '') category = 'novice';
     category = category.toUpperCase();
     var mServer = player.mainServer;
-    if(mServer.allTables[category] == null) {
-        mServer.allTables[category] = [];
-    }
 
     switch(category) {
         case 'PRACTICE':
@@ -1017,6 +1030,8 @@ Table.joinPlayer = function(player, category) {
             table.startGame();
             return;
         case 'NOVICE':
+        case 'INTERMEDIATE':
+        case 'ADVANCED':
             break;
         default:
             Mylog.log("category= " + category);
@@ -1056,6 +1071,58 @@ Table.joinPlayer = function(player, category) {
     }
 };
 
+Table.CATEGORY = {
+    PRACTICE: {
+        icon: 58678,
+        en: 'Practice',
+        zh: '练习'
+    },
+    NOVICE: {
+        icon: 58726,
+        en: 'Novice',
+        zh: '初级'
+    },
+    INTERMEDIATE: {
+        icon: 58673,
+        en: 'Intermediate',
+        zh: '中级'
+    },
+    ADVANCED: {
+        icon: 58676,
+        en: 'Advanced',
+        zh: '高级'
+    }
+};
+
+Table.pushTableList = function(player) {
+    var mServer = player.mainServer;
+    var json = {action: 'list', category: ''};
+    var first = true;
+    for(k in Table.CATEGORY) {
+        if(first) {
+            first = false;
+        } else {
+            json.category += ',';
+        }
+        json.category += k + '|' + Table.CATEGORY[k][player.lang] + '|' + Table.CATEGORY[k].icon;
+        writeTableList(player, json, k, mServer.allTables[k]);
+    }
+    player.pushJson(json);
+};
+
+function writeTableList(player, json, k, tables) {
+    if(tables.length < 1) return;
+    json[k] = '';
+    for(var x=0,idx=tables.length-1,t,tk; idx>=0 && x<Config.MAX_LIST_TABLES; x++,idx--) {
+        t = tables[idx];
+        if(x>0) json[k] += ',';
+        tk = (t.passCode > 0 ? 'L' : 'P') + t.id;  // L: private, P: public
+        json[k] += tk;
+        json[tk] = t.matchType.brief + ': ' + t.realPlayerNames() + '; '
+                  + Table.Messages.GameNumber[player.lang].format(t.games.length);
+    }
+}
+
 Table.Messages = {
     PlayerIn: {
         en: '{0} in',
@@ -1068,6 +1135,11 @@ Table.Messages = {
     PlayerWatching: {
         en: '{0} is watching',
         zh: '{0}在旁观'
+    },
+    
+    GameNumber: {
+        en: 'Game {0}',
+        zh: '第{0}局'
     },
     
     AllTableFull: {
@@ -1092,11 +1164,8 @@ function getSecondsToNextSyncTable() {
 
 function setTableCode(t) {
     if(t.mainServer == null) return;
-    var maxCode = 999999;
-    var minCode = 100000;
-    if(t.mainServer.protectedTables == null) {
-        t.mainServer.protectedTables = {};
-    }
+    var maxCode = 9999;
+    var minCode = 1000;
     var tabCode;
     do {
         tabCode = Math.floor(Math.random() * maxCode);
