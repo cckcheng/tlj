@@ -30,6 +30,7 @@ function Table(o, mainServer, category) {
     this.id = null;
     this.category = category ? category : 'NOVICE';
     this.players = new Array(SEAT_NUMBER);
+    this.visiters = [];
     this.robots = [];
     this._positions = [];
     this.dismissed = false;
@@ -60,6 +61,18 @@ function Table(o, mainServer, category) {
     this.playerStatus = '';  // record player names and latest ranks
 
     if(this.mainServer) this.mainServer.myDB.addTable(this);
+    
+    this.addVisiter = function(player) {
+        if(this.visiters.indexOf(player) >= 0) return;
+        this.visiters.push(player);
+        player.currentTable = this;
+    };
+
+    this.removeVisiter = function(player) {
+        var idx = this.visiters.indexOf(player);
+        if(idx >=0 ) this.visiters.splice(idx, 1);
+        player.currentTable = null;
+    };
 
     this.updateTableList = function(action_type) {
         if(this.mainServer == null) return;
@@ -210,7 +223,9 @@ Table.prototype.dismiss = function () {
     }
 
     if (this.status === 'break') return false;
+
     if (this.pauseTimer != null) return false;
+
     if(this.autoTimer != null) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
@@ -244,6 +259,7 @@ Table.prototype.terminate = function () {
 Table.prototype.resume = function (player) {
     if (this.dismissed) return false;
     if (player == null || player.currentTable !== this) return false;
+    player.clearIdleTimer();
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
         this.pauseTimer = null;
@@ -380,6 +396,10 @@ Table.prototype.startGame = function (testOnly) {
                 };
             }
         }
+    }
+
+    for (var x = 0, p; p = this.visiters[x]; x++) {
+        p.pushData(this);
     }
 
     if(broadJson) {
@@ -832,12 +852,24 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
             p.pushJson(json);
         }
     });
+
+    this.visiters.forEach(function (p) {
+        if (langInfo != null) {
+            p.pushJson(Object.assign(Object.assign({}, json), langInfo[p.lang]));
+        } else {
+            p.pushJson(json);
+        }
+    });
 };
 
 Table.prototype.broadcastMessage = function (langMessage, args) {
     var t = this;
     this.players.forEach(function (p) {
         if (p.currentTable !== t) return;
+        p.sendMessage(args ? langMessage[p.lang].format(args) : langMessage[p.lang]);
+    });
+
+    this.visiters.forEach(function (p) {
         p.sendMessage(args ? langMessage[p.lang].format(args) : langMessage[p.lang]);
     });
 };
@@ -1080,6 +1112,21 @@ Table.joinPlayer = function(player, category) {
     }
 };
 
+Table.watchTable = function(player, tid) {
+    var mServer = player.mainServer;
+    var tableList = mServer.tableListById;
+    //player.sendMessage('table ' + tid + '->' + tableList[tid].id);
+    Mylog.log('table ' + tid + '->' + tableList[tid].id);
+    var table = tableList[tid];
+    if(table == null || table.dismissed) {
+        player.pushJson(Table.Messages.TableEnded[player.lang]);
+        return;
+    }
+    player.pushData(table);
+    table.addVisiter(player);
+    table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
+};
+
 Table.CATEGORY = {
     PRACTICE: {
         icon: 58678,
@@ -1117,6 +1164,7 @@ Table.pushTableList = function(player) {
         writeTableList(player, json, k, mServer.allTables[k]);
     }
     player.pushJson(json);
+//    Mylog.log('tables: ' + json.category);
 };
 
 function writeTableList(player, json, k, tables) {
@@ -1149,6 +1197,11 @@ Table.Messages = {
     GameNumber: {
         en: 'Game {0}',
         zh: '第{0}局'
+    },
+    
+    TableEnded: {
+        en: 'Table ended',
+        zh: '该局已结束'
     },
     
     AllTableFull: {

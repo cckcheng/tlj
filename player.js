@@ -106,23 +106,7 @@ function Player(o, mainServer) {
     };
 
     this.toRobot = function (keepMinutes) {
-        this.sock = null;
-        if (this.idleTimer != null) return;
-
-        if (this.currentTable != null && !this.currentTable.dismissed) {
-            this.currentTable.broadcastGameInfo({action: 'out', seat: this.currentTable.getSeat(this)});
-        }
-
-        var timeout = Config.DEFAULT_KEEP_SECONDS ? Config.DEFAULT_KEEP_SECONDS * 1000 : 10;
-        if (keepMinutes == null) {
-            timeout = Config.MAX_IDLE_MINUTES * 60000;
-        } else if (keepMinutes > 0) {
-            timeout = keepMinutes * 60000;
-        } else if (keepMinutes < 0) {
-            timeout = 10;
-        }
-
-        this.idleTimer = setTimeout(function (p) {
+        function proceed(p) {
             if (p.sock != null) return;
             p.mainServer.removePlayer(p);
             p.idleTimer = null;
@@ -137,7 +121,35 @@ function Player(o, mainServer) {
             if (!p.currentTable.dismiss()) {
                 p.currentTable.robots.push(p);
             }
-        }, timeout, this);
+        }
+            
+        this.sock = null;
+        if(keepMinutes < 0) {  // proceed immidiately
+            if(this.idleTimer != null) {
+                clearTimeout(this.idleTimer);
+            }
+            proceed(this);
+            return;
+        }
+
+        if (this.idleTimer != null) return;
+
+        if (this.currentTable != null && !this.currentTable.dismissed) {
+            this.currentTable.broadcastGameInfo({action: 'out', seat: this.currentTable.getSeat(this)});
+            this.currentTable.dismiss();  // will not dismiss if there still other real players
+        } else {
+            this.mainServer.removePlayer(this);
+            return;
+        }
+
+        var timeout = Config.DEFAULT_KEEP_SECONDS ? Config.DEFAULT_KEEP_SECONDS * 1000 : 10;  // default, if keepMinutes == 0
+        if (keepMinutes == null) {
+            timeout = Config.MAX_IDLE_MINUTES * 60000;
+        } else if (keepMinutes > 0) {
+            timeout = keepMinutes * 60000;
+        }
+
+        this.idleTimer = setTimeout(proceed, timeout, this);
     };
 
     this.clearIdleTimer = function () {
@@ -367,38 +379,41 @@ Player.prototype.pushJson = function (json) {
     return true;
 };
 
-Player.prototype.pushData = function () {
+Player.prototype.pushData = function (watchTable) {
     if (this.sock == null)
         return;
 
-    var seat = this.currentTable.getSeat(this);
+    var table = watchTable ? watchTable : this.currentTable;
+    var totalPlayer = table.players.length;
+    var seat = watchTable ? (totalPlayer+1) : table.getSeat(this);
     var playerInfo = [];
-    var totalPlayer = this.currentTable.players.length;
-    for (var count = totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
+    for (var count = watchTable ? totalPlayer : totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
         if (x >= totalPlayer)
             x -= totalPlayer;
-        p = this.currentTable.players[x];
+        p = table.players[x];
         playerInfo.push(p.matchInfo.toJson(x + 1));
     }
 
-    var game = this.currentTable.game;
+    var game = table.game;
     if (game == null) {
         var sec = Config.PAUSE_SECONDS_BETWEEN_GAME;
-        if (this.currentTable.resumeTime != null) {
-            sec = Math.round((this.currentTable.resumeTime - (new Date()).getTime()) / 1000);
+        if (table.resumeTime != null) {
+            sec = Math.round((table.resumeTime - (new Date()).getTime()) / 1000);
         }
 
         var period = sec > 90 ? Math.round(sec/60) + (this.lang === 'zh' ? '分钟' : ' minutes')
                     : sec + (this.lang === 'zh' ? '秒' : ' seconds');
-        json = Object.assign({
+        
+        var json0 = {
             action: 'init',
-            game: this.currentTable.games.length,
+            game: table.games.length,
             info: this.lang === 'zh' ? '下一局' + period + '后开始...'
                     : 'Next game will start in ' + period + '...',
             pause: sec,
             players: playerInfo,
-            timeout: Math.floor(this.currentTable.TIMEOUT_SECONDS * this.currentTable.timerScale) // default timeout
-        }, this.matchInfo.toJson(seat));
+            timeout: Math.floor(table.TIMEOUT_SECONDS * table.timerScale) // default timeout
+        };
+        var json = Object.assign(json0, watchTable ? {seat: seat} : this.matchInfo.toJson(seat));
         this.pushJson(json);
         return;
     }
@@ -429,33 +444,34 @@ Player.prototype.pushData = function () {
         }
     }
 
-    var json = Object.assign({
+    var json0 = {
         action: 'init',
-        game: this.currentTable.games.length,
+        game: table.games.length,
         stage: game.stage,
         contract: game.contractPoint,
         players: playerInfo,
-        timeout: Math.floor(this.currentTable.TIMEOUT_SECONDS * this.currentTable.timerScale), // default timeout
+        timeout: Math.floor(table.TIMEOUT_SECONDS * table.timerScale), // default timeout
         S: S,
         H: H,
         D: D,
         C: C,
         T: T
-    }, this.matchInfo.toJson(seat));
+    };
+    var json = Object.assign(json0, watchTable ? {seat: seat} : this.matchInfo.toJson(seat));
 
-    if (this.currentTable.actionPlayerIdx >= 0) {
-        json.next = this.currentTable.actionPlayerIdx + 1;
+    if (table.actionPlayerIdx >= 0) {
+        json.next = table.actionPlayerIdx + 1;
     }
 
-    if (this.currentTable.game.stage === Game.BIDDING_STAGE) {
+    if (table.game.stage === Game.BIDDING_STAGE) {
         json = Object.assign({
             trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
-            minBid: Config.SHOW_MINBID || this.currentTable.showMinBid ? this.minBid : -1
+            minBid: Config.SHOW_MINBID || table.showMinBid ? this.minBid : -1
         }, json);
     } else {
         var obj = {
-            seatContractor: this.currentTable.getSeat(game.contractor),
-            seatPartner: this.currentTable.getSeat(game.partner),
+            seatContractor: table.getSeat(game.contractor),
+            seatPartner: table.getSeat(game.partner),
             gameRank: game.rank,
             pt0: game.collectedPoint
         };
@@ -466,7 +482,7 @@ Player.prototype.pushData = function () {
             obj.trump = game.trump;
             if (game.holeCards.length < 1) {
                 obj.act = 'bury';
-                obj.acttime = Math.floor(Config.TIMEOUT_SECONDS_BURYCARDS * this.currentTable.timerScale);
+                obj.acttime = Math.floor(Config.TIMEOUT_SECONDS_BURYCARDS * table.timerScale);
             } else if(game.partnerDef == null) {
                 obj.act = 'partner';
             } else {
