@@ -362,8 +362,7 @@ Player.prototype.pushJson = function (json) {
     if (this.sock == null || this.sock.destroyed) return false;
 //Mylog.log(JSON.stringify(json));
     var tmpSock = this.sock;
-    setImmediate(function (p) {
-        // this seems no differents
+    function send(p) {
         try {
             if (Config.DEBUGGING) {
                 tmpSock.write(JSON.stringify(json) + '\n');
@@ -374,8 +373,10 @@ Player.prototype.pushJson = function (json) {
             Mylog.log(new Date().toLocaleString() + ', ' + err.message);
             p.toRobot(-1);
         }
-    }, this);
+    }
     
+//    setImmediate(send, this);        // this seems not necessary    
+    send(this);
     return true;
 };
 
@@ -385,15 +386,16 @@ Player.prototype.pushData = function (watchTable) {
 
     var table = watchTable ? watchTable : this.currentTable;
     var totalPlayer = table.players.length;
-    var seat = watchTable ? (totalPlayer+1) : table.getSeat(this);
+    var seat = watchTable ? 1 : table.getSeat(this);
     var playerInfo = [];
-    for (var count = watchTable ? totalPlayer : totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
+    for (var count = totalPlayer - 1, p, x = seat; count > 0; count--, x++) {
         if (x >= totalPlayer)
             x -= totalPlayer;
         p = table.players[x];
         playerInfo.push(p.matchInfo.toJson(x + 1));
     }
 
+    var thisPlayer = watchTable ? table.players[seat-1] : this;
     var game = table.game;
     if (game == null) {
         var sec = Config.PAUSE_SECONDS_BETWEEN_GAME;
@@ -413,7 +415,8 @@ Player.prototype.pushData = function (watchTable) {
             players: playerInfo,
             timeout: Math.floor(table.TIMEOUT_SECONDS * table.timerScale) // default timeout
         };
-        var json = Object.assign(json0, watchTable ? {seat: seat} : this.matchInfo.toJson(seat));
+        var json = Object.assign(json0, thisPlayer.matchInfo.toJson(seat));
+        if(watchTable) json.visit = 'Y'; 
         this.pushJson(json);
         return;
     }
@@ -457,17 +460,21 @@ Player.prototype.pushData = function (watchTable) {
         C: C,
         T: T
     };
-    var json = Object.assign(json0, watchTable ? {seat: seat} : this.matchInfo.toJson(seat));
+    var json = Object.assign(json0, thisPlayer.matchInfo.toJson(seat));
+    if(watchTable) json.visit = 'Y'; 
 
     if (table.actionPlayerIdx >= 0) {
         json.next = table.actionPlayerIdx + 1;
     }
 
     if (table.game.stage === Game.BIDDING_STAGE) {
-        json = Object.assign({
-            trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
-            minBid: Config.SHOW_MINBID || table.showMinBid ? this.minBid : -1
-        }, json);
+        if(watchTable) {
+        } else {
+            json = Object.assign({
+                trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
+                minBid: Config.SHOW_MINBID || table.showMinBid ? this.minBid : -1
+            }, json);
+        }
     } else {
         var obj = {
             seatContractor: table.getSeat(game.contractor),

@@ -173,6 +173,7 @@ Table.MATCH_TYPE = {
         maxGame: 6,
         timerScale: 2,
         ranks: [2, 3, 4, 5]
+//        ranks: [2]
     },
     EXPRESS: {
         title: 'Express(10->A)',
@@ -244,16 +245,29 @@ Table.prototype.terminate = function () {
     for (var x = 0, p; x < this.players.length; x++) {
         p = this.players[x];
         if (p == null) continue;
-        if (p.sock == null && p.id != null) {
+        if (p.id != null) {
             // need delete the player from activePlayers
             this.mainServer.removePlayer(p);
         }
+        p.currentTable = null;
     }
 
+    this.visiters.forEach(function (p) {
+        p.currentTable = null;
+    });
+        
     Mylog.log(new Date().toLocaleString() + ', table ended: ' + this.id);
     this.mainServer.myDB.addTableSummary(this);
     this.updateTableList('remove');
     this.mainServer.removeTable(this);
+    
+    setTimeout(function (t) {
+        // for garbage collection
+        t.visiters = null;
+        t.players = null;
+        t.robots = null;
+        t.games = null;
+    }, 5000, this);
 };
 
 Table.prototype.resume = function (player) {
@@ -845,7 +859,7 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
     var t = this;
     this.players.forEach(function (p) {
         if (p === exceptPlayer) return;
-        if (p.currentTable !== t) return;
+        //if (p.currentTable !== t) return;
         if (langInfo != null) {
             p.pushJson(Object.assign(Object.assign({}, json), langInfo[p.lang]));
         } else {
@@ -854,6 +868,10 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
     });
 
     this.visiters.forEach(function (p) {
+        if(p.sock == null || p.sock.destroyed || p.currentTable !== t) {
+            t.removeVisiter(p);
+            return;
+        }
         if (langInfo != null) {
             p.pushJson(Object.assign(Object.assign({}, json), langInfo[p.lang]));
         } else {
@@ -865,7 +883,7 @@ Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
 Table.prototype.broadcastMessage = function (langMessage, args) {
     var t = this;
     this.players.forEach(function (p) {
-        if (p.currentTable !== t) return;
+        //if (p.currentTable !== t) return;
         p.sendMessage(args ? langMessage[p.lang].format(args) : langMessage[p.lang]);
     });
 
@@ -1054,6 +1072,9 @@ Table.joinPlayer = function(player, category) {
     category = category.toUpperCase();
     var mServer = player.mainServer;
 
+    if(player.currentTable != null) {
+        player.currentTable.removeVisiter(player);
+    }
     switch(category) {
         case 'PRACTICE':
             var lenTables = mServer.allTables[category].length;
@@ -1115,11 +1136,10 @@ Table.joinPlayer = function(player, category) {
 Table.watchTable = function(player, tid) {
     var mServer = player.mainServer;
     var tableList = mServer.tableListById;
-    //player.sendMessage('table ' + tid + '->' + tableList[tid].id);
-    Mylog.log('table ' + tid + '->' + tableList[tid].id);
     var table = tableList[tid];
     if(table == null || table.dismissed) {
         player.pushJson(Table.Messages.TableEnded[player.lang]);
+        Table.pushTableList(player);
         return;
     }
     player.pushData(table);
@@ -1191,7 +1211,7 @@ Table.Messages = {
     },
     PlayerWatching: {
         en: '{0} is watching',
-        zh: '{0}在旁观'
+        zh: '{0}来了, 在旁观'
     },
     
     GameNumber: {
@@ -1293,6 +1313,7 @@ function MatchInfo(t, player) {
             } else {
                 json.bid = this.lastBid;
             }
+            json.cnum = this.player.totalCardLeft();  //card number in hand
         }
         return json;
     };
