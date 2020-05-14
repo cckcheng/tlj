@@ -408,6 +408,7 @@ Player.prototype.pushData = function (watchTable) {
         
         var json0 = {
             action: 'init',
+            tid: (table.passCode > 0 ? 'L' : 'P') + table.id,
             game: table.games.length,
             info: this.lang === 'zh' ? '下一局' + period + '后开始...'
                     : 'Next game will start in ' + period + '...',
@@ -416,7 +417,11 @@ Player.prototype.pushData = function (watchTable) {
             timeout: Math.floor(table.TIMEOUT_SECONDS * table.timerScale) // default timeout
         };
         var json = Object.assign(json0, thisPlayer.matchInfo.toJson(seat));
-        if(watchTable) json.visit = 'Y'; 
+        if(watchTable) {
+            json.visit = 'Y'; 
+        } else if(table.passCode > 0) {
+            json.pass = '' + table.passCode; 
+        }
         this.pushJson(json);
         return;
     }
@@ -449,6 +454,7 @@ Player.prototype.pushData = function (watchTable) {
 
     var json0 = {
         action: 'init',
+        tid: (table.passCode > 0 ? 'L' : 'P') + table.id,
         game: table.games.length,
         stage: game.stage,
         contract: game.contractPoint,
@@ -461,7 +467,11 @@ Player.prototype.pushData = function (watchTable) {
         T: T
     };
     var json = Object.assign(json0, thisPlayer.matchInfo.toJson(seat));
-    if(watchTable) json.visit = 'Y'; 
+    if(watchTable) {
+        json.visit = 'Y';
+    } else if(table.passCode > 0) {
+        json.pass = '' + table.passCode; 
+    }
 
     if (table.actionPlayerIdx >= 0) {
         json.next = table.actionPlayerIdx + 1;

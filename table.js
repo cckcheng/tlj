@@ -1024,11 +1024,16 @@ Table.prototype.canJoin = function (player) {
     var halfIndex = Math.floor(this.matchType.ranks.length / 2);
 //    if(maxRank > this.matchType.ranks[halfIndex]) return false;
 
+    var watchTable = player.currentTable;
+    var orgPlayer = player;
     var robot = this.robots.pop();
 
     robot.replaceRobot(player);
     this.mainServer.activePlayers[player.id] = player = robot;
     if(!this.resume(player)) return false;
+    if(watchTable != null) {
+        watchTable.removeVisiter(orgPlayer);
+    }
     this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
     this.broadcastMessage(Table.Messages.PlayerIn, player.name);
     return true;
@@ -1133,18 +1138,38 @@ Table.joinPlayer = function(player, category) {
     }
 };
 
+Table.joinTable = function(player, json) {
+    var mServer = player.mainServer;
+    var tableList = mServer.tableListById;
+    var table = json.tid ? tableList[tid] : mServer.protectedTables[json.pass];
+    if(table == null || table.dismissed) {
+        player.sendMessage(Table.Messages.TableEnded[player.lang]);
+        Table.pushTableList(player);
+        return;
+    }
+    
+    if(table.passCode > 0 && table.passcode != json.pass) {
+        player.sendMessage(Table.Messages.WrongPass[player.lang]);
+        return;
+    }
+    
+    if(!table.canJoin(player)) {
+        player.sendMessage(Table.Messages.NoSeat[player.lang]);
+    }
+};
+
 Table.watchTable = function(player, tid) {
     var mServer = player.mainServer;
     var tableList = mServer.tableListById;
     var table = tableList[tid];
     if(table == null || table.dismissed) {
-        player.pushJson(Table.Messages.TableEnded[player.lang]);
+        player.sendMessage(Table.Messages.TableEnded[player.lang]);
         Table.pushTableList(player);
         return;
     }
     player.pushData(table);
-    table.addVisiter(player);
     table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
+    table.addVisiter(player);
 };
 
 Table.CATEGORY = {
@@ -1222,6 +1247,14 @@ Table.Messages = {
     TableEnded: {
         en: 'Table ended',
         zh: '该局已结束'
+    },
+    WrongPass: {
+        en: 'Wrong Password',
+        zh: '密码错误'
+    },
+    NoSeat: {
+        en: 'No Seat Available',
+        zh: '没有空座'
     },
     
     AllTableFull: {
