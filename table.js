@@ -1140,19 +1140,33 @@ Table.joinPlayer = function(player, category) {
 
 Table.joinTable = function(player, json) {
     var mServer = player.mainServer;
-    var tableList = mServer.tableListById;
-    var table = json.tid ? tableList[tid] : mServer.protectedTables[json.pass];
-    if(table == null || table.dismissed) {
-        player.sendMessage(Table.Messages.TableEnded[player.lang]);
-        Table.pushTableList(player);
+    var table;
+    if(json.pass) {
+        table = mServer.protectedTables[json.pass];
+        if(table == null) {
+            player.sendMessage(Table.Messages.WrongPass[player.lang]);
+            return;
+        }
+        if(table.dismissed) {
+            player.sendMessage(Table.Messages.TableEnded[player.lang]);
+            Table.pushTableList(player);
+            return;
+        }
+    } else if(json.tid) {
+        table = mServer.tableListById[json.tid];
+        if(table == null || table.dismissed) {
+            player.sendMessage(Table.Messages.TableEnded[player.lang]);
+            Table.pushTableList(player);
+            return;
+        }
+        if(table.passCode > 0 && table.passcode != json.pass) {
+            player.sendMessage(Table.Messages.WrongPass[player.lang]);
+            return;
+        }
+    } else {
         return;
     }
-    
-    if(table.passCode > 0 && table.passcode != json.pass) {
-        player.sendMessage(Table.Messages.WrongPass[player.lang]);
-        return;
-    }
-    
+
     if(!table.canJoin(player)) {
         player.sendMessage(Table.Messages.NoSeat[player.lang]);
     }
