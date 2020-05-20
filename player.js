@@ -482,6 +482,7 @@ Player.prototype.pushData = function (watchTable) {
         } else {
             json = Object.assign({
                 trump: this.intendTrumpSuite ? this.intendTrumpSuite : '',
+                ptrumps: this.possibleTrumpSuites,
                 minBid: Config.SHOW_MINBID || table.showMinBid ? this.minBid : -1
             }, json);
         }
@@ -2328,6 +2329,7 @@ Player.prototype.promote = function (delta) {
 };
 
 Player.prototype.evaluate = function () {
+    this.possibleTrumpSuites = '';
     var numGames = this.currentTable.games.length;
     if (numGames > 1) {
       //debugger;
@@ -2364,6 +2366,8 @@ Player.prototype.evaluate = function () {
             honorPoints += 2;
         }
     }
+    
+    if(honorPoints > 0) this.possibleTrumpSuites += Card.SUITE.JOKER;
 
     function totalGameRankCard(suite) {
         var n = 0;
@@ -2378,6 +2382,11 @@ Player.prototype.evaluate = function () {
     var gameCardNumHeart = totalGameRankCard(this.hearts);
     var gameCardNumDiamond = totalGameRankCard(this.diamonds);
     var gameCardNumClub = totalGameRankCard(this.clubs);
+
+    if( gameCardNumDiamond > 0) this.possibleTrumpSuites = Card.SUITE.DIAMOND + this.possibleTrumpSuites;
+    if( gameCardNumClub > 0) this.possibleTrumpSuites = Card.SUITE.CLUB + this.possibleTrumpSuites;
+    if( gameCardNumHeart > 0) this.possibleTrumpSuites = Card.SUITE.HEART + this.possibleTrumpSuites;
+    if( gameCardNumSpade > 0) this.possibleTrumpSuites = Card.SUITE.SPADE + this.possibleTrumpSuites;
 
     var totalGameCardNum = gameCardNumSpade + gameCardNumHeart + gameCardNumDiamond + gameCardNumClub;
     honorPoints += totalGameCardNum;
