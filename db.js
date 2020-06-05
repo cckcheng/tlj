@@ -15,6 +15,20 @@ function SqlDb() {
     };
 }
 
+function randomAuthCode() {
+    var maxCode = 999999;
+    var minCode = 100000;
+    var aCode = Math.floor(Math.random() * maxCode);
+    if(aCode < minCode) aCode += minCode;
+    return aCode;
+}
+
+function calcTime(addMinutes) {
+    // return total seconds from 1970-1-1, add given minutes
+    var seconds = Math.floor((new Date()).getTime()/1000);
+    return seconds + addMinutes * 60;
+}
+
 SqlDb.prototype.getCountryCode = function (ip, cb) {
     var aa = ip.split('.');
     var ipVal = 0;
@@ -65,6 +79,76 @@ SqlDb.prototype.recordUser = function (player, o) {
                     Mylog.log(err.message);
                 }
             });
+            
+            if(o.action === 'reg') {
+                Mylog.log(JSON.stringify(o));
+                var q20 = "select * from accounts where global_id=?";
+                var q21, q22;
+                var params;
+                var gId = o.gid ? o.gid : o.email;
+                mainDB.get(q20, [gId], (err, row) => {
+                    if (err) {
+                        Mylog.log(err.message);
+                        player.pushJson({action: 'ack'});
+                    } else {
+                        if(row) {
+                            q21 = "update accounts set email=? where global_id=?";
+                            mainDB.run(q21, [o.email, gId], function(err) {
+                                if (err) {
+                                    Mylog.log(err.message);
+                                }
+                            });
+                            q22 = "update users set account_id=? where player_id=?"
+                            mainDB.run(q22, [row.id, o.id], function(err) {
+                                if (err) {
+                                    Mylog.log(err.message);
+                                    player.pushJson({action: 'ack'});
+                                } else {
+                                    if(o.gid) {
+                                        player.pushJson({action: 'reg'});   // good to go
+                                    } else {
+                                        player.pushJson({action: 'ack'});
+                                    }
+                                }
+                            });
+                        } else {
+                            q21 = "Insert Into accounts (global_id,email,coins,verified,authcode,code_expiry)"
+                                + " values (?,?,?,?,?,?)";
+                            var authCode = randomAuthCode();  // need send email to user, TODO
+                            params = o.gid ? [o.gid, o.email, Config.INIT_COIN, 1, null, null]
+                                          : [o.email, o.email, Config.INIT_COIN, 0, authCode, calcTime(Config.AUTHCODE_EXPIRE_MINUTE)];
+                            mainDB.run(q21, params, function(err) {
+                                if (err) {
+                                    Mylog.log(err.message);
+                                    player.pushJson({action: 'ack'});
+                                } else {
+                                    q = "select last_insert_rowid() as accid";
+                                    mainDB.get(q, [], (err, row) => {
+                                        if(err) {
+                                            Mylog.log(err.message);
+                                            player.pushJson({action: 'ack'});
+                                        } else {
+                                            q22 = "update users set account_id=? where player_id=?"
+                                            mainDB.run(q22, [row.accid, o.id], function(err) {
+                                                if (err) {
+                                                    Mylog.log(err.message);
+                                                    player.pushJson({action: 'ack'});
+                                                } else {
+                                                    if(o.gid) {
+                                                        player.pushJson({action: 'reg'});   // good to go
+                                                    } else {
+                                                        player.pushJson({action: 'ack'});
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });  
+            }
         });
     });
 };
