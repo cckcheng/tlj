@@ -4,6 +4,7 @@ var sqlite3 = require('sqlite3').verbose();
 var Config = require('./conf');
 var Mylog = require('./mylog');
 var Card = require('./card');
+var Sendmail = require('./sendmail');
 
 function SqlDb() {
     this.country_db = new sqlite3.Database(Config.COUNTRY_DB);
@@ -107,14 +108,19 @@ SqlDb.prototype.recordUser = function (player, o) {
                                     if(o.gid) {
                                         player.pushJson({action: 'reg'});   // good to go
                                     } else {
-                                        player.pushJson({action: 'ack'});
+                                        player.pushJson({action: 'auth'});  // notify user to verify the authCode
                                     }
                                 }
                             });
                         } else {
                             q21 = "Insert Into accounts (global_id,email,coins,verified,authcode,code_expiry)"
                                 + " values (?,?,?,?,?,?)";
-                            var authCode = randomAuthCode();  // need send email to user, TODO
+                            var authCode = randomAuthCode();
+                            if(o.gid) {
+                                // authorised with social, no need verify
+                            } else {
+                                Sendmail.sendVerifyCode(o.email, o.lang, authCode);
+                            }
                             params = o.gid ? [o.gid, o.email, Config.INIT_COIN, 1, null, null]
                                           : [o.email, o.email, Config.INIT_COIN, 0, authCode, calcTime(Config.AUTHCODE_EXPIRE_MINUTE)];
                             mainDB.run(q21, params, function(err) {
@@ -137,7 +143,7 @@ SqlDb.prototype.recordUser = function (player, o) {
                                                     if(o.gid) {
                                                         player.pushJson({action: 'reg'});   // good to go
                                                     } else {
-                                                        player.pushJson({action: 'ack'});
+                                                        player.pushJson({action: 'auth'});  // notify user to verify the authCode
                                                     }
                                                 }
                                             });
