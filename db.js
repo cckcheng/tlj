@@ -48,10 +48,126 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     });
 };
 
+SqlDb.prototype.registerUser = function (player, o) {
+    var mainDB = this.db;
+
+    var q20 = "select * from accounts where global_id=?";
+    var q21, q22;
+    var params;
+    var gId = o.gid ? o.gid : o.email;
+    mainDB.get(q20, [gId], (err, row) => {
+        if (err) {
+            Mylog.log(err.message);
+            player.pushJson({action: 'ack'});
+        } else {
+            if(row) {
+                player.setAccountInfo(row);
+                var curTime = calcTime(0);
+                var codeExpiry = row.code_expiry;
+                var authCode = row.authcode;
+                var codeSentTime = row.code_send_time;
+                var expiryMinutes = Config.AUTHCODE_EXPIRE_MINUTE;
+                if(curTime >= codeExpiry) {
+                    authCode = randomAuthCode();
+                    codeExpiry = calcTime(Config.AUTHCODE_EXPIRE_MINUTE);
+                    codeSentTime = curTime;
+                    player.property.authcode = authCode;
+                } else if(curTime - codeSentTime >= 60) {
+                    codeSentTime = curTime;
+                    expiryMinutes = Math.floor((codeExpiry - curTime) / 60);
+                }
+                if(codeSentTime === curTime) {
+                    if(player.regTimes > 5) {
+                        return;
+                    }
+                    Sendmail.sendVerifyCode(o.email, o.lang, authCode, expiryMinutes);
+                    player.regTimes++;
+                }
+                
+                q21 = "update accounts set email=?,authcode=?,code_send_time=?,code_expiry=? where global_id=?";
+                mainDB.run(q21, [o.email, authCode, codeSentTime, codeExpiry, gId], function(err) {
+                    if (err) {
+                        Mylog.log(err.message);
+                    }
+                });
+                q22 = "update users set account_id=? where player_id=?"
+                mainDB.run(q22, [row.id, o.id], function(err) {
+                    if (err) {
+                        Mylog.log(err.message);
+                        player.pushJson({action: 'ack'});
+                    } else {
+                        player.setAccountInfo(row);
+                        if(o.gid) {
+                            player.pushJson({action: 'reg'});   // good to go
+                        } else {
+                            player.pushJson({action: 'auth'});  // notify user to verify the authCode
+                        }
+                    }
+                });
+            } else {
+                q21 = "Insert Into accounts (global_id,email,coins,verified,authcode,code_expiry,code_send_time)"
+                    + " values (?,?,?,?,?,?,?)";
+                var authCode = randomAuthCode();
+                if(o.gid) {
+                    // authorised with social, no need verify
+                } else {
+                    if(player.regTimes > 5) {
+                        return;
+                    }
+                    Sendmail.sendVerifyCode(o.email, o.lang, authCode, Config.AUTHCODE_EXPIRE_MINUTE);
+                    player.regTimes++;
+                }
+
+                params = o.gid ? [o.gid, o.email, Config.INIT_COIN, 1, null, null, null]
+                              : [o.email, o.email, Config.INIT_COIN, 0, authCode, calcTime(Config.AUTHCODE_EXPIRE_MINUTE), calcTime(0)];
+                mainDB.run(q21, params, function(err) {
+                    if (err) {
+                        Mylog.log(err.message);
+                        player.pushJson({action: 'ack'});
+                    } else {
+                        q = "select last_insert_rowid() as accid";
+                        mainDB.get(q, [], (err, row) => {
+                            if(err) {
+                                Mylog.log(err.message);
+                                player.pushJson({action: 'ack'});
+                            } else {
+                                q22 = "update users set account_id=? where player_id=?"
+                                mainDB.run(q22, [row.accid, o.id], function(err) {
+                                    if (err) {
+                                        Mylog.log(err.message);
+                                        player.pushJson({action: 'ack'});
+                                    } else {
+                                        if(o.gid) {
+                                            player.pushJson({action: 'reg'});   // good to go
+                                        } else {
+                                            player.pushJson({action: 'auth'});  // notify user to verify the authCode
+                                        }
+                                        player.setAccountInfo({
+                                            account_id: row.accid,
+                                            authcode: authCode,
+                                            coins: Config.INIT_COIN
+                                        });
+                                    }
+                                }).run('Insert Into transactions (account_id,coins,action) values (?,?,?)',
+                                        [row.accid,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
+                                    if (err) {
+                                        Mylog.log(err.message);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    });  
+};
+
 SqlDb.prototype.recordUser = function (player, o) {
     var port = player.sock.localPort;
     var mainDB = this.db;
-    var q = "select * from users where player_id=?";
+    var thisObj = this;
+    var q = "select * from users a left join accounts b on a.account_id=b.id where a.player_id=?";
     mainDB.get(q, [o.id], (err, row) => {
         if (err) {
         } else {
@@ -83,77 +199,7 @@ SqlDb.prototype.recordUser = function (player, o) {
             
             if(o.action === 'reg') {
                 Mylog.log(JSON.stringify(o));
-                var q20 = "select * from accounts where global_id=?";
-                var q21, q22;
-                var params;
-                var gId = o.gid ? o.gid : o.email;
-                mainDB.get(q20, [gId], (err, row) => {
-                    if (err) {
-                        Mylog.log(err.message);
-                        player.pushJson({action: 'ack'});
-                    } else {
-                        if(row) {
-                            q21 = "update accounts set email=? where global_id=?";
-                            mainDB.run(q21, [o.email, gId], function(err) {
-                                if (err) {
-                                    Mylog.log(err.message);
-                                }
-                            });
-                            q22 = "update users set account_id=? where player_id=?"
-                            mainDB.run(q22, [row.id, o.id], function(err) {
-                                if (err) {
-                                    Mylog.log(err.message);
-                                    player.pushJson({action: 'ack'});
-                                } else {
-                                    if(o.gid) {
-                                        player.pushJson({action: 'reg'});   // good to go
-                                    } else {
-                                        player.pushJson({action: 'auth'});  // notify user to verify the authCode
-                                    }
-                                }
-                            });
-                        } else {
-                            q21 = "Insert Into accounts (global_id,email,coins,verified,authcode,code_expiry)"
-                                + " values (?,?,?,?,?,?)";
-                            var authCode = randomAuthCode();
-                            if(o.gid) {
-                                // authorised with social, no need verify
-                            } else {
-                                Sendmail.sendVerifyCode(o.email, o.lang, authCode);
-                            }
-                            params = o.gid ? [o.gid, o.email, Config.INIT_COIN, 1, null, null]
-                                          : [o.email, o.email, Config.INIT_COIN, 0, authCode, calcTime(Config.AUTHCODE_EXPIRE_MINUTE)];
-                            mainDB.run(q21, params, function(err) {
-                                if (err) {
-                                    Mylog.log(err.message);
-                                    player.pushJson({action: 'ack'});
-                                } else {
-                                    q = "select last_insert_rowid() as accid";
-                                    mainDB.get(q, [], (err, row) => {
-                                        if(err) {
-                                            Mylog.log(err.message);
-                                            player.pushJson({action: 'ack'});
-                                        } else {
-                                            q22 = "update users set account_id=? where player_id=?"
-                                            mainDB.run(q22, [row.accid, o.id], function(err) {
-                                                if (err) {
-                                                    Mylog.log(err.message);
-                                                    player.pushJson({action: 'ack'});
-                                                } else {
-                                                    if(o.gid) {
-                                                        player.pushJson({action: 'reg'});   // good to go
-                                                    } else {
-                                                        player.pushJson({action: 'auth'});  // notify user to verify the authCode
-                                                    }
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    }
-                });  
+                thisObj.registerUser(player, o);
             }
         });
     });

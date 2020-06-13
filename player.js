@@ -14,6 +14,7 @@ Player.init = function() {
 function Player(o, mainServer) {
     this.mainServer = mainServer;
 
+    this.regTimes = 0;  // count register time to prevent attack
     this.premium = false;
     if (o) {
         this.id = o.id;
@@ -38,7 +39,7 @@ function Player(o, mainServer) {
         priority: 0,
         aiLevel: 0
     };
-
+    
     this.currentTable = null;
     this.matchInfo = null;
 
@@ -84,6 +85,10 @@ function Player(o, mainServer) {
             aiLevel: rec['ai_level']
         };
 
+        if(rec['account_id']) {
+            this.setAccountInfo(rec);
+        }
+
         var expireTime = rec['expire_time'];
         if(expireTime == null) {
             this.property.member = false;
@@ -93,6 +98,15 @@ function Player(o, mainServer) {
         this.property.member = currentTime <= expireTime;
     };
 
+    this.setAccountInfo = function(rec) {
+        this.property.account_id = rec['id'];
+        this.property.coins = rec['coins'];
+        this.property.authcode = rec['authcode'];
+        this.property.code_send_time = rec['code_send_time'];
+        this.property.code_expiry = rec['code_expiry'];
+        this.property.verified = rec['verified'];
+    },
+    
     this.isRobot = function() {
         return this.id == null && this.sock == null;
     };
