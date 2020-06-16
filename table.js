@@ -182,6 +182,11 @@ Table.MATCH_TYPE = {
         ranks: [10, 11, 12, 13, 14]
     }
 };
+Table.MATCH_TYPE['2->A'] = Table.MATCH_TYPE.FULL;
+Table.MATCH_TYPE['8->A'] = Table.MATCH_TYPE.HALF;
+Table.MATCH_TYPE['10->A'] = Table.MATCH_TYPE.EXPRESS;
+Table.MATCH_TYPE['5 10 K'] = Table.MATCH_TYPE.POINTS;
+Table.MATCH_TYPE['2->5'] = Table.MATCH_TYPE.FREE;
 
 Table.prototype.seatAvailable = function () {
     return this._positions.length > 0;
@@ -273,6 +278,7 @@ Table.prototype.terminate = function () {
 Table.prototype.resume = function (player) {
     if (this.dismissed) return false;
     if (player == null || player.currentTable !== this) return false;
+
     player.clearIdleTimer();
     if(this.pauseTimer != null) {
         clearTimeout(this.pauseTimer);
@@ -676,6 +682,24 @@ function procPlayCards(t, cards) {
     }
 }
 
+function highestRank(players) {
+    var maxRank = 0;
+    for(var x=0,p; p=players[x]; x++) {
+        if(p.matchInfo.currentRank > maxRank) {
+            maxRank = p.matchInfo.currentRank;
+        }
+    }
+    
+    return maxRank;
+}
+
+function needLongBreak(t) {
+    var num = t.games.length;
+    if(num < Config.LONG_BREAK_GAME_NUM || (num % Config.LONG_BREAK_GAME_NUM) !== 0) return false;
+    var threshold = t.matchType.ranks[t.matchType.ranks.length - 2];
+    return highestRank(t.players) < threshold;
+}
+
 function gameOver(t) {
     var enSummary = '';
     var zhSummary = '';
@@ -709,9 +733,12 @@ function gameOver(t) {
             t.matchOver = true;
         }
     }
+    
+    var pauseSeconds = Table.PAUSE_SECONDS_BETWEEN_GAME;
     if (!t.matchOver) {
-        enSummary += '\nNext game will start in ' + Table.PAUSE_SECONDS_BETWEEN_GAME + ' seconds.';
-        zhSummary += '\n下一局' + Table.PAUSE_SECONDS_BETWEEN_GAME + '秒后开始...';
+        if(needLongBreak(t)) pauseSeconds = Config.LONG_BREAK_MINUTES * 60;
+        enSummary += '\nNext game will start in ' + pauseSeconds + ' seconds.';
+        zhSummary += '\n下一局' + pauseSeconds + '秒后开始...';
     }
 
     var json = {
@@ -719,7 +746,7 @@ function gameOver(t) {
         seat: t.getSeat(t.game.contractor),
         hole: Card.cardsToString(t.game.holeCards),
         pt0: t.game.collectedPoint,
-        pause: t.matchOver ? 0 : Table.PAUSE_SECONDS_BETWEEN_GAME
+        pause: t.matchOver ? 0 : pauseSeconds
     };
     var langInfo = {
         en: {
@@ -751,8 +778,8 @@ function gameOver(t) {
         t.game = null;
         t.status = 'break';
         t.actionPlayerIdx = -1;
-        t.resumeTime = (new Date()).getTime() + Table.PAUSE_SECONDS_BETWEEN_GAME * 1000;
-        t.goPause(Table.PAUSE_SECONDS_BETWEEN_GAME);
+        t.resumeTime = (new Date()).getTime() + pauseSeconds * 1000;
+        t.goPause(pauseSeconds);
     }
 }
 
@@ -1045,7 +1072,8 @@ Table.createTable = function(player, category, o) {
     var mServer = player.mainServer;
     var mType = Table.MATCH_TYPE[o.tableType];
     if (mType == null) {
-        mType = Table.MATCH_TYPE.FREE;
+//        mType = Table.MATCH_TYPE.FREE;
+        mType = Table.MATCH_TYPE[Config.tableType];
     }
 
     if (mServer.allTables[category].length >= Config.TABLE_LIMIT[category]) {
@@ -1127,18 +1155,24 @@ Table.joinPlayer = function(player, category) {
     });
 
     var waitSeconds = getSecondsToNextSyncTable();
+    if(waitSeconds < 0) waitSeconds = Config.START_WAIT_SECONDS;
     if(waitSeconds > 0) {
-        table.status = 'break';
-        table.actionPlayerIdx = -1;
-        table.resumeTime = (new Date()).getTime() + waitSeconds * 1000;
-        table.resume(player);
-        table.goPause(waitSeconds);
+        Table.delayStart(table, waitSeconds, player);
     } else {
         table.startGame();
     }
 };
 
-Table.joinTable = function(player, json) {
+Table.delayStart = function(table, waitSeconds, player) {
+    var mServer = table.mainServer;
+    table.status = 'break';
+    table.actionPlayerIdx = -1;
+    table.resumeTime = (new Date()).getTime() + waitSeconds * 1000;
+    table.resume(mServer.activePlayers[player.id]);
+    table.goPause(waitSeconds);
+};
+
+Table.joinTable = function(player, json, tblPlayer) {
     var mServer = player.mainServer;
     var table;
     if(json.pass) {
@@ -1167,6 +1201,14 @@ Table.joinTable = function(player, json) {
         return;
     }
 
+    if (tblPlayer) {
+        if(table === tblPlayer.currentTable) {
+            tblPlayer.sock = player.sock;
+            table.resume(tblPlayer);
+            return;
+        }
+        tblPlayer.toRobot(-1);
+    }            
     if(!table.canJoin(player)) {
         player.sendMessage(Table.Messages.NoSeat[player.lang]);
     }

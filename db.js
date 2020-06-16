@@ -72,9 +72,12 @@ SqlDb.prototype.registerUser = function (player, o) {
                     codeExpiry = calcTime(Config.AUTHCODE_EXPIRE_MINUTE);
                     codeSentTime = curTime;
                     player.property.authcode = authCode;
+                    player.property.code_expiry = codeExpiry;
+                    player.property.code_send_time = codeSentTime;
                 } else if(curTime - codeSentTime >= 60) {
                     codeSentTime = curTime;
                     expiryMinutes = Math.floor((codeExpiry - curTime) / 60);
+                    player.property.code_send_time = codeSentTime;
                 }
                 if(codeSentTime === curTime) {
                     if(player.regTimes > 5) {
@@ -163,6 +166,39 @@ SqlDb.prototype.registerUser = function (player, o) {
     });  
 };
 
+SqlDb.prototype.updateRecord = function (tableName, idField, idVal, o) {
+    if(!o) return;
+    var keys = Object.keys(o);
+    if(!keys || keys.length < 1) return;
+    
+    var fields = "";
+    var params = [];
+    for(k in o) {
+        fields += "," + k + "=?";
+        params.push(o[k]);
+    }
+    var q = "update " + tableName + " set " + fields.substr(1) + " where " + idField + "=?";
+    params.push(idVal);
+    this.db.run(q, params, (err) => {
+        if(err) Mylog.log(err.message);
+    });
+};
+
+SqlDb.prototype.verifyAccount = function (player, o) {
+    var curTime = calcTime(0);
+    if(player.property.code_expiry && curTime > player.property.code_expiry) {
+        player.sendMessage(player.lang === 'zh' ?  '验证码已失效' : 'Verification code expired');
+        return;
+    }
+
+    if(o.code == player.property.authcode) {
+        player.pushJson({action: 'reg'});
+        this.updateRecord('accounts', 'id', player.property.account_id, {verified: 1});
+    } else {
+        player.sendMessage(player.lang === 'zh' ? '验证码错误' : 'Incorrect verification code');
+    }
+};
+
 SqlDb.prototype.recordUser = function (player, o) {
     var port = player.sock.localPort;
     var mainDB = this.db;
@@ -172,7 +208,12 @@ SqlDb.prototype.recordUser = function (player, o) {
         if (err) {
         } else {
             if(row) {
-                if(player) player.setProperty(row);
+                if(player) {
+                    player.setProperty(row);
+                    if(o.action === 'auth') {
+                        thisObj.verifyAccount(player, o);
+                    }
+                }
             } else {
                 if(port === Config.PORT_IOS) {
                     player.property.member = true;
