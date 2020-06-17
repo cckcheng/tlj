@@ -85,6 +85,7 @@ SqlDb.prototype.registerUser = function (player, o) {
                     }
                     Sendmail.sendVerifyCode(o.email, o.lang, authCode, expiryMinutes);
                     player.regTimes++;
+                    Mylog.log("1 code_expiry=" + player.property.code_expiry);
                 }
                 
                 q21 = "update accounts set email=?,authcode=?,code_send_time=?,code_expiry=? where global_id=?";
@@ -99,7 +100,7 @@ SqlDb.prototype.registerUser = function (player, o) {
                         Mylog.log(err.message);
                         player.pushJson({action: 'ack'});
                     } else {
-                        player.setAccountInfo(row);
+                        //player.setAccountInfo(row);
                         if(o.gid) {
                             player.pushJson({action: 'reg'});   // good to go
                         } else {
@@ -121,8 +122,9 @@ SqlDb.prototype.registerUser = function (player, o) {
                     player.regTimes++;
                 }
 
+                var codeExpiry = calcTime(Config.AUTHCODE_EXPIRE_MINUTE);
                 params = o.gid ? [o.gid, o.email, Config.INIT_COIN, 1, null, null, null]
-                              : [o.email, o.email, Config.INIT_COIN, 0, authCode, calcTime(Config.AUTHCODE_EXPIRE_MINUTE), calcTime(0)];
+                              : [o.email, o.email, Config.INIT_COIN, 0, authCode, codeExpiry, calcTime(0)];
                 mainDB.run(q21, params, function(err) {
                     if (err) {
                         Mylog.log(err.message);
@@ -148,6 +150,7 @@ SqlDb.prototype.registerUser = function (player, o) {
                                         player.setAccountInfo({
                                             account_id: row.accid,
                                             authcode: authCode,
+                                            code_expiry: codeExpiry,
                                             coins: Config.INIT_COIN
                                         });
                                     }
@@ -186,6 +189,8 @@ SqlDb.prototype.updateRecord = function (tableName, idField, idVal, o) {
 
 SqlDb.prototype.verifyAccount = function (player, o) {
     var curTime = calcTime(0);
+    Mylog.log("code_expiry=" + player.property.code_expiry);
+    Mylog.log("curTime=" + curTime);
     if(player.property.code_expiry && curTime > player.property.code_expiry) {
         player.sendMessage(player.lang === 'zh' ?  '验证码已失效' : 'Verification code expired');
         return;
