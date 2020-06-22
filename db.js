@@ -62,46 +62,49 @@ SqlDb.prototype.registerUser = function (player, o) {
         } else {
             if(row) {
                 player.setAccountInfo(row);
-                var curTime = calcTime(0);
-                var codeExpiry = row.code_expiry;
-                var authCode = row.authcode;
-                var codeSentTime = row.code_send_time;
-                var expiryMinutes = Config.AUTHCODE_EXPIRE_MINUTE;
-                if(curTime >= codeExpiry) {
-                    authCode = randomAuthCode();
-                    codeExpiry = calcTime(Config.AUTHCODE_EXPIRE_MINUTE);
-                    codeSentTime = curTime;
-                    player.property.authcode = authCode;
-                    player.property.code_expiry = codeExpiry;
-                    player.property.code_send_time = codeSentTime;
-                } else if(curTime - codeSentTime >= 60) {
-                    codeSentTime = curTime;
-                    expiryMinutes = Math.floor((codeExpiry - curTime) / 60);
-                    player.property.code_send_time = codeSentTime;
-                }
-                if(codeSentTime === curTime) {
-                    if(player.regTimes > 5) {
-                        return;
+                if(o.gid || o.email == Config.REVIEW_USER) {
+                } else {
+                    var curTime = calcTime(0);
+                    var codeExpiry = row.code_expiry;
+                    var authCode = row.authcode;
+                    var codeSentTime = row.code_send_time;
+                    var expiryMinutes = Config.AUTHCODE_EXPIRE_MINUTE;
+                    if(curTime >= codeExpiry) {
+                        authCode = randomAuthCode();
+                        codeExpiry = calcTime(Config.AUTHCODE_EXPIRE_MINUTE);
+                        codeSentTime = curTime;
+                        player.property.authcode = authCode;
+                        player.property.code_expiry = codeExpiry;
+                        player.property.code_send_time = codeSentTime;
+                    } else if(curTime - codeSentTime >= 60) {
+                        codeSentTime = curTime;
+                        expiryMinutes = Math.floor((codeExpiry - curTime) / 60);
+                        player.property.code_send_time = codeSentTime;
                     }
-                    Sendmail.sendVerifyCode(o.email, o.lang, authCode, expiryMinutes);
-                    player.regTimes++;
-                    Mylog.log("1 code_expiry=" + player.property.code_expiry);
+                    if(codeSentTime === curTime) {
+                        if(player.regTimes > 5) {
+                            return;
+                        }
+                        Sendmail.sendVerifyCode(o.email, o.lang, authCode, expiryMinutes);
+                        player.regTimes++;
+                        Mylog.log("1 code_expiry=" + player.property.code_expiry);
+                    }
+                    
+                    q21 = "update accounts set email=?,authcode=?,code_send_time=?,code_expiry=? where global_id=?";
+                    mainDB.run(q21, [o.email, authCode, codeSentTime, codeExpiry, gId], function(err) {
+                        if (err) {
+                            Mylog.log(err.message);
+                        }
+                    });
                 }
                 
-                q21 = "update accounts set email=?,authcode=?,code_send_time=?,code_expiry=? where global_id=?";
-                mainDB.run(q21, [o.email, authCode, codeSentTime, codeExpiry, gId], function(err) {
-                    if (err) {
-                        Mylog.log(err.message);
-                    }
-                });
                 q22 = "update users set account_id=? where player_id=?"
                 mainDB.run(q22, [row.id, o.id], function(err) {
                     if (err) {
                         Mylog.log(err.message);
                         player.pushJson({action: 'ack'});
                     } else {
-                        //player.setAccountInfo(row);
-                        if(o.gid) {
+                        if(o.gid || o.email == Config.REVIEW_USER) {
                             player.pushJson({action: 'reg'});   // good to go
                         } else {
                             player.pushJson({action: 'auth'});  // notify user to verify the authCode
@@ -112,7 +115,7 @@ SqlDb.prototype.registerUser = function (player, o) {
                 q21 = "Insert Into accounts (global_id,email,coins,verified,authcode,code_expiry,code_send_time)"
                     + " values (?,?,?,?,?,?,?)";
                 var authCode = randomAuthCode();
-                if(o.gid) {
+                if(o.gid || o.email == Config.REVIEW_USER) {
                     // authorised with social, no need verify
                 } else {
                     if(player.regTimes > 5) {
@@ -142,7 +145,7 @@ SqlDb.prototype.registerUser = function (player, o) {
                                         Mylog.log(err.message);
                                         player.pushJson({action: 'ack'});
                                     } else {
-                                        if(o.gid) {
+                                        if(o.gid || o.email == Config.REVIEW_USER) {
                                             player.pushJson({action: 'reg'});   // good to go
                                         } else {
                                             player.pushJson({action: 'auth'});  // notify user to verify the authCode
