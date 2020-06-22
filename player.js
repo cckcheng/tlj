@@ -2334,6 +2334,7 @@ Player.prototype.buryCards = function (strCards) {
     if (Config.DEBUGGING) Mylog.log("hole cards: " + strCards);
     this.pushJson({
         action: 'bury',
+        def: this.autoPartner(),
         cards: strCards
     });
 };

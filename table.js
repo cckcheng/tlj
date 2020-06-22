@@ -479,6 +479,7 @@ function procAfterBid(t) {
     var bidOver = t.players[t.actionPlayerIdx] === t.game.contractor;
     if (bidOver) {
         obj.bidOver = "yes";
+        obj.itrump = t.game.contractor.intendTrumpSuite;
     }
     t.broadcastGameInfo(obj);
 
