@@ -105,7 +105,17 @@ function Player(o, mainServer) {
         this.property.code_send_time = rec['code_send_time'];
         this.property.code_expiry = rec['code_expiry'];
         this.property.verified = rec['verified'];
-    },
+        if(this.property.account_id) {
+            this.pushJson({action: 'acc', coin: this.property.coins});
+        }
+    };
+    
+    this.checkBalance = function(coins) {
+        if(this.property.account_id == null) return true;
+        if(coins <= 0 || this.property.coins >= coins) return true;
+        this.pushJson({action: 'coin'});
+        return false;
+    };
     
     this.isRobot = function() {
         return this.id == null && this.sock == null;

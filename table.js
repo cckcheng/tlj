@@ -29,6 +29,7 @@ function Table(o, mainServer, category) {
 
     this.id = null;
     this.category = category ? category : 'NOVICE';
+    this.coins = 0;
     this.players = new Array(SEAT_NUMBER);
     this.visiters = [];
     this.robots = [];
@@ -719,8 +720,8 @@ function gameOver(t) {
     t.game.promote();
     enSummary += t.game.enSummary;
     zhSummary += t.game.zhSummary;
-    enSummary += t.game.playerStatusEn;
-    zhSummary += t.game.playerStatusZh;
+//    enSummary += t.game.playerStatusEn + '\n';
+//    zhSummary += t.game.playerStatusZh + '\n';
     t.playerStatus = t.playerNames();
     t.mainServer.myDB.recordGameResult(t);
 
@@ -738,8 +739,8 @@ function gameOver(t) {
     var pauseSeconds = Table.PAUSE_SECONDS_BETWEEN_GAME;
     if (!t.matchOver) {
         if(needLongBreak(t)) pauseSeconds = Config.LONG_BREAK_MINUTES * 60;
-        enSummary += '\nNext game will start in ' + pauseSeconds + ' seconds.';
-        zhSummary += '\n下一局' + pauseSeconds + '秒后开始...';
+        enSummary += 'Next game will start in ' + pauseSeconds + ' seconds.';
+        zhSummary += '下一局' + pauseSeconds + '秒后开始...';
     }
 
     var json = {
@@ -776,6 +777,7 @@ function gameOver(t) {
             t.terminate();
         }, 8000, t);
     } else {
+        pauseSeconds += Config.PAUSE_SECONDS_BETWEEN_ROUND;
         t.game = null;
         t.status = 'break';
         t.actionPlayerIdx = -1;
@@ -1070,6 +1072,11 @@ Table.prototype.canJoin = function (player) {
 Table.createTable = function(player, category, o) {
     if(category == null || category == '') category = 'novice';
     category = category.toUpperCase();
+    var coins = 0;
+    var tabCat = Table.CATEGORY[category];
+    if(tabCat) coins = tabCat.coins;
+    if(!player.checkBalance(coins)) return;
+    
     var mServer = player.mainServer;
     var mType = Table.MATCH_TYPE[o.tableType];
     if (mType == null) {
@@ -1083,6 +1090,7 @@ Table.createTable = function(player, category, o) {
     }
     
     var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
+    table.coins = coins;
     mServer.allTables[category].push(table);
 //    table.addPlayer(player);
 
@@ -1129,7 +1137,7 @@ Table.joinPlayer = function(player, category) {
         case 'NOVICE':
         case 'INTERMEDIATE':
         case 'ADVANCED':
-            break;
+            break;            
         default:
             Mylog.log("category= " + category);
             return;
@@ -1139,7 +1147,10 @@ Table.joinPlayer = function(player, category) {
         player.sendNotification(Config.MEMBERSHIP);
         return;
     }
-    
+
+    var coins = Table.CATEGORY[category].coins;
+    if(!player.checkBalance(coins)) return;
+
     var avlTables = mServer.allTables[category];
     for(var x=avlTables.length-1, t; x>=0 && (t=avlTables[x]); x--) {
         if(!t.allowJoin || t.passCode > 0) continue;
@@ -1202,6 +1213,8 @@ Table.joinTable = function(player, json, tblPlayer) {
         return;
     }
 
+    if(!player.checkBalance(table.coins)) return;
+    
     if (tblPlayer) {
         if(table === tblPlayer.currentTable) {
             tblPlayer.sock = player.sock;
@@ -1232,21 +1245,25 @@ Table.watchTable = function(player, tid) {
 Table.CATEGORY = {
     PRACTICE: {
         icon: 58678,
+        coins: 0,
         en: 'Practice',
         zh: '练习'
     },
     NOVICE: {
         icon: 58726,
+        coins: 50,
         en: 'Novice',
         zh: '初级'
     },
     INTERMEDIATE: {
         icon: 58673,
+        coins: 200,
         en: 'Intermediate',
         zh: '中级'
     },
     ADVANCED: {
         icon: 58676,
+        coins: 500,
         en: 'Advanced',
         zh: '高级'
     }
@@ -1255,14 +1272,15 @@ Table.CATEGORY = {
 Table.pushTableList = function(player) {
     var mServer = player.mainServer;
     var json = {action: 'list', category: ''};
-    var first = true;
+    var first = true, cat;
     for(k in Table.CATEGORY) {
         if(first) {
             first = false;
         } else {
             json.category += ',';
         }
-        json.category += k + '|' + Table.CATEGORY[k][player.lang] + '|' + Table.CATEGORY[k].icon;
+        cat = Table.CATEGORY[k];
+        json.category += k + '|' + cat[player.lang] + '|' + cat.icon + '|' + cat.coins;
         writeTableList(player, json, k, mServer.allTables[k]);
     }
     player.pushJson(json);

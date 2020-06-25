@@ -207,6 +207,30 @@ SqlDb.prototype.verifyAccount = function (player, o) {
     }
 };
 
+SqlDb.prototype.readAccount = function (player, o) {
+    var port = player.sock.localPort;
+    var mainDB = this.db;
+    var thisObj = this;
+    var q = "select * from users a left join accounts b on a.account_id=b.id where a.player_id=?";
+    mainDB.get(q, [o.id], (err, row) => {
+        if (err) {
+        } else {
+            if(row) {
+                if(player) {
+                    player.setProperty(row);
+                    if(o.action === 'auth') {
+                        thisObj.verifyAccount(player, o);
+                    }
+                }
+            } else {
+                if(port === Config.PORT_IOS) {
+                    player.property.member = true;
+                } 
+            }
+        }
+    });
+};
+
 SqlDb.prototype.recordUser = function (player, o) {
     var port = player.sock.localPort;
     var mainDB = this.db;
