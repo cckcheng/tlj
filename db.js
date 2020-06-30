@@ -51,6 +51,7 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
 SqlDb.prototype.registerUser = function (player, o) {
     var mainDB = this.db;
 
+    if(o.email) o.email = o.email.toLowerCase();
     var q20 = "select * from accounts where global_id=?";
     var q21, q22;
     var params;

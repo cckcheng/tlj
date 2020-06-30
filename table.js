@@ -803,7 +803,7 @@ function procAfterPause(t) {
             t.actionPlayerIdx = 0;
         }
 
-        t.autoPlay(t.game.leadingPlayer.totalCardLeft() <= 1);
+        t.autoPlay(t.game.leadingPlayer && t.game.leadingPlayer.totalCardLeft() <= 1);
     } else {
         if (t.allRobots()) {
             t.status = 'pending';
@@ -1272,6 +1272,14 @@ Table.CATEGORY = {
 Table.pushTableList = function(player) {
     var mServer = player.mainServer;
     var json = {action: 'list', category: ''};
+    
+    var players = Object.keys(mServer.activePlayers);
+    if(players.length > 0) {
+        var tables = Object.keys(mServer.tableListById);
+        json.stat = players.length + ' player' + (players.length>1 ? 's' : '') + ', ' 
+                  + tables.length + ' table' + (tables.length>1 ? 's' : ''); 
+    }
+    
     var first = true, cat;
     for(k in Table.CATEGORY) {
         if(first) {
@@ -1282,6 +1290,9 @@ Table.pushTableList = function(player) {
         cat = Table.CATEGORY[k];
         json.category += k + '|' + cat[player.lang] + '|' + cat.icon + '|' + cat.coins;
         writeTableList(player, json, k, mServer.allTables[k]);
+    }
+    if(player.property.account_id) {
+        json.coin = player.property.coins;
     }
     player.pushJson(json);
 //    Mylog.log('tables: ' + json.category);
