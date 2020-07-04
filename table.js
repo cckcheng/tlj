@@ -189,6 +189,33 @@ Table.MATCH_TYPE['10->A'] = Table.MATCH_TYPE.EXPRESS;
 Table.MATCH_TYPE['5 10 K'] = Table.MATCH_TYPE.POINTS;
 Table.MATCH_TYPE['2->5'] = Table.MATCH_TYPE.FREE;
 
+Table.OPTIONS = {
+    A: {  // Any trump
+        en: 'No trump restriction',
+        zh: '任意定主'
+    },
+    
+    L: {  // Late trump
+        en: 'Late trump set',
+        zh: '起底后定主'
+    },
+    
+    M: {  // Penalty point multiple
+        en: 'Hole point multiple',
+        zh: '抠底倍数'
+    },
+    
+    W: {  // match start waiting
+        en: 'Wait for players join',
+        zh: '等人入场'
+    },
+    
+    B: {  // long break
+        en: 'Long break time',
+        zh: '中场休息'
+    }
+};
+
 Table.prototype.seatAvailable = function () {
     return this._positions.length > 0;
 };
@@ -1251,18 +1278,21 @@ Table.CATEGORY = {
     },
     NOVICE: {
         icon: 58726,
+        opt: 'A',
         coins: 50,
         en: 'Novice',
         zh: '初级'
     },
     INTERMEDIATE: {
         icon: 58673,
+        opt: 'ALMWB',
         coins: 200,
         en: 'Intermediate',
         zh: '中级'
     },
     ADVANCED: {
         icon: 58676,
+        opt: 'A',
         coins: 500,
         en: 'Advanced',
         zh: '高级'
@@ -1289,6 +1319,7 @@ Table.pushTableList = function(player) {
         }
         cat = Table.CATEGORY[k];
         json.category += k + '|' + cat[player.lang] + '|' + cat.icon + '|' + cat.coins;
+        if(cat.opt) json.category += '|' + cat.opt;
         writeTableList(player, json, k, mServer.allTables[k]);
     }
     if(player.property.account_id) {

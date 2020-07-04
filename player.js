@@ -2441,9 +2441,6 @@ Player.prototype.evaluate = function () {
                 iTrumps.push(c);
         }
 
-        if (iTrumps.length <= 8)
-            return 0;
-
         var point = iTrumps.length / 3.0; // length point
         if (iTrumps.length > 14) {
             // extra length bonus
@@ -2481,7 +2478,7 @@ Player.prototype.evaluate = function () {
 
     this.intendTrumpSuite = Card.SUITE.JOKER;
     if (totalGameCardNum > 0) {
-        var maxTrumpPoint = 0;
+        var maxTrumpPoint = -1;
 
         if(gameCardNumSpade >0 ){
             var trumpPointSpade = trumpPoint(this, Card.SUITE.SPADE);
