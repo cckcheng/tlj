@@ -29,6 +29,7 @@ function Table(o, mainServer, category) {
 
     this.id = null;
     this.category = category ? category : 'NOVICE';
+    this.options = {};
     this.coins = 0;
     this.players = new Array(SEAT_NUMBER);
     this.visiters = [];
@@ -146,6 +147,29 @@ function Table(o, mainServer, category) {
             }
         }
         return ai;
+    };
+    
+    this.setOptions = function(opt) {
+        opts = opt.split(',');
+        for(var x in opts) {
+            switch(opts[x].charAt(0)) {
+                case 'A':
+                    this.options.anyTrump = true;
+                    break;
+                case 'L':
+                    this.options.lateTrump = true;
+                    break;
+                case 'M':
+                    
+                    break;
+                case 'W':
+                    
+                    break;
+                case 'B':
+                    
+                    break;
+            }
+        }
     };
 }
 
@@ -1117,6 +1141,7 @@ Table.createTable = function(player, category, o) {
     }
     
     var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
+    if(o.option) table.setOptions(o.option);
     table.coins = coins;
     mServer.allTables[category].push(table);
 //    table.addPlayer(player);
@@ -1278,7 +1303,7 @@ Table.CATEGORY = {
     },
     NOVICE: {
         icon: 58726,
-        opt: 'A',
+        opt: 'AB',
         coins: 50,
         en: 'Novice',
         zh: '初级'
@@ -1292,7 +1317,7 @@ Table.CATEGORY = {
     },
     ADVANCED: {
         icon: 58676,
-        opt: 'A',
+        opt: 'AB',
         coins: 500,
         en: 'Advanced',
         zh: '高级'

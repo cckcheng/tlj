@@ -2355,6 +2355,8 @@ Player.prototype.promote = function (delta) {
 
 Player.prototype.evaluate = function () {
     this.possibleTrumpSuites = '';
+    var anyTrump = this.currentTable.options.anyTrump;
+    if(anyTrump) this.possibleTrumpSuites = Card.SUITE.SPADE + Card.SUITE.HEART + Card.SUITE.DIAMOND + Card.SUITE.CLUB + Card.SUITE.JOKER;
     var numGames = this.currentTable.games.length;
     if (numGames > 1) {
       //debugger;
@@ -2392,7 +2394,10 @@ Player.prototype.evaluate = function () {
         }
     }
     
-    if(honorPoints > 0) this.possibleTrumpSuites += Card.SUITE.JOKER;
+    if(anyTrump) {
+    } else {
+        if(honorPoints > 0) this.possibleTrumpSuites += Card.SUITE.JOKER;
+    }
 
     function totalGameRankCard(suite) {
         var n = 0;
@@ -2408,10 +2413,13 @@ Player.prototype.evaluate = function () {
     var gameCardNumDiamond = totalGameRankCard(this.diamonds);
     var gameCardNumClub = totalGameRankCard(this.clubs);
 
-    if( gameCardNumDiamond > 0) this.possibleTrumpSuites = Card.SUITE.DIAMOND + this.possibleTrumpSuites;
-    if( gameCardNumClub > 0) this.possibleTrumpSuites = Card.SUITE.CLUB + this.possibleTrumpSuites;
-    if( gameCardNumHeart > 0) this.possibleTrumpSuites = Card.SUITE.HEART + this.possibleTrumpSuites;
-    if( gameCardNumSpade > 0) this.possibleTrumpSuites = Card.SUITE.SPADE + this.possibleTrumpSuites;
+    if(anyTrump) {
+    } else {
+        if( gameCardNumDiamond > 0) this.possibleTrumpSuites = Card.SUITE.DIAMOND + this.possibleTrumpSuites;
+        if( gameCardNumClub > 0) this.possibleTrumpSuites = Card.SUITE.CLUB + this.possibleTrumpSuites;
+        if( gameCardNumHeart > 0) this.possibleTrumpSuites = Card.SUITE.HEART + this.possibleTrumpSuites;
+        if( gameCardNumSpade > 0) this.possibleTrumpSuites = Card.SUITE.SPADE + this.possibleTrumpSuites;
+    }
 
     var totalGameCardNum = gameCardNumSpade + gameCardNumHeart + gameCardNumDiamond + gameCardNumClub;
     honorPoints += totalGameCardNum;
@@ -2477,31 +2485,31 @@ Player.prototype.evaluate = function () {
     }
 
     this.intendTrumpSuite = Card.SUITE.JOKER;
-    if (totalGameCardNum > 0) {
+    if (anyTrump || totalGameCardNum > 0) {
         var maxTrumpPoint = -1;
 
-        if(gameCardNumSpade >0 ){
+        if(anyTrump || gameCardNumSpade >0 ){
             var trumpPointSpade = trumpPoint(this, Card.SUITE.SPADE);
             if (trumpPointSpade > maxTrumpPoint) {
                 maxTrumpPoint = trumpPointSpade;
                 this.intendTrumpSuite = Card.SUITE.SPADE;
             }
         }
-        if(gameCardNumHeart >0 ){
+        if(anyTrump || gameCardNumHeart >0 ){
             var trumpPointHeart = trumpPoint(this, Card.SUITE.HEART);
             if (trumpPointHeart > maxTrumpPoint) {
                 maxTrumpPoint = trumpPointHeart;
                 this.intendTrumpSuite = Card.SUITE.HEART;
             }
         }
-        if(gameCardNumDiamond > 0) {
+        if(anyTrump || gameCardNumDiamond > 0) {
             var trumpPointDiamond = trumpPoint(this, Card.SUITE.DIAMOND);
             if (trumpPointDiamond > maxTrumpPoint) {
                 maxTrumpPoint = trumpPointDiamond;
                 this.intendTrumpSuite = Card.SUITE.DIAMOND;
             }
         }
-        if(gameCardNumClub > 0) {
+        if(anyTrump || gameCardNumClub > 0) {
             var trumpPointClub = trumpPoint(this, Card.SUITE.CLUB);
             if (trumpPointClub > maxTrumpPoint) {
                 maxTrumpPoint = trumpPointClub;
