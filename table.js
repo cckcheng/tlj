@@ -1413,7 +1413,7 @@ Table.CATEGORY = {
     },
     NOVICE: {
         icon: 58726,
-        opt: 'AB',
+        opt: '',
         coins: 50,
         prizePoolScale: 1,
         en: 'Novice',
