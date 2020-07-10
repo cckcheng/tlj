@@ -48,6 +48,35 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     });
 };
 
+SqlDb.prototype.updateAccount = function (playerId, action, coins) {
+    var mainDB = this.db;
+    var q0 = "Select account_id from users where player_id=?";
+    mainDB.get(q0, [playerId], (err, row) => {
+        if (err) {
+            Mylog.log(err.message);
+            player.pushJson({action: 'ack'});
+        } else {
+            if(row) {
+                var accId = row.account_id;
+                if(accId == null) return;
+                
+                var q1 = "Update accounts set coins=coins+" + coins;
+                if(action === Config.TRANSACTION.WIN) {
+                    q1 += ",profit=profit+" + coins + ",prize=prize+" + coins;
+                } else if(action === Config.TRANSACTION.CONSUME) {
+                    q1 += ",profit=profit+" + coins;
+                }
+                mainDB.run(q1 + " where id=?", [accId], (err) => {
+                    if(err) Mylog.log(err.message);
+                }).run("Insert Into transactions (account_id,coins,action) values (?,?,?)",
+                        [accId,coins,action], (err) => {
+                    if(err) Mylog.log(err.message);
+                });
+            }
+        }
+    });
+};
+
 SqlDb.prototype.registerUser = function (player, o) {
     var mainDB = this.db;
 

@@ -31,7 +31,10 @@ function Table(o, mainServer, category) {
     this.category = category ? category : 'NOVICE';
     this.options = {};
     this.coins = 0;
+    this.prizePoolScale = 1;
     this.players = new Array(SEAT_NUMBER);
+    
+    this.playerRecord = {};
     this.visiters = [];
     this.robots = [];
     this._positions = [];
@@ -100,6 +103,8 @@ function Table(o, mainServer, category) {
         if (gameNum < 1) return '';
 
         if(!this.matchOver) return this.playerStatus;
+        
+        if(this.finalSummary) return this.finalSummary;  // avoid run twice
 
         var summary = '';
         this.players.sort(function (a, b) {
@@ -107,17 +112,72 @@ function Table(o, mainServer, category) {
         });
 
         var pRank = 0, rnk;
+        var winners = {};
         for (var r = 1, x = 0, p; p = this.players[x]; x++) {
             rnk = p.matchInfo.currentRank;
             if (pRank !== 0 && rnk !== pRank) r = x + 1;
+            if(r<=3) {
+                if(winners[r] == null) {
+                    winners[r] = [];
+                }
+                winners[r].push(p);
+            }
             summary += (r === 1 ? 'Winner' : 'No. ' + r) + ': ' + p.name
                     + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
             pRank = rnk;
         }
+        
+        // reword winners
+        if(this.coins > 0) {
+            var totalPrize = this.players.length * this.coins * this.prizePoolScale;
+            var p1 = totalPrize * 0.5;
+            var p2 = totalPrize * 0.3;
+            var p3 = totalPrize * 0.2;
+            var nm = winners[1].length;
+            if(nm >= 3) {
+                this.splitPrize(winners[1], totalPrize);
+            } else if(nm === 2) {
+                this.splitPrize(winners[1], p1 + p2);
+                this.splitPrize(winners[3], p3);
+            } else {
+                this.rewardPlayer(winners[1][0], p1);
+                
+                nm = winners[2].length;
+                if(nm > 1) {
+                    this.splitPrize(winners[2], p2 + p3);
+                } else {
+                    this.rewardPlayer(winners[2][0], p2);
+                    this.splitPrize(winners[3], p3);
+                }
+            }
+        }
+        
+        this.finalSummary = summary;
+        
 //        Mylog.log(summary);
         return summary;
     };
-
+    
+    this.splitPrize = function(players, total) {
+        var avgPrize = total / players.length;
+        for(var i in players) {
+            this.rewardPlayer(players[i], avgPrize);
+        }
+    };
+    
+    this.rewardPlayer = function(p, prize) {
+        if(!p.isRobot()) {
+            if(this.playerRecord[p.id] == null || !this.playerRecord[p.id].deducted) return;
+            this.mainServer.myDB.updateAccount(p.id, Config.TRANSACTION.WIN, prize);
+            if(p.sock != null) {
+                var player = Table.getOnlinePlayer(this.mainServer, p.sock);
+                if(player) {
+                    player.updateBalance(prize);
+                }
+            }
+        }
+    };
+    
     this.playerNames = function () {
         var s = '';
         this.players.forEach(function (p) {
@@ -457,6 +517,9 @@ Table.prototype.startGame = function (testOnly) {
     var langMsg;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.pushData();
+        if(!p.isRobot()) {
+            this.updatePlayerRecord(p.id);
+        }
         if (p.matchInfo.alert) {
             langMsg = p.matchInfo.alert;
             if (!p.canBid) {
@@ -1081,11 +1144,53 @@ Table.prototype.getNextRank = function (rank, delta) {
     return this.matchType.ranks[nextIdx];
 };
 
+Table.prototype.updatePlayerRecord = function (playerId, tblPlayer) {
+    if(this.coins < 1) return;
+
+    if(tblPlayer) {
+        if(this.playerRecord[playerId]) {
+            this.playerRecord[player.id].tblPlayer = tblPlayer;
+        } else {
+            this.playerRecord[playerId] = {
+                tblPlayer: tblPlayer,
+                deducted: false,  // whether deducted the match fee
+                games: {}
+            };
+        }
+    } else {
+        if(this.playerRecord[playerId] == null) {
+            Mylog.log('EXCEPTION: missing playerRecord: ' + playerId);
+            return;
+        }
+    }
+    
+    if(this.game && this.game.cardNumberPlayed <= Config.MAX_CARDS_PER_GAME_REWORD) {
+        var gm = this.games.length;
+        if(this.playerRecord[playerId].games[gm]) return;
+        this.playerRecord[playerId].games[gm] = true;
+        if(this.playerRecord[playerId].deducted) return;
+        
+        var gmPlayed = Object.keys(this.playerRecord[playerId].games).length;
+        if(gmPlayed >= Config.MIN_GAMES_REWORD) {
+            this.playerRecord[playerId].deducted = true;
+            this.mainServer.myDB.updateAccount(playerId, Config.TRANSACTION.CONSUME, -this.coins);
+            var sock = this.playerRecord[playerId].tblPlayer.sock;
+            if(sock != null) {
+                var player = Table.getOnlinePlayer(this.mainServer, sock);
+                if(player) {
+                    player.updateBalance(-this.coins);
+                }
+            }
+        }
+    }
+};
+
 Table.prototype.linkPlayer = function (player) {
     if(this.robots.length < 1) return false;
-    var robot = this.robots.pop();
+    var robot = this.robots.shift();
     robot.replaceRobot(player);
     this.mainServer.activePlayers[player.id] = robot;
+    this.updatePlayerRecord(player.id, robot);
     return true;
 };
 
@@ -1107,11 +1212,14 @@ Table.prototype.canJoin = function (player) {
 
     var watchTable = player.currentTable;
     var orgPlayer = player;
-    var robot = this.robots.pop();
+    var robot = this.robots.shift();
 
     robot.replaceRobot(player);
     this.mainServer.activePlayers[player.id] = player = robot;
     if(!this.resume(player)) return false;
+    
+    this.updatePlayerRecord(player.id, robot);
+
     if(watchTable != null) {
         watchTable.removeVisiter(orgPlayer);
     }
@@ -1143,6 +1251,7 @@ Table.createTable = function(player, category, o) {
     var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
     if(o.option) table.setOptions(o.option);
     table.coins = coins;
+    if(coins > 0) table.prizePoolScale = tabCat.prizePoolScale;
     mServer.allTables[category].push(table);
 //    table.addPlayer(player);
 
@@ -1298,6 +1407,7 @@ Table.CATEGORY = {
     PRACTICE: {
         icon: 58678,
         coins: 0,
+        prizePoolScale: 1,
         en: 'Practice',
         zh: '练习'
     },
@@ -1305,6 +1415,7 @@ Table.CATEGORY = {
         icon: 58726,
         opt: 'AB',
         coins: 50,
+        prizePoolScale: 1,
         en: 'Novice',
         zh: '初级'
     },
@@ -1312,6 +1423,7 @@ Table.CATEGORY = {
         icon: 58673,
         opt: 'ALMWB',
         coins: 200,
+        prizePoolScale: 1.25,
         en: 'Intermediate',
         zh: '中级'
     },
@@ -1319,6 +1431,7 @@ Table.CATEGORY = {
         icon: 58676,
         opt: 'AB',
         coins: 500,
+        prizePoolScale: 1.5,
         en: 'Advanced',
         zh: '高级'
     }
@@ -1352,6 +1465,11 @@ Table.pushTableList = function(player) {
     }
     player.pushJson(json);
 //    Mylog.log('tables: ' + json.category);
+};
+
+Table.getOnlinePlayer = function(mainServer, sock){
+    var sockId = sock.remoteAddress + ':' + sock.remotePort;
+    return mainServer.onlinePlayers[sockId];
 };
 
 function writeTableList(player, json, k, tables) {

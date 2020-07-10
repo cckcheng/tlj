@@ -110,6 +110,13 @@ function Player(o, mainServer) {
         }
     };
     
+    this.updateBalance = function(coins) {
+        if(this.property.account_id) {
+            this.property.coins += coins;
+            this.pushJson({action: 'acc', coin: this.property.coins});
+        }
+    };
+    
     this.checkBalance = function(coins) {
         if(this.property.account_id == null) return true;
         if(coins <= 0 || this.property.coins >= coins) return true;
