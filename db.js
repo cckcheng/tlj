@@ -48,6 +48,56 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     });
 };
 
+SqlDb.prototype.getRanking = function(player, dt) {
+    var mainDB = this.db;
+    var json = {action: dt.action, lang: dt.lang, type: dt.type};
+    if(dt.lang === 'zh') {
+        json.title = '排行榜';
+    } else {
+        json.title = 'Ranking';
+    }
+    
+    var content = '';
+    var q1 = 'select b.player_name,a.profit,max(b.last_time) from accounts a join users b on a.id=b.account_id'
+          + ' where a.profit>0 group by a.id order by a.profit desc limit 10';
+    var q2 = 'select b.player_name,a.prize,max(b.last_time) from accounts a join users b on a.id=b.account_id'
+          + ' where a.prize>0 group by a.id order by a.prize desc limit 10';
+    var x = 1;
+    mainDB.serialize(() => {
+        mainDB.all(q1, [], (err, rows) => {
+            if (err) {
+                Mylog.log(err.message);
+                player.pushJson({action: 'ack'});
+                return;
+            } else {
+                content += dt.lang === 'zh' ? '按总盈余排行\n' : 'Ranking by total profit';
+                rows.forEach((row) => {
+                    content += '\n' + (x++) + '. ' + row.player_name + '   ' + row.profit;
+                });
+                if(x === 1) content += '\n---';
+            }
+        });
+
+        mainDB.all(q2, [], (err, rows) => {
+            if (err) {
+                Mylog.log(err.message);
+                player.pushJson({action: 'ack'});
+                return;
+            } else {
+                content += '\n\n';
+                content += dt.lang === 'zh' ? '按总奖金排行\n' : 'Ranking by total prize';
+                x = 1;
+                rows.forEach((row) => {
+                    content += '\n' + (x++) + '. ' + row.player_name + '   ' + row.prize;
+                });
+                if(x === 1) content += '\n---';
+                json.content = content;
+                player.pushJson(json);
+            }
+        });
+    });
+};
+
 SqlDb.prototype.updateAccount = function (playerId, action, coins) {
     var mainDB = this.db;
     var q0 = "Select account_id from users where player_id=?";

@@ -127,6 +127,8 @@ function Table(o, mainServer, category) {
             pRank = rnk;
         }
         
+        this.finalSummary = summary;
+        
         // reword winners
         if(this.coins > 0) {
             var totalPrize = this.players.length * this.coins * this.prizePoolScale;
@@ -152,14 +154,12 @@ function Table(o, mainServer, category) {
             }
         }
         
-        this.finalSummary = summary;
-        
 //        Mylog.log(summary);
         return summary;
     };
     
     this.splitPrize = function(players, total) {
-        var avgPrize = total / players.length;
+        var avgPrize = Math.round(total / players.length);
         for(var i in players) {
             this.rewardPlayer(players[i], avgPrize);
         }

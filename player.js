@@ -105,6 +105,9 @@ function Player(o, mainServer) {
         this.property.code_send_time = rec['code_send_time'];
         this.property.code_expiry = rec['code_expiry'];
         this.property.verified = rec['verified'];
+        
+        this.property.prize = rec['prize'] | 0;
+        this.property.profit = rec['profit'] | 0;
         if(this.property.account_id) {
             this.pushJson({action: 'acc', coin: this.property.coins});
         }
@@ -387,6 +390,28 @@ Player.prototype.showHand = function () {
     s += '\n';
 
     return s;
+};
+
+Player.prototype.pushAccountSummary = function (dt) {
+    var json = {action: dt.action, lang: dt.lang};
+    switch(dt.lang) {
+        case 'zh':
+            json.title = '账户信息';
+            json.content = '余额: ' + this.property.coins
+                + '\n总奖金: ' + this.property.prize
+                + '\n总盈余: ' + this.property.profit;
+            break;
+
+        case 'en':
+        default:
+            json.title = 'Account Summary';
+            json.content = 'Balance: ' + this.property.coins
+                + '\nTotal Prize: ' + this.property.prize
+                + '\nTotal Profit: ' + this.property.profit;
+            break;
+    }
+    
+    this.pushJson(json);
 };
 
 Player.prototype.pushJson = function (json) {
