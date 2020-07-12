@@ -59,7 +59,7 @@ SqlDb.prototype.getRanking = function(player, dt) {
     
     var content = '';
     var q1 = 'select b.player_name,a.profit,max(b.last_time) from accounts a join users b on a.id=b.account_id'
-          + ' where a.profit>0 group by a.id order by a.profit desc limit 10';
+          + ' where a.prize>0 or a.profit!=0 group by a.id order by a.profit desc limit 10';
     var q2 = 'select b.player_name,a.prize,max(b.last_time) from accounts a join users b on a.id=b.account_id'
           + ' where a.prize>0 group by a.id order by a.prize desc limit 10';
     var x = 1;
@@ -70,7 +70,7 @@ SqlDb.prototype.getRanking = function(player, dt) {
                 player.pushJson({action: 'ack'});
                 return;
             } else {
-                content += dt.lang === 'zh' ? '按总盈余排行\n' : 'Ranking by total profit';
+                content += dt.lang === 'zh' ? '按总盈余排行' : 'Ranking by total profit';
                 rows.forEach((row) => {
                     content += '\n' + (x++) + '. ' + row.player_name + '   ' + row.profit;
                 });
@@ -85,7 +85,7 @@ SqlDb.prototype.getRanking = function(player, dt) {
                 return;
             } else {
                 content += '\n\n';
-                content += dt.lang === 'zh' ? '按总奖金排行\n' : 'Ranking by total prize';
+                content += dt.lang === 'zh' ? '按总奖金排行' : 'Ranking by total prize';
                 x = 1;
                 rows.forEach((row) => {
                     content += '\n' + (x++) + '. ' + row.player_name + '   ' + row.prize;

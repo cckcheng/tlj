@@ -220,13 +220,13 @@ function Table(o, mainServer, category) {
                     this.options.lateTrump = true;
                     break;
                 case 'M':
-                    
+                    this.options.holeMultiple = opts[x].substring(1);
                     break;
                 case 'W':
-                    
+                    this.options.minPlayers = opts[x].charAt(1) - '0';
                     break;
                 case 'B':
-                    
+                    this.options.longBreakMinutes = parseInt(opts[x].substring(1));
                     break;
             }
         }
@@ -810,6 +810,7 @@ function highestRank(players) {
 }
 
 function needLongBreak(t) {
+    if(t.options.longBreakMinutes <= 0) return false;
     var num = t.games.length;
     if(num < Config.LONG_BREAK_GAME_NUM || (num % Config.LONG_BREAK_GAME_NUM) !== 0) return false;
     var threshold = t.matchType.ranks[t.matchType.ranks.length - 2];
@@ -852,7 +853,11 @@ function gameOver(t) {
     
     var pauseSeconds = Table.PAUSE_SECONDS_BETWEEN_GAME;
     if (!t.matchOver) {
-        if(needLongBreak(t)) pauseSeconds = Config.LONG_BREAK_MINUTES * 60;
+        if(needLongBreak(t)) {
+            pauseSeconds = t.options.longBreakMinutes * 60;
+            enSummary += 'Break time. ';
+            zhSummary += '休息一下, ';
+        }
         enSummary += 'Next game will start in ' + pauseSeconds + ' seconds.';
         zhSummary += '下一局' + pauseSeconds + '秒后开始...';
     }
@@ -1329,6 +1334,7 @@ Table.joinPlayer = function(player, category) {
 
     var waitSeconds = getSecondsToNextSyncTable();
     if(waitSeconds < 0) waitSeconds = Config.START_WAIT_SECONDS;
+
     if(waitSeconds > 0) {
         Table.delayStart(table, waitSeconds, player);
     } else {
@@ -1413,7 +1419,7 @@ Table.CATEGORY = {
     },
     NOVICE: {
         icon: 58726,
-        opt: '',
+        opt: 'WB',
         coins: 50,
         prizePoolScale: 1,
         en: 'Novice',
@@ -1421,7 +1427,7 @@ Table.CATEGORY = {
     },
     INTERMEDIATE: {
         icon: 58673,
-        opt: 'ALMWB',
+        opt: 'AWB',
         coins: 200,
         prizePoolScale: 1.25,
         en: 'Intermediate',
@@ -1429,7 +1435,7 @@ Table.CATEGORY = {
     },
     ADVANCED: {
         icon: 58676,
-        opt: 'AB',
+        opt: 'AWB',
         coins: 500,
         prizePoolScale: 1.5,
         en: 'Advanced',
