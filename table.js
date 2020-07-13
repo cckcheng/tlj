@@ -810,7 +810,7 @@ function highestRank(players) {
 }
 
 function needLongBreak(t) {
-    if(t.options.longBreakMinutes <= 0) return false;
+    if(t.options.longBreakMinutes == null || t.options.longBreakMinutes <= 0) return false;
     var num = t.games.length;
     if(num < Config.LONG_BREAK_GAME_NUM || (num % Config.LONG_BREAK_GAME_NUM) !== 0) return false;
     var threshold = t.matchType.ranks[t.matchType.ranks.length - 2];
@@ -1154,7 +1154,7 @@ Table.prototype.updatePlayerRecord = function (playerId, tblPlayer) {
 
     if(tblPlayer) {
         if(this.playerRecord[playerId]) {
-            this.playerRecord[player.id].tblPlayer = tblPlayer;
+            this.playerRecord[playerId].tblPlayer = tblPlayer;
         } else {
             this.playerRecord[playerId] = {
                 tblPlayer: tblPlayer,
