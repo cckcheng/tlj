@@ -394,23 +394,28 @@ Player.prototype.showHand = function () {
 
 Player.prototype.pushAccountSummary = function (dt) {
     var json = {action: dt.action, lang: dt.lang};
-    switch(dt.lang) {
-        case 'zh':
-            json.title = '账户信息';
-            json.content = '余额: ' + this.property.coins
-                + '\n总奖金: ' + this.property.prize
-                + '\n总盈余: ' + this.property.profit;
-            break;
-
-        case 'en':
-        default:
-            json.title = 'Account Summary';
-            json.content = 'Balance: ' + this.property.coins
-                + '\nTotal Prize: ' + this.property.prize
-                + '\nTotal Profit: ' + this.property.profit;
-            break;
-    }
+    if(this.property.account_id == null) {
+        json.title =  dt.lang === 'zh' ? '提示' : 'Alert';
+        json.content = dt.lang === 'zh' ? '请先注册' : 'Please register first';
+    } else {
+        switch(dt.lang) {
+            case 'zh':
+                json.title = '账户信息';
+                json.content = '余额: ' + this.property.coins
+                    + '\n总奖金: ' + this.property.prize
+                    + '\n总盈余: ' + this.property.profit;
+                break;
     
+            case 'en':
+            default:
+                json.title = 'Account Summary';
+                json.content = 'Balance: ' + this.property.coins
+                    + '\nTotal Prize: ' + this.property.prize
+                    + '\nTotal Profit: ' + this.property.profit;
+                break;
+        }
+    }
+        
     this.pushJson(json);
 };
 

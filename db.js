@@ -48,6 +48,46 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     });
 };
 
+SqlDb.prototype.addReferal = function(player, dt) {
+    if(player.property.account_id == null) {
+        player.pushJson({action: 'msg', lang: dt.lang, title: dt.lang === 'zh' ? '提示' : 'Alert',
+              content: dt.lang === 'zh' ? '请先注册' : 'Please register first'});
+        return;
+    }
+
+    var emails = dt.emails.split(',');
+    if(emails.length < 1) {
+        player.pushJson({action: 'ack'});
+        return;
+    }
+
+    var params = [];
+    var values = '';
+    for(var x in emails) {
+        values += ',(?,?,?)';
+        params.push(emails[x], dt.myname, player.property.account_id);
+    }
+
+    var q = "Insert or Ignore Into referal (email, refer_by, account_id) values " + values.substring(1);
+    
+    this.db.run(q, params, function(err) {
+        if(err) {
+            Mylog.log(err.message);
+        } else {
+//            Mylog.log('lastID referal: ' + JSON.stringify(Object.keys(this)));
+//            Mylog.log('lastID ' + this.lastID);
+//            Mylog.log('valid referals: ' + this.changes);
+            var content = '';
+            if(dt.lang === 'zh') {
+                content = '提交成功: ' + this.changes + '个有效email';
+            } else {
+                content = this.changes + ' valid email(s) submmited';
+            }
+            player.pushJson({action: 'msg', lang: dt.lang, title: 'Success', content: content});
+        }
+    });
+};
+
 SqlDb.prototype.getRanking = function(player, dt) {
     var mainDB = this.db;
     var json = {action: dt.action, lang: dt.lang, type: dt.type};
@@ -213,14 +253,9 @@ SqlDb.prototype.registerUser = function (player, o) {
                         Mylog.log(err.message);
                         player.pushJson({action: 'ack'});
                     } else {
-                        q = "select last_insert_rowid() as accid";
-                        mainDB.get(q, [], (err, row) => {
-                            if(err) {
-                                Mylog.log(err.message);
-                                player.pushJson({action: 'ack'});
-                            } else {
+                                var accountId = this.lastID;
                                 q22 = "update users set account_id=? where player_id=?"
-                                mainDB.run(q22, [row.accid, o.id], function(err) {
+                                mainDB.run(q22, [accountId, o.id], function(err) {
                                     if (err) {
                                         Mylog.log(err.message);
                                         player.pushJson({action: 'ack'});
@@ -231,20 +266,54 @@ SqlDb.prototype.registerUser = function (player, o) {
                                             player.pushJson({action: 'auth'});  // notify user to verify the authCode
                                         }
                                         player.setAccountInfo({
-                                            account_id: row.accid,
+                                            account_id: accountId,
                                             authcode: authCode,
                                             code_expiry: codeExpiry,
                                             coins: Config.INIT_COIN
                                         });
                                     }
                                 }).run('Insert Into transactions (account_id,coins,action) values (?,?,?)',
-                                        [row.accid,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
+                                        [accountId,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
+                                    if (err) {
+                                        Mylog.log(err.message);
+                                    }
+                                });
+/*
+                        q = "select last_insert_rowid() as accid";
+                        mainDB.get(q, [], (err, row) => {
+                            if(err) {
+                                Mylog.log(err.message);
+                                player.pushJson({action: 'ack'});
+                            } else {
+                                var accountId = row.accid;
+//                                var accountId = this.lastID;
+                                q22 = "update users set account_id=? where player_id=?"
+                                mainDB.run(q22, [accountId, o.id], function(err) {
+                                    if (err) {
+                                        Mylog.log(err.message);
+                                        player.pushJson({action: 'ack'});
+                                    } else {
+                                        if(o.gid || o.email == Config.REVIEW_USER) {
+                                            player.pushJson({action: 'reg'});   // good to go
+                                        } else {
+                                            player.pushJson({action: 'auth'});  // notify user to verify the authCode
+                                        }
+                                        player.setAccountInfo({
+                                            account_id: accountId,
+                                            authcode: authCode,
+                                            code_expiry: codeExpiry,
+                                            coins: Config.INIT_COIN
+                                        });
+                                    }
+                                }).run('Insert Into transactions (account_id,coins,action) values (?,?,?)',
+                                        [accountId,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
                                     if (err) {
                                         Mylog.log(err.message);
                                     }
                                 });
                             }
                         });
+*/
                     }
                 });
             }
