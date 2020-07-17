@@ -48,6 +48,31 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     });
 };
 
+SqlDb.prototype.testSendReferal = function(mailto, lang, referBy) {
+    Sendmail.sendReferal(mailto, lang, referBy);
+};
+
+SqlDb.prototype.sendReferal = function(accountId, lang) {
+    var q = 'select * from referal where account_id=? and sent=0';
+    var thisObj = this;
+    var mainDB = this.db;
+    mainDB.all(q, [accountId], (err, rows) => {
+        if (err) {
+            Mylog.log(err.message);
+        } else {
+            var ids = [];
+            rows.forEach((row) => {
+                Sendmail.sendReferal(row.email, lang, row.refer_by);
+                ids.push(row.id);
+            });
+            
+            ids.forEach((id) => {
+                thisObj.updateRecord('referal', 'id', id, {sent: 1});
+            });
+        }
+    });
+};
+
 SqlDb.prototype.addReferal = function(player, dt) {
     if(player.property.account_id == null) {
         player.pushJson({action: 'msg', lang: dt.lang, title: dt.lang === 'zh' ? '提示' : 'Alert',
@@ -70,7 +95,9 @@ SqlDb.prototype.addReferal = function(player, dt) {
 
     var q = "Insert or Ignore Into referal (email, refer_by, account_id) values " + values.substring(1);
     
-    this.db.run(q, params, function(err) {
+    var thisObj = this;
+    var mainDB = this.db;
+    mainDB.run(q, params, function(err) {
         if(err) {
             Mylog.log(err.message);
         } else {
@@ -84,6 +111,7 @@ SqlDb.prototype.addReferal = function(player, dt) {
                 content = this.changes + ' valid email(s) submmited';
             }
             player.pushJson({action: 'msg', lang: dt.lang, title: 'Success', content: content});
+            thisObj.sendReferal(player.property.account_id, dt.lang);
         }
     });
 };
@@ -253,67 +281,31 @@ SqlDb.prototype.registerUser = function (player, o) {
                         Mylog.log(err.message);
                         player.pushJson({action: 'ack'});
                     } else {
-                                var accountId = this.lastID;
-                                q22 = "update users set account_id=? where player_id=?"
-                                mainDB.run(q22, [accountId, o.id], function(err) {
-                                    if (err) {
-                                        Mylog.log(err.message);
-                                        player.pushJson({action: 'ack'});
-                                    } else {
-                                        if(o.gid || o.email == Config.REVIEW_USER) {
-                                            player.pushJson({action: 'reg'});   // good to go
-                                        } else {
-                                            player.pushJson({action: 'auth'});  // notify user to verify the authCode
-                                        }
-                                        player.setAccountInfo({
-                                            account_id: accountId,
-                                            authcode: authCode,
-                                            code_expiry: codeExpiry,
-                                            coins: Config.INIT_COIN
-                                        });
-                                    }
-                                }).run('Insert Into transactions (account_id,coins,action) values (?,?,?)',
-                                        [accountId,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
-                                    if (err) {
-                                        Mylog.log(err.message);
-                                    }
-                                });
-/*
-                        q = "select last_insert_rowid() as accid";
-                        mainDB.get(q, [], (err, row) => {
-                            if(err) {
+                        var accountId = this.lastID;
+                        q22 = "update users set account_id=? where player_id=?"
+                        mainDB.run(q22, [accountId, o.id], function(err) {
+                            if (err) {
                                 Mylog.log(err.message);
                                 player.pushJson({action: 'ack'});
                             } else {
-                                var accountId = row.accid;
-//                                var accountId = this.lastID;
-                                q22 = "update users set account_id=? where player_id=?"
-                                mainDB.run(q22, [accountId, o.id], function(err) {
-                                    if (err) {
-                                        Mylog.log(err.message);
-                                        player.pushJson({action: 'ack'});
-                                    } else {
-                                        if(o.gid || o.email == Config.REVIEW_USER) {
-                                            player.pushJson({action: 'reg'});   // good to go
-                                        } else {
-                                            player.pushJson({action: 'auth'});  // notify user to verify the authCode
-                                        }
-                                        player.setAccountInfo({
-                                            account_id: accountId,
-                                            authcode: authCode,
-                                            code_expiry: codeExpiry,
-                                            coins: Config.INIT_COIN
-                                        });
-                                    }
-                                }).run('Insert Into transactions (account_id,coins,action) values (?,?,?)',
-                                        [accountId,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
-                                    if (err) {
-                                        Mylog.log(err.message);
-                                    }
+                                if(o.gid || o.email == Config.REVIEW_USER) {
+                                    player.pushJson({action: 'reg'});   // good to go
+                                } else {
+                                    player.pushJson({action: 'auth'});  // notify user to verify the authCode
+                                }
+                                player.setAccountInfo({
+                                    account_id: accountId,
+                                    authcode: authCode,
+                                    code_expiry: codeExpiry,
+                                    coins: Config.INIT_COIN
                                 });
                             }
+                        }).run('Insert Into transactions (account_id,coins,action) values (?,?,?)',
+                                [accountId,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
+                            if (err) {
+                                Mylog.log(err.message);
+                            }
                         });
-*/
                     }
                 });
             }
