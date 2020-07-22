@@ -10,7 +10,7 @@ const {Game, Hand, SimpleHand} = require('./game');
 Table.init = function() {
     Config = require('./conf');
     Table.FastMode = false;
-    Table.HOLE_POINT_TIMES = 4;
+    Table.HOLE_POINT_TIMES = 4;  // default
     Table.SHOW_MINBID = Config.SHOW_MINBID ? true : false;
     Table.PAUSE_SECONDS_BETWEEN_GAME = Config.PAUSE_SECONDS_BETWEEN_GAME;
     Table.PAUSE_SECONDS_BETWEEN_ROUND = Config.PAUSE_SECONDS_BETWEEN_ROUND;
@@ -392,7 +392,7 @@ Table.CATEGORY = {
     },
     INTERMEDIATE: {
         icon: 58673,
-        opt: 'AWB',
+        opt: 'AMWB',
         coins: 200,
         prizePoolScale: 1.25,
         en: 'Intermediate',
@@ -400,7 +400,7 @@ Table.CATEGORY = {
     },
     ADVANCED: {
         icon: 58676,
-        opt: 'AWB',
+        opt: 'AMWB',
         coins: 500,
         prizePoolScale: 1.5,
         en: 'Advanced',
@@ -940,7 +940,13 @@ function gameOver(t) {
     if (holeCardsPoint > 0) {
         var leadPlayer = t.game.currentRound.getNextLeadingPlayer();
         if (leadPlayer !== t.game.contractor && leadPlayer != t.game.partner) {
-            var times = Table.HOLE_POINT_TIMES * t.game.currentRound.maxSubHandLength();
+            var maxLen = t.game.currentRound.maxSubHandLength();
+            var times = Table.HOLE_POINT_TIMES * maxLen;
+            if(t.options.holeMultiple === '2n') {
+                times = 2 * maxLen;
+            } else if(t.options.holeMultiple === '2^n') {
+                times = Math.pow(2, maxLen);
+            }
             var holePoints = holeCardsPoint * times;
             leadPlayer.addPoints(holePoints);
             zhSummary += '闲家抠底，底分翻' + times + '倍,共' + holePoints + '\n';
