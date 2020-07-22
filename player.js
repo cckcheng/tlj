@@ -404,6 +404,7 @@ Player.prototype.pushAccountSummary = function (dt) {
                 json.content = '余额: ' + this.property.coins
                     + '\n总奖金: ' + this.property.prize
                     + '\n总盈余: ' + this.property.profit;
+                json.content += '\n\n' + Config.SUPPORT['zh'];
                 break;
     
             case 'en':
@@ -412,10 +413,11 @@ Player.prototype.pushAccountSummary = function (dt) {
                 json.content = 'Balance: ' + this.property.coins
                     + '\nTotal Prize: ' + this.property.prize
                     + '\nTotal Profit: ' + this.property.profit;
+                json.content += '\n\n' + Config.SUPPORT['en'];
                 break;
         }
     }
-        
+
     this.pushJson(json);
 };
 

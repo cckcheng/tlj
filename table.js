@@ -18,6 +18,61 @@ Table.init = function() {
     Table.MAX_IDLE_MINUTES = Config.MAX_IDLE_MINUTES;
 };
 
+Table.Messages = {
+    AnyTrumpLate: {
+        en: 'Late trump definition, no restriction\n',
+        zh: '起底后任意定主\n'
+    },
+    AnyTrump: {
+        en: 'No trump restriction\n',
+        zh: '任意定主\n'
+    },
+    LateTrump: {
+        en: 'Late trump definition\n',
+        zh: '起底后定主\n'
+    },
+    HoleMultiple: {
+        en: 'Hole point multiple: ',
+        zh: '底分倍数: '
+    },
+    
+    PlayerIn: {
+        en: '{0} in',
+        zh: '{0}来了'
+    },
+    PlayerOut: {
+        en: '{0} out',
+        zh: '{0}走了'
+    },
+    PlayerWatching: {
+        en: '{0} is watching',
+        zh: '{0}来了, 在旁观'
+    },
+    
+    GameNumber: {
+        en: 'Game {0}',
+        zh: '第{0}局'
+    },
+    
+    TableEnded: {
+        en: 'Table ended',
+        zh: '该局已结束'
+    },
+    WrongPass: {
+        en: 'Wrong Password',
+        zh: '密码错误'
+    },
+    NoSeat: {
+        en: 'No Seat Available',
+        zh: '没有空座'
+    },
+    
+    AllTableFull: {
+        en: 'No table available. Please wait...',
+        zh: '没有空桌. 请稍候...'
+    }
+};
+
 const SEAT_NUMBER = 6;
 const DECK_NUMBER = 4;
 const ADD_SECONDS = 2;
@@ -210,6 +265,7 @@ function Table(o, mainServer, category) {
     };
     
     this.setOptions = function(opt) {
+        if(opt == null || opt.length < 1) return;
         opts = opt.split(',');
         for(var x in opts) {
             switch(opts[x].charAt(0)) {
@@ -230,6 +286,24 @@ function Table(o, mainServer, category) {
                     break;
             }
         }
+        
+        this.options.summary = {en: '', zh: ''};
+        if(this.options.anyTrump && this.options.lateTrump) {
+            this.options.summary.en += Table.Messages.AnyTrumpLate.en;
+            this.options.summary.zh += Table.Messages.AnyTrumpLate.zh;
+        } else if(this.options.anyTrump) {
+            this.options.summary.en += Table.Messages.AnyTrump.en;
+            this.options.summary.zh += Table.Messages.AnyTrump.zh;
+        } else if(this.options.lateTrump) {
+            this.options.summary.en += Table.Messages.LateTrump.en;
+            this.options.summary.zh += Table.Messages.LateTrump.zh;
+        }
+        
+        if(this.options.holeMultiple != null) {
+            this.options.summary.en += Table.Messages.HoleMultiple.en + this.options.holeMultiple;
+            this.options.summary.zh += Table.Messages.HoleMultiple.zh + this.options.holeMultiple;
+        } 
+        if(this.options.summary.en.length < 1) this.options.summary = null;
     };
 }
 
@@ -297,6 +371,40 @@ Table.OPTIONS = {
     B: {  // long break
         en: 'Long break time',
         zh: '中场休息'
+    }
+};
+
+Table.CATEGORY = {
+    PRACTICE: {
+        icon: 58678,
+        coins: 0,
+        prizePoolScale: 1,
+        en: 'Practice',
+        zh: '练习'
+    },
+    NOVICE: {
+        icon: 58726,
+        opt: 'WB',
+        coins: 50,
+        prizePoolScale: 1,
+        en: 'Novice',
+        zh: '初级'
+    },
+    INTERMEDIATE: {
+        icon: 58673,
+        opt: 'AWB',
+        coins: 200,
+        prizePoolScale: 1.25,
+        en: 'Intermediate',
+        zh: '中级'
+    },
+    ADVANCED: {
+        icon: 58676,
+        opt: 'AWB',
+        coins: 500,
+        prizePoolScale: 1.5,
+        en: 'Advanced',
+        zh: '高级'
     }
 };
 
@@ -434,9 +542,14 @@ Table.prototype.resume = function (player) {
             case 'break':
                 player.pushData();
                 if(this.games.length < 1) {
-                    player.sendMessage(
-                        player.lang === 'zh' ? '新桌，等待玩家加入...' : 'New table, please wait for other players...'
-                    );
+                    var msg = '';
+                    if(this.options.summary != null) {
+                        msg = this.options.summary[player.lang];
+                    } else {
+                        msg = player.lang === 'zh' ? '新桌，等待玩家加入...' : 'New table, please wait for other players...';
+                    }
+                    if(msg != null) player.sendMessage(msg);
+                    return true;
                 }
                 break;
             case 'pending':
@@ -445,6 +558,9 @@ Table.prototype.resume = function (player) {
         }
     }
 
+    if(this.options.summary != null) {
+        player.sendMessage(this.options.summary[player.lang]);
+    }
     return true;
 };
 
@@ -1409,40 +1525,6 @@ Table.watchTable = function(player, tid) {
     table.addVisiter(player);
 };
 
-Table.CATEGORY = {
-    PRACTICE: {
-        icon: 58678,
-        coins: 0,
-        prizePoolScale: 1,
-        en: 'Practice',
-        zh: '练习'
-    },
-    NOVICE: {
-        icon: 58726,
-        opt: 'WB',
-        coins: 50,
-        prizePoolScale: 1,
-        en: 'Novice',
-        zh: '初级'
-    },
-    INTERMEDIATE: {
-        icon: 58673,
-        opt: 'AWB',
-        coins: 200,
-        prizePoolScale: 1.25,
-        en: 'Intermediate',
-        zh: '中级'
-    },
-    ADVANCED: {
-        icon: 58676,
-        opt: 'AWB',
-        coins: 500,
-        prizePoolScale: 1.5,
-        en: 'Advanced',
-        zh: '高级'
-    }
-};
-
 Table.pushTableList = function(player) {
     var mServer = player.mainServer;
     var json = {action: 'list', category: ''};
@@ -1490,44 +1572,6 @@ function writeTableList(player, json, k, tables) {
                   + Table.Messages.GameNumber[player.lang].format(t.games.length);
     }
 }
-
-Table.Messages = {
-    PlayerIn: {
-        en: '{0} in',
-        zh: '{0}来了'
-    },
-    PlayerOut: {
-        en: '{0} out',
-        zh: '{0}走了'
-    },
-    PlayerWatching: {
-        en: '{0} is watching',
-        zh: '{0}来了, 在旁观'
-    },
-    
-    GameNumber: {
-        en: 'Game {0}',
-        zh: '第{0}局'
-    },
-    
-    TableEnded: {
-        en: 'Table ended',
-        zh: '该局已结束'
-    },
-    WrongPass: {
-        en: 'Wrong Password',
-        zh: '密码错误'
-    },
-    NoSeat: {
-        en: 'No Seat Available',
-        zh: '没有空座'
-    },
-    
-    AllTableFull: {
-        en: 'No table available. Please wait...',
-        zh: '没有空桌. 请稍候...'
-    }
-};
 
 function getSecondsToNextSyncTable() {
     var dt = new Date();
