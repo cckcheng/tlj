@@ -990,10 +990,7 @@ Game.prototype.setPartner = function (player) {
 };
 
 Game.prototype.setTrump = function (suite) {
-    for (var x = 0, c; c = this.deck.remains[x]; x++) {
-        this.contractor.addCard(c);
-    }
-    this.contractor.sortHand();
+    this.contractor.addRemains(this.deck.remains);
     this.contractor.matchInfo.contracts++;
 
     this.trump = suite;

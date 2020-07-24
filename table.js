@@ -384,7 +384,6 @@ Table.CATEGORY = {
     },
     NOVICE: {
         icon: 58726,
-        opt: 'WB',
         coins: 50,
         prizePoolScale: 1,
         en: 'Novice',
@@ -392,7 +391,6 @@ Table.CATEGORY = {
     },
     INTERMEDIATE: {
         icon: 58673,
-        opt: 'AMWB',
         coins: 200,
         prizePoolScale: 1.25,
         en: 'Intermediate',
@@ -400,7 +398,6 @@ Table.CATEGORY = {
     },
     ADVANCED: {
         icon: 58676,
-        opt: 'AMWB',
         coins: 500,
         prizePoolScale: 1.5,
         en: 'Advanced',
@@ -635,6 +632,9 @@ Table.prototype.startGame = function (testOnly) {
         p.pushData();
         if(!p.isRobot()) {
             this.updatePlayerRecord(p.id);
+            if(this.options.summary != null) {
+                p.sendMessage(this.options.summary[p.lang]);
+            }
         }
         if (p.matchInfo.alert) {
             langMsg = p.matchInfo.alert;
@@ -651,6 +651,9 @@ Table.prototype.startGame = function (testOnly) {
 
     for (var x = 0, p; p = this.visiters[x]; x++) {
         p.pushData(this);
+        if(this.options.summary != null) {
+            p.sendMessage(this.options.summary[p.lang]);
+        }
     }
 
     if(broadJson) {
@@ -788,6 +791,14 @@ Table.prototype.autoPlay = function (deemRobot) {
 
 Table.prototype.enterPlayingStage = function () {
     this.game.enterPlayStage();
+    if(this.options.lateTrump) {
+        this.game.contractor.pushJson({
+            action: 'add_remains',
+            cards: Card.cardsToString(this.game.deck.remains)
+        });
+        this.game.contractor.addRemains(this.game.deck.remains);        
+    }
+     
     this.declareTrump();
 };
 
@@ -802,11 +813,18 @@ function procSetTrump(t, trump) {
         trump: t.game.trump
     });
 
-    t.game.contractor.pushJson({
-        action: 'add_remains',
-        cards: Card.cardsToString(t.game.deck.remains),
-        acttime: Math.floor(Table.TIMEOUT_SECONDS_BURYCARDS * t.timerScale)
-    });
+    if(t.options.lateTrump) {
+        t.game.contractor.pushJson({
+            action: 'add_remains',
+            acttime: Math.floor(Table.TIMEOUT_SECONDS_BURYCARDS * t.timerScale)
+        });
+    } else {
+        t.game.contractor.pushJson({
+            action: 'add_remains',
+            cards: Card.cardsToString(t.game.deck.remains),
+            acttime: Math.floor(Table.TIMEOUT_SECONDS_BURYCARDS * t.timerScale)
+        });
+    }
 
     t.buryCards();
 }
@@ -1465,6 +1483,10 @@ Table.joinPlayer = function(player, category) {
 };
 
 Table.delayStart = function(table, waitSeconds, player) {
+    if(waitSeconds <= 0) {
+        table.startGame();
+        return;
+    }
     var mServer = table.mainServer;
     table.status = 'break';
     table.actionPlayerIdx = -1;
@@ -1551,14 +1573,13 @@ Table.pushTableList = function(player) {
         }
         cat = Table.CATEGORY[k];
         json.category += k + '|' + cat[player.lang] + '|' + cat.icon + '|' + cat.coins;
-        if(cat.opt) json.category += '|' + cat.opt;
+        if(Config.TABLE_OPTION[k] != null) json.category += '|' + Config.TABLE_OPTION[k];
         writeTableList(player, json, k, mServer.allTables[k]);
     }
     if(player.property.account_id) {
         json.coin = player.property.coins;
     }
     player.pushJson(json);
-//    Mylog.log('tables: ' + json.category);
 };
 
 Table.getOnlinePlayer = function(mainServer, sock){

@@ -266,6 +266,8 @@ Player.prototype.newHand = function () {
     this.diamonds = [];
     this.clubs = [];
     this.trumps = [];
+    
+    this.addedRemains = false;
 };
 
 Player.prototype.addCard = function (card) {
@@ -295,6 +297,13 @@ Player.prototype.addCards = function (cards) {
     cards.forEach(function (c) {
         p.addCard(c);
     });
+};
+
+Player.prototype.addRemains = function (cards) {
+    if(this.addedRemains) return;
+    this.addCards(cards);
+    this.sortHand();
+    this.addedRemains = true;
 };
 
 Player.prototype.removeCard = function (card) {
