@@ -126,6 +126,9 @@ function Table(o, mainServer, category) {
         if(this.visiters.indexOf(player) >= 0) return;
         this.visiters.push(player);
         player.currentTable = this;
+        if(this.options.summary != null) {
+            player.sendMessage(this.options.summary[player.lang]);
+        }
     };
 
     this.removeVisiter = function(player) {
@@ -392,14 +395,14 @@ Table.CATEGORY = {
     INTERMEDIATE: {
         icon: 58673,
         coins: 200,
-        prizePoolScale: 1.25,
+        prizePoolScale: 1.1,
         en: 'Intermediate',
         zh: '中级'
     },
     ADVANCED: {
         icon: 58676,
         coins: 500,
-        prizePoolScale: 1.5,
+        prizePoolScale: 1.2,
         en: 'Advanced',
         zh: '高级'
     }
@@ -1357,7 +1360,20 @@ Table.prototype.canJoin = function (player) {
 
     var watchTable = player.currentTable;
     var orgPlayer = player;
-    var robot = this.robots.shift();
+    
+    var robot;
+    if(this.playerRecord[player.id] != null) {
+        robot = this.playerRecord[player.id].tblPlayer;
+        var idx = this.robots.indexOf(robot);
+        if(idx < 0) {
+            // occupied by other player
+            robot = this.robots.shift();
+        } else {
+            this.robots.splice(idx, 1);
+        }
+    } else {
+        robot = this.robots.shift();
+    }
 
     robot.replaceRobot(player);
     this.mainServer.activePlayers[player.id] = player = robot;
@@ -1548,8 +1564,9 @@ Table.watchTable = function(player, tid) {
         Table.pushTableList(player);
         return;
     }
-    player.pushData(table);
     table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
+    player.pushData(table);
+
     table.addVisiter(player);
 };
 
