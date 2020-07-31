@@ -117,7 +117,9 @@ function Player(o, mainServer) {
         if(this.property.account_id) {
             this.property.coins += coins;
             this.pushJson({action: 'acc', coin: this.property.coins});
+            return true;
         }
+        return false;
     };
     
     this.checkBalance = function(coins) {

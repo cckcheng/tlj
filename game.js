@@ -1059,15 +1059,16 @@ Game.prototype.promote = function () {
             delta = 2;
         }
 
-        this.enSummary += 'Contract made, ';
-        this.zhSummary += '庄成,';
         if (delta === 2) {
             this.enSummary += 'XiaoGuang, ';
             this.zhSummary += '小光,';
         } else if (delta === 3) {
             this.enSummary += 'DaGuang, ';
             this.zhSummary += '大光,';
-        }
+        } else {
+            this.enSummary += 'Contract made, ';
+            this.zhSummary += '庄成,';
+	}
 
         if (this.partnerDef.noPartner) {
             delta *= 2;

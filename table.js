@@ -19,6 +19,36 @@ Table.init = function() {
 };
 
 Table.Messages = {
+    Winning: {
+        en: 'Congratulations, you win \u2666{0}',
+        zh: '祝贺，您赢得奖金\u2666{0}'
+    },
+
+    First: {
+        en: 'Winner',
+	zh: '冠军'
+    },
+    Second: {
+        en: 'Runner-up',
+        zh: '亚军'
+    },
+    Third: {
+        en: 'No. 3',
+        zh: '第三'
+    },
+    Fourth: {
+        en: 'No. 4',
+        zh: '第四'
+    },
+    Fifth: {
+        en: 'No. 5',
+        zh: '第五'
+    },
+    Sixth: {
+        en: 'No. 6',
+        zh: '第六'
+    },
+
     AnyTrumpLate: {
         en: 'Late trump definition, no restriction\n',
         zh: '起底后任意定主\n'
@@ -35,7 +65,7 @@ Table.Messages = {
         en: 'Hole point multiple: ',
         zh: '底分倍数: '
     },
-    
+
     PlayerIn: {
         en: '{0} in',
         zh: '{0}来了'
@@ -165,6 +195,7 @@ function Table(o, mainServer, category) {
         if(this.finalSummary) return this.finalSummary;  // avoid run twice
 
         var summary = '';
+        var summary_zh = '';
         this.players.sort(function (a, b) {
             return b.matchInfo.currentRank - a.matchInfo.currentRank;
         });
@@ -180,12 +211,48 @@ function Table(o, mainServer, category) {
                 }
                 winners[r].push(p);
             }
-            summary += (r === 1 ? 'Winner' : 'No. ' + r) + ': ' + p.name
-                    + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
+            
+            switch(r) {
+                case 1:
+                    summary += Table.Messages.First['en'];
+                    summary_zh += Table.Messages.First['zh'];
+                    break;
+                case 2:
+                    summary += Table.Messages.Second['en'];
+                    summary_zh += Table.Messages.Second['zh'];
+                    break;
+                case 3:
+                    summary += Table.Messages.Third['en'];
+                    summary_zh += Table.Messages.Third['zh'];
+                    break;
+                case 4:
+                    summary += Table.Messages.Fourth['en'];
+                    summary_zh += Table.Messages.Fourth['zh'];
+                    break;
+                case 5:
+                    summary += Table.Messages.Fifth['en'];
+                    summary_zh += Table.Messages.Fifth['zh'];
+                    break;
+                case 6:
+                    summary += Table.Messages.Sixth['en'];
+                    summary_zh += Table.Messages.Sixth['zh'];
+                    break;
+            }
+            summary += ': ' + p.name + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
+            summary_zh += ': ' + p.name + ' (' + Card.RankToString(p.matchInfo.currentRank) + ')\n';
             pRank = rnk;
         }
         
         this.finalSummary = summary;
+        
+        this.matchSummaryLang = {
+            en: {
+                summary: summary
+            },
+            zh: {
+                summary: summary_zh
+            }
+        };
         
         // reword winners
         if(this.coins > 0) {
@@ -230,7 +297,9 @@ function Table(o, mainServer, category) {
             if(p.sock != null) {
                 var player = Table.getOnlinePlayer(this.mainServer, p.sock);
                 if(player) {
-                    player.updateBalance(prize);
+                    if(player.updateBalance(prize)) {
+                        this.playerRecord[p.id].winning = Table.Messages.Winning[p.lang].format(prize);
+                    }
                 }
             }
         }
@@ -1033,9 +1102,8 @@ function gameOver(t) {
         var summary = t.matchSummary();
         setTimeout(function (t) {
             t.broadcastGameInfo({
-                action: 'gameover',
-                summary: summary
-            });
+                action: 'gameover'
+            }, null, t.matchSummaryLang, true);
             t.terminate();
         }, 8000, t);
     } else {
@@ -1147,13 +1215,17 @@ Table.prototype.definePartner = function () {
     }, waitSeconds * 1000, this);
 };
 
-Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo) {
+Table.prototype.broadcastGameInfo = function (json, exceptPlayer, langInfo, matchOver) {
     var t = this;
     this.players.forEach(function (p) {
         if (p === exceptPlayer) return;
         //if (p.currentTable !== t) return;
         if (langInfo != null) {
-            p.pushJson(Object.assign(Object.assign({}, json), langInfo[p.lang]));
+            var jsonMsg = Object.assign(Object.assign({}, json), langInfo[p.lang]);
+            if(matchOver && t.playerRecord[p.id] != null) {
+                if(t.playerRecord[p.id].winning != null) jsonMsg.summary += '\n' + t.playerRecord[p.id].winning;
+            }
+            p.pushJson(jsonMsg);
         } else {
             p.pushJson(json);
         }
@@ -1609,7 +1681,8 @@ function writeTableList(player, json, k, tables) {
     json[k] = '';
     for(var x=0,idx=tables.length-1,t,tk; idx>=0 && x<Config.MAX_LIST_TABLES; x++,idx--) {
         t = tables[idx];
-        if(x>0) json[k] += ',';
+        if(t.id == null) continue;
+        if(json[k].length>0) json[k] += ',';
         tk = (t.passCode > 0 ? 'L' : 'P') + t.id;  // L: private, P: public
         json[k] += tk;
         json[tk] = t.matchType.brief + ': ' + t.realPlayerNames() + '; '
