@@ -198,7 +198,13 @@ SqlDb.prototype.updateAccount = function (playerId, action, coins) {
 SqlDb.prototype.registerUser = function (player, o) {
     var mainDB = this.db;
 
-    if(o.email) o.email = o.email.toLowerCase();
+    if(o.email) {
+        o.email = o.email.toLowerCase();
+        if(!Sendmail.isValidEmail(o.email)) {
+            player.sendMessage(player.lang === 'zh' ? '非法邮箱地址' : 'Invalid Email address');
+            return;
+        }
+    }
     var q20 = "select * from accounts where global_id=?";
     var q21, q22;
     var params;

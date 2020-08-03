@@ -34,7 +34,7 @@ Table.Messages = {
     },
     Third: {
         en: 'No. 3',
-        zh: '第三'
+        zh: '季军'
     },
     Fourth: {
         en: 'No. 4',

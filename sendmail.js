@@ -37,6 +37,11 @@ function send(mailto, subject, content) {
 }
 
 module.exports = {
+    isValidEmail: function(email) {
+        var filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        return filter.test(email);
+    },
+
     sendReferal: function(mailto, lang, referBy) {
         if(lang !== 'zh') lang = 'en';
         var content = invitation.content[lang].format(referBy);
