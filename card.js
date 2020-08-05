@@ -964,3 +964,19 @@ Card.containsAll = function (srcCards, subCards) {
 
     return true;
 };
+
+Card.shortestSuit = function(pointFirst, ...suites) {
+    var suitesNotEmpty = [];
+    suites.forEach((s) => {if(s.length > 0) suitesNotEmpty.push(s);});
+    if(suitesNotEmpty.length < 1) return null;
+    suitesNotEmpty.sort(function (a, b) {
+        if(a.length === b.length) {
+            var aPoint = Card.getTotalPoints(a);
+            var bPoint = Card.getTotalPoints(b);
+            return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+        }
+        return a.length - b.length;
+    });
+    
+    return suitesNotEmpty[0];
+};

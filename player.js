@@ -602,6 +602,7 @@ Player.prototype.playAllCards = function (cards) {
 
 Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     var game = this.currentTable.game;
+    var xNum = num;
     var allCards = [];
 
     if (exSuite !== Card.SUITE.SPADE) {
@@ -617,7 +618,11 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
         allCards = allCards.concat(this.clubs);
     }
 
-    if (allCards.length < num) {
+    if (allCards.length <= num) {
+        xNum -= allCards.length;
+        var cx = allCards.length;
+        while(cx-- > 0) cards.push(allCards.shift());
+        if(xNum === 0) return;
         allCards = allCards.concat(this.trumps);
     }
 
@@ -674,7 +679,7 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
         });
     }
 
-    for (var x = 0; x < num; x++) {
+    for (var x = 0; x < xNum; x++) {
         cards.push(allCards[x]);
     }
 };
