@@ -619,10 +619,12 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     }
 
     if (allCards.length <= num) {
-        xNum -= allCards.length;
-        var cx = allCards.length;
-        while(cx-- > 0) cards.push(allCards.shift());
-        if(xNum === 0) return;
+        if(this.aiLevel >= 4) {
+            xNum -= allCards.length;
+            var cx = allCards.length;
+            while(cx-- > 0) cards.push(allCards.shift());
+            if(xNum === 0) return;
+        }
         allCards = allCards.concat(this.trumps);
     }
 
@@ -811,6 +813,24 @@ Player.prototype.isDeadPartner = function () {
     return partnerDef.keyCardCount + n === 4;
 };
 
+function countHonor(cards, honorRank) {
+    if(cards == null || cards.length < 1) return 0;
+    var n=0;
+    for(var x=cards.length-1; x>=0; x--, n++) {
+        if(cards[x].rank !== honorRank) break;
+    }
+    return n;
+}
+
+Player.prototype.totalHonors = function () {
+    var game = this.currentTable.game;
+    var n = countHonor(this.trumps, Card.RANK.BigJoker)
+        + countHonor(this.spades, game.honorRank)
+        + countHonor(this.hearts, game.honorRank)
+        + countHonor(this.diamonds, game.honorRank)
+        + countHonor(this.clubs, game.honorRank);
+};
+
 Player.prototype.shouldPlayPartner = function () {
     var game = this.currentTable.game;
     var partnerDef = game.partnerDef;
@@ -827,6 +847,14 @@ Player.prototype.shouldPlayPartner = function () {
     if (n < 1) return false;
     if (n > 1 || partnerDef.keyCardCount + n === 4 || cardList.length < 5) {
         return true;
+    }
+    
+    if(this.aiLevel >= 4) {
+        if(game.cardNumberPlayed >= Config.THRESHOLD_PARTNER) return true;
+        if(this.matchInfo.points >= Config.THRESHOLD_POINTS_EARN) return true;
+        if(game.sumPoints(this) > game.contractPoint / 2) return false;
+        if(this.getStrongHand() != null) return true;
+        return this.totalHonors() >= Config.THRESHOLD_HONORS;
     }
     return game.sumPoints(this) < game.contractPoint / 2;
 };
