@@ -96,7 +96,18 @@ Table.Messages = {
         en: 'No Seat Available',
         zh: '没有空座'
     },
-    
+
+    JoinTooLate:
+    {
+        en: 'Too late to join',
+        zh: '太晚，无法加入'
+    },
+    TableCloseEnd: 
+    {
+	en: 'Table close to end',
+	zh: '该局即将结束，无法加入'
+    },
+
     AllTableFull: {
         en: 'No table available. Please wait...',
         zh: '没有空桌. 请稍候...'
@@ -1415,11 +1426,15 @@ Table.prototype.linkPlayer = function (player) {
 };
 
 Table.prototype.canJoin = function (player) {
+    player.alertMessage = Table.Messages.NoSeat[player.lang];  // MUST set player.alertMessage if return false 
     if(this.robots.length < 1) return false;
 
     var maxGame = this.matchType.maxGame;
     var gameLimit = maxGame > 10 ? maxGame / 3 : maxGame / 2;
-//    if(this.games.length > gameLimit) return false;
+//    if(this.coins > 0 && this.games.length > gameLimit) {
+//        player.alertMessage = Table.Messages.JoinTooLate[player.lang];
+//        return false;
+//    }
 
     var maxRank = this.matchType.ranks[0];
     for(var x=0,p; p=this.players[x]; x++) {
@@ -1427,8 +1442,18 @@ Table.prototype.canJoin = function (player) {
             maxRank = p.matchInfo.currentRank;
         }
     }
-    var halfIndex = Math.floor(this.matchType.ranks.length / 2);
-//    if(maxRank > this.matchType.ranks[halfIndex]) return false;
+//    var maxIndex = Math.floor(this.matchType.ranks.length / 2);
+    var maxIndex = this.matchType.ranks.length;
+    if(maxIndex >= Table.MATCH_TYPE.HALF.ranks.length) {
+        maxIndex -= 3;  // max rank: Q
+    } else {
+        maxIndex -= 2;  // max rank: K
+    }
+    
+    if(this.coins > 0 && maxRank >= this.matchType.ranks[maxIndex]) {
+        player.alertMessage = Table.Messages.TableCloseEnd[player.lang];
+        return false;
+    }
 
     var watchTable = player.currentTable;
     var orgPlayer = player;
@@ -1449,7 +1474,10 @@ Table.prototype.canJoin = function (player) {
 
     robot.replaceRobot(player);
     this.mainServer.activePlayers[player.id] = player = robot;
-    if(!this.resume(player)) return false;
+    if(!this.resume(player)) {
+        player.alertMessage = Table.Messages.TableEnded[player.lang];
+        return false;
+    }
     
     this.updatePlayerRecord(player.id, robot);
 
@@ -1623,7 +1651,7 @@ Table.joinTable = function(player, json, tblPlayer) {
         tblPlayer.toRobot(-1);
     }            
     if(!table.canJoin(player)) {
-        player.sendMessage(Table.Messages.NoSeat[player.lang]);
+        player.sendMessage(player.alertMessage);
     }
 };
 
