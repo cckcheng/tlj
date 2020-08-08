@@ -1640,8 +1640,6 @@ Table.joinTable = function(player, json, tblPlayer) {
         return;
     }
 
-    if(!player.checkBalance(table.coins)) return;
-    
     if (tblPlayer) {
         if(table === tblPlayer.currentTable) {
             tblPlayer.sock = player.sock;
@@ -1649,7 +1647,9 @@ Table.joinTable = function(player, json, tblPlayer) {
             return;
         }
         tblPlayer.toRobot(-1);
-    }            
+    }
+
+    if(!player.checkBalance(table.coins)) return;    
     if(!table.canJoin(player)) {
         player.sendMessage(player.alertMessage);
     }
