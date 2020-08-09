@@ -43,11 +43,40 @@ var game = table.game;
 var p = players[0];
 
 game.contractor = p;
+game.partner = players[5];
 game.enterPlayStage();
 game.setTrump(trump_suite);
 var curRound = game.currentRound;
 
+p.newHand();
+
+p.addCard(new Card(Card.SUITE.SPADE, 3));
+p.addCard(new Card(Card.SUITE.SPADE, 3));
+p.addCard(new Card(Card.SUITE.SPADE, 14));
+p.addCard(new Card(Card.SUITE.SPADE, 14));
+p.addCard(new Card(Card.SUITE.SPADE, 14));
+p.addCard(new Card(Card.SUITE.SPADE, 13));
+p.addCard(new Card(Card.SUITE.SPADE, 13));
+//p.addCard(new Card(Card.SUITE.SPADE, 13));
+//p.addCard(new Card(Card.SUITE.SPADE, 12));
+p.addCard(new Card(Card.SUITE.SPADE, 12));
+p.addCard(new Card(Card.SUITE.SPADE, 11));
+p.addCard(new Card(Card.SUITE.SPADE, 11));
+p.addCard(new Card(Card.SUITE.SPADE, 10));
+p.addCard(new Card(Card.SUITE.SPADE, 9));
+
+p.addCard(new Card(Card.SUITE.SPADE, 10));
+p.addCard(new Card(Card.SUITE.SPADE, 9));
+
+p.sortHand();
 var cards = [];
+debugger;
+p.playHonor(cards, game);
+console.log(Card.showCards(cards));
+
+if (true) process.exit(0);
+
+
 cards.push(new Card(Card.SUITE.SPADE, 7));
 cards.push(new Card(Card.SUITE.SPADE, 7));
 cards.push(new Card(Card.SUITE.SPADE, 8));

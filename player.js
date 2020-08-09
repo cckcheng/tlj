@@ -721,45 +721,55 @@ Player.prototype.ruff = function (cards) {
     }
 };
 
+Player.prototype.getStrongHandOneSuit = function (cardList) {
+    var game = this.currentTable.game;
+    var stat,rnks, sHand, isTrump, tractors;
+
+    if (cardList.length >= 3) {
+        isTrump = cardList === this.trumps;
+        stat = new HandStat(cardList, game.trump, game.rank);
+        if (cardList.length === 3) {
+            if (stat.totalTrips > 0) {
+                rnks = stat.sortedRanks(3);
+                sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
+                return Hand.makeCards(sHand, cardList, game.trump, game.rank);
+            }
+        } else {
+            if (stat.totalQuads > 0) {
+                rnks = stat.sortedRanks(4);
+                sHand = new SimpleHand(Hand.SIMPLE_TYPE.QUADS, rnks[rnks.length - 1], isTrump);
+                return Hand.makeCards(sHand, cardList, game.trump, game.rank);
+            }
+            tractors = stat.getTractors(3);
+            if (tractors.length < 1) {
+                tractors = stat.getTractors(2);
+            }
+            if (tractors.length > 0) {
+                tractors.sort(function (a, b) {
+                    if (a.type.len === b.type.len) return b.minRank - a.minRank;
+                    return b.type.len - a.type.len;
+                });
+                return Hand.makeCards(tractors[0], cardList, game.trump, game.rank);
+            }
+            if (stat.totalTrips > 0) {
+                rnks = stat.sortedRanks(3);
+                sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
+                return Hand.makeCards(sHand, cardList, game.trump, game.rank);
+            }
+        }
+    }
+
+    return null;
+};
+
 Player.prototype.getStrongHand = function () {
     var game = this.currentTable.game;
     var arr = this.getAllSuites();
     var x = Math.floor(Math.random() * (arr.length));
     var stat,rnks, sHand, isTrump, tractors;
     for(var i=0; i<arr.length; i++) {
-        if (arr[x].length >= 3) {
-            isTrump = arr[x] === this.trumps;
-            stat = new HandStat(arr[x], game.trump, game.rank);
-            if (arr[x].length === 3) {
-                if (stat.totalTrips > 0) {
-                    rnks = stat.sortedRanks(3);
-                    sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
-                    return Hand.makeCards(sHand, arr[x], game.trump, game.rank);
-                }
-            } else {
-                if (stat.totalQuads > 0) {
-                    rnks = stat.sortedRanks(4);
-                    sHand = new SimpleHand(Hand.SIMPLE_TYPE.QUADS, rnks[rnks.length - 1], isTrump);
-                    return Hand.makeCards(sHand, arr[x], game.trump, game.rank);
-                }
-                tractors = stat.getTractors(3);
-                if (tractors.length < 1) {
-                    tractors = stat.getTractors(2);
-                }
-                if (tractors.length > 0) {
-                    tractors.sort(function (a, b) {
-                        if (a.type.len === b.type.len) return b.minRank - a.minRank;
-                        return b.type.len - a.type.len;
-                    });
-                    return Hand.makeCards(tractors[0], arr[x], game.trump, game.rank);
-                }
-                if (stat.totalTrips > 0) {
-                    rnks = stat.sortedRanks(3);
-                    sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
-                    return Hand.makeCards(sHand, arr[x], game.trump, game.rank);
-                }
-            }
-        }
+        var strongHand = this.getStrongHandOneSuit(arr[x]);
+        if(strongHand != null) return strongHand;
 
         x++;
         if(x === arr.length) x=0;
@@ -979,6 +989,19 @@ function addHonorCard(cardList, honors, honorRank) {
     if(xCard.rank === honorRank) honors.push(xCard);
 }
 
+Player.prototype.shouldPlayStrongHand = function(cards, cardList, honorRank) {
+    var strongHand = this.getStrongHandOneSuit(cardList);
+    if(strongHand == null) return false;
+    if(strongHand.length > 4 || strongHand[strongHand.length-1].rank === honorRank) {
+        strongHand = this.recalStrong(strongHand);
+        var n = strongHand.length;
+        while(n-- > 0) cards.push(strongHand.shift());
+        return true;
+    }
+    
+    return false;
+};
+
 Player.prototype.playHonor = function(cards, game, maxSuiteLength) {
     var honors = [];
     if(maxSuiteLength > 0) {
@@ -998,6 +1021,9 @@ Player.prototype.playHonor = function(cards, game, maxSuiteLength) {
 
     for(var x = 0, xCard, cardList; xCard = honors[x]; x++) {
         cardList = this.getCardsBySuite(xCard.suite);
+        if(this.shouldPlayStrongHand(cards, cardList, game.honorRank)) {
+            return true;
+        }
         if(cardList.length > 1 && cardList[cardList.length-2].rank === game.honorRank) {
             cards.push(xCard);
             cards.push(xCard);
