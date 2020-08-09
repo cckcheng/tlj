@@ -698,11 +698,11 @@ Table.prototype.startGame = function (testOnly) {
         }
     }
 
-    this.mainServer.myDB.addGame(this);
+    if(this.mainServer != null) this.mainServer.myDB.addGame(this);
     this.actionPlayerIdx = 0;
     for (var x = 0, p; p = this.players[x]; x++) {
         p.evaluate();
-        this.mainServer.myDB.addGamePlayer(this, p, x+1);
+        if(this.mainServer != null) this.mainServer.myDB.addGamePlayer(this, p, x+1);
     }
 
     if (!this.players[0].canBid && this.players[0].matchInfo.alert) {

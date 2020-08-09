@@ -548,6 +548,12 @@ Hand.SIMPLE_TYPE = {
     QUADS: {cat: Hand.COMBINATION.QUADS, len: 4}
 };
 
+Hand.canBeat = function(hand, leadingHand) {
+    if(leadingHand == null) return false;
+    if(hand.type.cat !== leadingHand.type.cat || hand.type.len < leadingHand.type.len) return false;
+    return hand.minRank > leadingHand.minRank;
+};
+
 Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {
     var stat = new HandStat(orgCards, trump_suite, game_rank);
     var cards = [];

@@ -26,7 +26,7 @@ while (players.length < 6) {
 
 table.startGame(true);
 
-if (true) process.exit(0);
+//if (true) process.exit(0);
 
 //var game = new Game(players, 4);
 //table.players.forEach(function (p) {
@@ -48,22 +48,25 @@ game.setTrump(trump_suite);
 var curRound = game.currentRound;
 
 var cards = [];
-cards.push(new Card(Card.SUITE.SPADE, 13));
-cards.push(new Card(Card.SUITE.SPADE, 13));
-cards.push(new Card(Card.SUITE.SPADE, 14));
+cards.push(new Card(Card.SUITE.SPADE, 7));
+cards.push(new Card(Card.SUITE.SPADE, 7));
+cards.push(new Card(Card.SUITE.SPADE, 8));
+cards.push(new Card(Card.SUITE.SPADE, 8));
 curRound.addHand(players[0], cards);
 console.log(curRound.getNextLeadingPlayer().id);
-
+/*
 cards = [];
-cards.push(new Card(Card.SUITE.SPADE, 6));
-cards.push(new Card(Card.SUITE.SPADE, 6));
-cards.push(new Card(Card.SUITE.SPADE, 5));
+cards.push(new Card(Card.SUITE.SPADE, 8));
+cards.push(new Card(Card.SUITE.SPADE, 8));
+cards.push(new Card(Card.SUITE.SPADE, 7));
+cards.push(new Card(Card.SUITE.SPADE, 7));
 curRound.addHand(players[1], cards);
 console.log(curRound.getNextLeadingPlayer().id);
 
 cards = [];
 cards.push(new Card(trump_suite, 5));
 cards.push(new Card(trump_suite, 5));
+cards.push(new Card(trump_suite, 4));
 cards.push(new Card(trump_suite, 4));
 curRound.addHand(players[2], cards);
 console.log(curRound.getNextLeadingPlayer().id);
@@ -72,10 +75,39 @@ cards = [];
 cards.push(new Card(trump_suite, 5));
 cards.push(new Card(trump_suite, 5));
 cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 curRound.addHand(players[5], cards);
 console.log(curRound.getNextLeadingPlayer().id);
+*/
+
+players[1].spades = [];
+players[1].addCard(new Card(Card.SUITE.SPADE, 3));
+players[1].addCard(new Card(Card.SUITE.SPADE, 3));
+players[1].addCard(new Card(Card.SUITE.SPADE, 4));
+players[1].addCard(new Card(Card.SUITE.SPADE, 4));
+players[1].addCard(new Card(Card.SUITE.SPADE, 5));
+players[1].addCard(new Card(Card.SUITE.SPADE, 5));
+
+//players[1].addCard(new Card(Card.SUITE.SPADE, 6));
+players[1].addCard(new Card(Card.SUITE.SPADE, 6));
+players[1].addCard(new Card(Card.SUITE.SPADE, 7));
+//players[1].addCard(new Card(Card.SUITE.SPADE, 7));
+players[1].addCard(new Card(Card.SUITE.SPADE, 8));
+players[1].addCard(new Card(Card.SUITE.SPADE, 8));
+players[1].addCard(new Card(Card.SUITE.SPADE, 9));
+players[1].addCard(new Card(Card.SUITE.SPADE, 9));
+players[1].addCard(new Card(Card.SUITE.SPADE, 10));
+players[1].addCard(new Card(Card.SUITE.SPADE, 10));
+
+players[1].sortHand();
+
+var selCards = [];
+players[1].aiLevel = 2;
+players[1].followPlay(selCards, players[1].spades, true);
+console.log(Card.showCards(selCards));
 
 if (true) process.exit(0);
+
 p.spades = [];
 p.spades.push(new Card(Card.SUITE.SPADE, 6));
 p.spades.push(new Card(Card.SUITE.SPADE, 6));

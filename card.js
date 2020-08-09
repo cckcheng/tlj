@@ -585,7 +585,7 @@ function sortByPoint(pointFirst, trump, gameRank) {
 }
 
 // select tractor2 (connected pairs), len: total card number
-Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRank) {
+Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRank, leadingHand) {
     var wholeLength = len + cards.length;
 
     var tmpCards = cardList.slice();
@@ -639,18 +639,27 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
                     });
                 });
             } else {
-                var left = len;
-                for (var x = tractors.length - 1; x >= 0 && left >= 4; x--) {
-                    if (tractors[x].type.len > left) {
-                        tractors[x].type.len = left;
-                    }
-
-                    var cc = Hand.makeCards(tractors[x], tmpCards, trump, gameRank);
+                if(tractors.length > 1 && Hand.canBeat(tractors[0], leadingHand)) {
+                    tractors[0].type.len = len;
+                    var cc = Hand.makeCards(tractors[0], tmpCards, trump, gameRank);
                     cc.forEach(function (c) {
                         cards.push(c);
                         tmpCards.splice(c.indexOf(tmpCards), 1);
                     });
-                    left -= tractors[x].type.len;
+                } else {
+                    var left = len;
+                    for (var x = tractors.length - 1; x >= 0 && left >= 4; x--) {
+                        if (tractors[x].type.len > left) {
+                            tractors[x].type.len = left;
+                        }
+    
+                        var cc = Hand.makeCards(tractors[x], tmpCards, trump, gameRank);
+                        cc.forEach(function (c) {
+                            cards.push(c);
+                            tmpCards.splice(c.indexOf(tmpCards), 1);
+                        });
+                        left -= tractors[x].type.len;
+                    }
                 }
             }
 

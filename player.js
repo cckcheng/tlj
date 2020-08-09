@@ -1407,7 +1407,8 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
             }
             break;
         case Hand.COMBINATION.TRACTOR2:
-            Card.selectTractor2(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank);
+            Card.selectTractor2(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank,
+                this.aiLevel >= 2 ? game.currentRound.getLeadingHand() : null);
             break;
         case Hand.COMBINATION.TRACTOR3:
             Card.selectTractor3(firstHand.type.len, cards, cardList, pointFirst, game.trump, game.rank);
@@ -1819,6 +1820,11 @@ Player.prototype.autoPlayCards = function (isLeading) {
             }
         }
 
+        if(this.aiLevel >= 3 && this !== game.contractor && game.partner != null) {
+            if(this.playTopTrump(cards, game)) return cards;
+            if(this.playHonor(cards, game)) return cards;
+        }
+        
         var strongHand = this.getStrongHand();
         if (strongHand != null) {
             cards = strongHand;

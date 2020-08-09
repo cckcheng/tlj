@@ -128,7 +128,7 @@ HandStat.prototype.getTractors = function (sLen, isTrump) {
 
     tractors.sort(function (a, b) {
         if (a.type.len === b.type.len) return b.minRank - a.minRank;
-        return a.type.len - b.type.len;
+        return b.type.len - a.type.len;
     });
     return tractors;
 };
