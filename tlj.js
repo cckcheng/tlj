@@ -68,10 +68,22 @@ p.addCard(new Card(Card.SUITE.SPADE, 9));
 p.addCard(new Card(Card.SUITE.SPADE, 10));
 p.addCard(new Card(Card.SUITE.SPADE, 9));
 
+////////////////////////////////////////////////
+p.addCard(new Card(Card.SUITE.HEART, 3));
+//p.addCard(new Card(Card.SUITE.HEART, 3));
+p.addCard(new Card(Card.SUITE.HEART, 5));
+p.addCard(new Card(Card.SUITE.HEART, 4));
+p.addCard(new Card(Card.SUITE.HEART, 4));
+p.addCard(new Card(Card.SUITE.HEART, 5));
+p.addCard(new Card(Card.SUITE.HEART, 6));
+p.addCard(new Card(Card.SUITE.HEART, 6));
+p.addCard(new Card(Card.SUITE.HEART, 6));
+
 p.sortHand();
 var cards = [];
 debugger;
-p.playHonor(cards, game);
+//p.playHonor(cards, game);
+cards = p.getStrongHand();
 console.log(Card.showCards(cards));
 
 if (true) process.exit(0);

@@ -974,7 +974,13 @@ Card.containsAll = function (srcCards, subCards) {
     return true;
 };
 
-Card.shortestSuit = function(pointFirst, ...suites) {
+Card.copyCards = function(src, dst) {
+    if(src == null || dst == null) return;
+    var n = src.length;
+    while(n-- > 0) dst.push(src.shift());
+};
+
+Card.shortestSuit = function(pointFirst, suites) {
     var suitesNotEmpty = [];
     suites.forEach((s) => {if(s.length > 0) suitesNotEmpty.push(s);});
     if(suitesNotEmpty.length < 1) return null;

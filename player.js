@@ -721,24 +721,34 @@ Player.prototype.ruff = function (cards) {
     }
 };
 
-Player.prototype.getStrongHandOneSuit = function (cardList) {
+// cards - output
+// cardList - one suit
+Player.prototype.getStrongHandOneSuit = function (cards, cardList) {
     var game = this.currentTable.game;
     var stat,rnks, sHand, isTrump, tractors;
 
     if (cardList.length >= 3) {
         isTrump = cardList === this.trumps;
+        if(isTrump && game.partner == null && this === game.contractor) {
+            if(this.orgLength[Card.SUITE.JOKER] - this.trumps.length >= Config.THRESHOLD_INIT_DRAW_TRUMP) {
+                // avoid draw too many trumps
+                return null;
+            }
+        }
         stat = new HandStat(cardList, game.trump, game.rank);
         if (cardList.length === 3) {
             if (stat.totalTrips > 0) {
                 rnks = stat.sortedRanks(3);
                 sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
-                return Hand.makeCards(sHand, cardList, game.trump, game.rank);
+                Card.copyCards(Hand.makeCards(sHand, cardList, game.trump, game.rank), cards);
+                return sHand;
             }
         } else {
             if (stat.totalQuads > 0) {
                 rnks = stat.sortedRanks(4);
                 sHand = new SimpleHand(Hand.SIMPLE_TYPE.QUADS, rnks[rnks.length - 1], isTrump);
-                return Hand.makeCards(sHand, cardList, game.trump, game.rank);
+                Card.copyCards(Hand.makeCards(sHand, cardList, game.trump, game.rank), cards);
+                return sHand;
             }
             tractors = stat.getTractors(3);
             if (tractors.length < 1) {
@@ -749,12 +759,14 @@ Player.prototype.getStrongHandOneSuit = function (cardList) {
                     if (a.type.len === b.type.len) return b.minRank - a.minRank;
                     return b.type.len - a.type.len;
                 });
-                return Hand.makeCards(tractors[0], cardList, game.trump, game.rank);
+                Card.copyCards(Hand.makeCards(tractors[0], cardList, game.trump, game.rank), cards);
+                return tractors[0];
             }
             if (stat.totalTrips > 0) {
                 rnks = stat.sortedRanks(3);
                 sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
-                return Hand.makeCards(sHand, cardList, game.trump, game.rank);
+                Card.copyCards(Hand.makeCards(sHand, cardList, game.trump, game.rank), cards);
+                return sHand;
             }
         }
     }
@@ -767,15 +779,31 @@ Player.prototype.getStrongHand = function () {
     var arr = this.getAllSuites();
     var x = Math.floor(Math.random() * (arr.length));
     var stat,rnks, sHand, isTrump, tractors;
+    var strongest = null, strongestCards = null;
     for(var i=0; i<arr.length; i++) {
-        var strongHand = this.getStrongHandOneSuit(arr[x]);
-        if(strongHand != null) return strongHand;
+        var strongCards = [];
+        var strongHand = this.getStrongHandOneSuit(strongCards, arr[x]);
+        if(strongHand != null) {
+            switch(strongHand.type.cat) {
+                case Hand.COMBINATION.QUADS:
+                case Hand.COMBINATION.TRACTOR3:
+                case Hand.COMBINATION.TRACTOR4:
+                    return strongCards;
+            }
+            if(arr[x] !== this.trumps && strongCards[strongCards.length-1].rank === game.honorRank) {
+                return strongCards;
+            }
+            if(strongest == null || SimpleHand.compare(strongHand, strongest) > 0) {
+                strongest = strongHand;
+                strongestCards = strongCards;
+            }
+        }
 
         x++;
         if(x === arr.length) x=0;
     }
 
-    return null;
+    return strongestCards;
 };
 
 Player.prototype.playPartnerCards = function (cards) {
@@ -877,9 +905,12 @@ Player.prototype.passToPartner = function (cards) {
         return false;
     }
 
-    if(game.partner != null && this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
-        this.endPlay(cards, game);
-        return false;
+    if(game.partner != null && this.aiLevel >= 2) {
+        var nLeft = this.totalCardLeft();
+        if(nLeft <= Config.CARD_NUMBER_ENDPLAY) {
+            this.endPlay(cards, game);
+            return;
+        }
     }
 
     var cardList = this.getCardsBySuite(partnerDef.suite);
@@ -949,9 +980,12 @@ Player.prototype.drawTrump = function (cards) {
         return;
     }
 
-    if(this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
-        this.endPlay(cards, game);
-        return;
+    if(this.aiLevel >= 2) {
+        var nLeft = this.totalCardLeft();
+        if(nLeft <= Config.CARD_NUMBER_ENDPLAY) {
+            this.endPlay(cards, game);
+            return;
+        }
     }
 
     if (ntLen < Config.THRESHOLD_NT_LEN && this.trumps.length > 1) {
@@ -990,12 +1024,10 @@ function addHonorCard(cardList, honors, honorRank) {
 }
 
 Player.prototype.shouldPlayStrongHand = function(cards, cardList, honorRank) {
-    var strongHand = this.getStrongHandOneSuit(cardList);
-    if(strongHand == null) return false;
-    if(strongHand.length > 4 || strongHand[strongHand.length-1].rank === honorRank) {
-        strongHand = this.recalStrong(strongHand);
-        var n = strongHand.length;
-        while(n-- > 0) cards.push(strongHand.shift());
+    var strongCards = [];
+    if(this.getStrongHandOneSuit(strongCards, cardList) == null) return false;
+    if(strongCards.length > 4 || strongCards[strongCards.length-1].rank === honorRank) {
+        Card.copyCards(this.recalStrong(strongCards), cards);
         return true;
     }
     
@@ -1170,7 +1202,7 @@ Player.prototype.playPairOrTop = function (cards, cardList, game, isTrump) {
 Player.prototype.endPlayTrump = function (cards, game) {
     var stat = new HandStat(this.trumps, game.trump, game.rank);
     if(stat.totalPairs < 1) {
-        if(this.partnerHasTrump(game)) {
+        if(this.trumps.length > Config.MAX_SAFE_CARDS_PLAYED && this.partnerHasTrump(game)) {
             cards.push(this.trumps[0]);
         } else {
             cards.push(this.trumps[this.trumps.length - 1]);
@@ -1289,9 +1321,12 @@ Player.prototype.endPlay = function (cards, game) {
 Player.prototype.randomPlay = function (cards) {
     // not totally random
     var game = this.currentTable.game;
-    if(this.aiLevel >= 2 && this.totalCardLeft() <= Config.CARD_NUMBER_ENDPLAY) {
-        this.endPlay(cards, game);
-        return;
+    if(this.aiLevel >= 2) {
+        var nLeft = this.totalCardLeft();
+        if(nLeft <= Config.CARD_NUMBER_ENDPLAY) {
+            this.endPlay(cards, game);
+            return;
+        }
     }
 
     if(this.aiLevel >= 3 && this !== game.contractor) {
@@ -1727,9 +1762,13 @@ Player.prototype.possibleOpponentRuff = function (game, suite, exPlayer) {  // e
         }
 
         var partnerDef = this.currentTable.game.partnerDef;
-        if(this !== firstPlayer && !partnerDef.noPartner && firstPlayer === game.partner && suite === partnerDef.suite && this !== game.contractor) {
-            if(game.currentRound.allFriendsLeft(game, this)) return false;
-            return game.contractor.hasTrump();
+        if(suite === partnerDef.suite && this !== game.contractor) {
+            if(this !== firstPlayer && !partnerDef.noPartner && firstPlayer === game.partner) {
+                if(game.currentRound.allFriendsLeft(game, this)) return false;
+                return game.contractor.hasTrump();
+            } else if(this === firstPlayer && this !== game.partner) {
+                return game.contractor.hasTrump();
+            }
         }
     } else {
         //debugger;
@@ -1765,6 +1804,30 @@ Player.prototype.possiblePartnerRuff = function (game, suite) {
         }
     }
     return false;
+};
+
+Player.prototype.tryPlayJokerPair = function (cards) {
+    var game = this.currentTable.game;
+    var honorRank = Card.RANK.BigJoker;
+    var viceRank = Card.RANK.SmallJoker;
+    var xRank = cards[cards.length-1].rank;
+    var cardList = this.trumps;
+    if(xRank === honorRank) {
+        if(cards.length != 4) return cards;
+        var nCards = [];
+        for(var x=cardList.length-1,c; c=cardList[x]; x--) {
+            if(c.rank < viceRank) break;
+            nCards.push(c);
+        }
+        return nCards;
+    }
+
+    var nCards = [];
+    for(var x=cardList.length-1,c; c=cardList[x]; x--) {
+        if(c.rank < honorRank) break;
+        nCards.push(c);
+    }
+    return nCards.length > 1 ? nCards : cards;
 };
 
 Player.prototype.recalStrong = function (cards) {
@@ -1854,8 +1917,12 @@ Player.prototype.autoPlayCards = function (isLeading) {
         var strongHand = this.getStrongHand();
         if (strongHand != null) {
             cards = strongHand;
-            if(this.aiLevel >= 2 && !cards[0].isTrump(game.trump, game.rank)) {
-                cards = this.recalStrong(strongHand);
+            if(this.aiLevel >= 2) {
+                if(!cards[0].isTrump(game.trump, game.rank)) {
+                    cards = this.recalStrong(strongHand);
+                } else {
+                    cards = this.tryPlayJokerPair(strongHand);
+                }
             }
         } else {
             if (game.partner == null) {
