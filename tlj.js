@@ -36,7 +36,7 @@ table.startGame(true);
 
 var n = 1;
 //var trump_suite = Card.SUITE.HEART;
-var trump_suite = Card.SUITE.CLUB;
+var trump_suite = Card.SUITE.SPADE;
 var game_rank = 2;
 
 var game = table.game;
@@ -50,28 +50,28 @@ var curRound = game.currentRound;
 
 p.newHand();
 
-p.addCard(new Card(Card.SUITE.SPADE, 3));
-p.addCard(new Card(Card.SUITE.SPADE, 3));
+p.addCard(new Card(Card.SUITE.SPADE, 5));
+p.addCard(new Card(Card.SUITE.SPADE, 5));
+p.addCard(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
 p.addCard(new Card(Card.SUITE.SPADE, 14));
 p.addCard(new Card(Card.SUITE.SPADE, 14));
-p.addCard(new Card(Card.SUITE.SPADE, 14));
-p.addCard(new Card(Card.SUITE.SPADE, 13));
 p.addCard(new Card(Card.SUITE.SPADE, 13));
 //p.addCard(new Card(Card.SUITE.SPADE, 13));
+//p.addCard(new Card(Card.SUITE.SPADE, 13));
 //p.addCard(new Card(Card.SUITE.SPADE, 12));
-p.addCard(new Card(Card.SUITE.SPADE, 12));
+//p.addCard(new Card(Card.SUITE.SPADE, 12));
 p.addCard(new Card(Card.SUITE.SPADE, 11));
 p.addCard(new Card(Card.SUITE.SPADE, 11));
 p.addCard(new Card(Card.SUITE.SPADE, 10));
 p.addCard(new Card(Card.SUITE.SPADE, 9));
 
-p.addCard(new Card(Card.SUITE.SPADE, 10));
+//p.addCard(new Card(Card.SUITE.SPADE, 10));
 p.addCard(new Card(Card.SUITE.SPADE, 9));
 
 ////////////////////////////////////////////////
 p.addCard(new Card(Card.SUITE.HEART, 3));
 //p.addCard(new Card(Card.SUITE.HEART, 3));
-p.addCard(new Card(Card.SUITE.HEART, 5));
+//p.addCard(new Card(Card.SUITE.HEART, 5));
 p.addCard(new Card(Card.SUITE.HEART, 4));
 p.addCard(new Card(Card.SUITE.HEART, 4));
 p.addCard(new Card(Card.SUITE.HEART, 5));
@@ -80,10 +80,15 @@ p.addCard(new Card(Card.SUITE.HEART, 6));
 p.addCard(new Card(Card.SUITE.HEART, 6));
 
 p.sortHand();
+
+p.resortCards(Card.SUITE.SPADE, 2);
+
 var cards = [];
+p.aiLevel = 3;
 debugger;
 //p.playHonor(cards, game);
-cards = p.getStrongHand();
+//cards = p.getStrongHand();
+p.duckCards(cards, Card.SUITE.HEART, true, 3);
 console.log(Card.showCards(cards));
 
 if (true) process.exit(0);
@@ -143,7 +148,7 @@ players[1].addCard(new Card(Card.SUITE.SPADE, 10));
 players[1].sortHand();
 
 var selCards = [];
-players[1].aiLevel = 2;
+players[1].aiLevel = 3;
 players[1].followPlay(selCards, players[1].spades, true);
 console.log(Card.showCards(selCards));
 

@@ -604,20 +604,26 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     var game = this.currentTable.game;
     var xNum = num;
     var allCards = [];
+    var ntSuites = [];
 
-    if (exSuite !== Card.SUITE.SPADE) {
+    if (exSuite !== Card.SUITE.SPADE && this.spades.length > 0) {
         allCards = allCards.concat(this.spades);
+        ntSuites.push(this.spades);
     }
-    if (exSuite !== Card.SUITE.HEART) {
+    if (exSuite !== Card.SUITE.HEART && this.hearts.length > 0) {
         allCards = allCards.concat(this.hearts);
+        ntSuites.push(this.hearts);
     }
-    if (exSuite !== Card.SUITE.DIAMOND) {
+    if (exSuite !== Card.SUITE.DIAMOND && this.diamonds.length > 0) {
         allCards = allCards.concat(this.diamonds);
+        ntSuites.push(this.diamonds);
     }
-    if (exSuite !== Card.SUITE.CLUB) {
+    if (exSuite !== Card.SUITE.CLUB && this.clubs.length > 0) {
         allCards = allCards.concat(this.clubs);
+        ntSuites.push(this.clubs);
     }
 
+    var duckTrumps = false;
     if (allCards.length <= num) {
         if(this.aiLevel >= 4) {
             xNum -= allCards.length;
@@ -626,6 +632,29 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
             if(xNum === 0) return;
         }
         allCards = allCards.concat(this.trumps);
+        duckTrumps = true;
+    } else if(this.aiLevel >= 3 && exSuite !== Card.SUITE.JOKER && this.trumps.length > 0 && ntSuites.length > 1) {
+        ntSuites.sort(function (a, b) {
+            if(a.length === b.length) {
+                var aPoint = Card.getTotalPoints(a);
+                var bPoint = Card.getTotalPoints(b);
+                return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+            }
+            return a.length - b.length;
+        });
+        
+        if(ntSuites[0].length <= num) {
+            var cx = ntSuites[0].length;
+            for (var x = 0; x < cx; x++) {
+                cards.push(ntSuites[0][x]);
+            }
+            xNum -= cx;
+            if(xNum === 0) return;
+            allCards = [];
+            for(var x = 1; x<ntSuites.length; x++) {
+                allCards = allCards.concat(ntSuites[x]);
+            }
+        }
     }
 
     var defCard = null;
@@ -654,19 +683,13 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
             return pointFirst ? bPoint - aPoint : aPoint - bPoint;
         });
     } else {
-        allCards.sort(function (a, b) {
-            if(a.equals(defCard)) return 1;
-            if(b.equals(defCard)) return -1;
-            if (a.isHonor(game.trump, game.rank)) return 1;
-            if (b.isHonor(game.trump, game.rank)) return -1;
-            var aPoint = a.getPoint();
-            var bPoint = b.getPoint();
-
-            if (aPoint === bPoint) {
+        if(duckTrumps && this === game.contractor) {
+            allCards.sort(function (a, b) {
                 var aTrump = a.isTrump(game.trump, game.rank);
                 var bTrump = b.isTrump(game.trump, game.rank);
                 if (aTrump !== bTrump) return aTrump ? 1 : -1;
-
+                if (a.isHonor(game.trump, game.rank)) return 1;
+                if (b.isHonor(game.trump, game.rank)) return -1;
                 if(stat) {
                     var aDup = stat.stat[a.key(game.trump, game.rank)];
                     var bDup = stat.stat[b.key(game.trump, game.rank)];
@@ -675,10 +698,40 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
                     }
                 }
 
-                return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
-            }
-            return pointFirst ? bPoint - aPoint : aPoint - bPoint;
-        });
+                var aPoint = a.getPoint();
+                var bPoint = b.getPoint();    
+                if (aPoint === bPoint) {
+                    return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
+                }
+                return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+            });
+        } else {
+            allCards.sort(function (a, b) {
+                if(a.equals(defCard)) return 1;
+                if(b.equals(defCard)) return -1;
+                if (a.isHonor(game.trump, game.rank)) return 1;
+                if (b.isHonor(game.trump, game.rank)) return -1;
+                var aPoint = a.getPoint();
+                var bPoint = b.getPoint();
+    
+                if (aPoint === bPoint) {
+                    var aTrump = a.isTrump(game.trump, game.rank);
+                    var bTrump = b.isTrump(game.trump, game.rank);
+                    if (aTrump !== bTrump) return aTrump ? 1 : -1;
+    
+                    if(stat) {
+                        var aDup = stat.stat[a.key(game.trump, game.rank)];
+                        var bDup = stat.stat[b.key(game.trump, game.rank)];
+                        if (aDup !== bDup) {
+                            return aDup - bDup;
+                        }
+                    }
+    
+                    return a.trumpRank(game.trump, game.rank) - b.trumpRank(game.trump, game.rank);
+                }
+                return pointFirst ? bPoint - aPoint : aPoint - bPoint;
+            });
+        }
     }
 
     for (var x = 0; x < xNum; x++) {
@@ -883,7 +936,7 @@ Player.prototype.shouldPlayPartner = function () {
     }
 
     if (n < 1) return false;
-    if (n > 1 || partnerDef.keyCardCount + n === 4 || cardList.length < 5) {
+    if (n > 1 || partnerDef.keyCardCount + n === 4 || this.orgLength[defCard.suite] < Config.MAX_SAFE_CARDS_PLAYED + 2) {
         return true;
     }
     
@@ -1202,7 +1255,9 @@ Player.prototype.playPairOrTop = function (cards, cardList, game, isTrump) {
 Player.prototype.endPlayTrump = function (cards, game) {
     var stat = new HandStat(this.trumps, game.trump, game.rank);
     if(stat.totalPairs < 1) {
-        if(this.trumps.length > Config.MAX_SAFE_CARDS_PLAYED && this.partnerHasTrump(game)) {
+        if(this.partnerHasTrump(game) && (!this.opponentHasTrump(game) ||
+            (this.trumps.length > Config.MAX_SAFE_CARDS_PLAYED
+             && this.orgLength[Card.SUITE.JOKER] - this.trumps.length < Config.AVERAGE_TRUMP_LENGTH-1))) {
             cards.push(this.trumps[0]);
         } else {
             cards.push(this.trumps[this.trumps.length - 1]);
