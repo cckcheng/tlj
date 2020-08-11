@@ -48,111 +48,125 @@ game.enterPlayStage();
 game.setTrump(trump_suite);
 var curRound = game.currentRound;
 
-p.newHand();
+//testDuckCards(p);
+testFollowPlay();
+if(true) {
+    process.exit(0);
+}
 
-p.addCard(new Card(Card.SUITE.SPADE, 5));
-p.addCard(new Card(Card.SUITE.SPADE, 5));
-p.addCard(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
-p.addCard(new Card(Card.SUITE.SPADE, 14));
-p.addCard(new Card(Card.SUITE.SPADE, 14));
-p.addCard(new Card(Card.SUITE.SPADE, 13));
-//p.addCard(new Card(Card.SUITE.SPADE, 13));
-//p.addCard(new Card(Card.SUITE.SPADE, 13));
-//p.addCard(new Card(Card.SUITE.SPADE, 12));
-//p.addCard(new Card(Card.SUITE.SPADE, 12));
-p.addCard(new Card(Card.SUITE.SPADE, 11));
-p.addCard(new Card(Card.SUITE.SPADE, 11));
-p.addCard(new Card(Card.SUITE.SPADE, 10));
-p.addCard(new Card(Card.SUITE.SPADE, 9));
+function testDuckCards(p) {
+    p.newHand();
+    
+    p.addCard(new Card(Card.SUITE.SPADE, 5));
+    p.addCard(new Card(Card.SUITE.SPADE, 5));
+    p.addCard(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+    p.addCard(new Card(Card.SUITE.SPADE, 14));
+    p.addCard(new Card(Card.SUITE.SPADE, 14));
+    p.addCard(new Card(Card.SUITE.SPADE, 13));
+    //p.addCard(new Card(Card.SUITE.SPADE, 13));
+    //p.addCard(new Card(Card.SUITE.SPADE, 13));
+    //p.addCard(new Card(Card.SUITE.SPADE, 12));
+    //p.addCard(new Card(Card.SUITE.SPADE, 12));
+    p.addCard(new Card(Card.SUITE.SPADE, 11));
+    p.addCard(new Card(Card.SUITE.SPADE, 11));
+    p.addCard(new Card(Card.SUITE.SPADE, 10));
+    p.addCard(new Card(Card.SUITE.SPADE, 9));
+    
+    //p.addCard(new Card(Card.SUITE.SPADE, 10));
+    p.addCard(new Card(Card.SUITE.SPADE, 9));
+    
+    ////////////////////////////////////////////////
+    p.addCard(new Card(Card.SUITE.HEART, 3));
+    //p.addCard(new Card(Card.SUITE.HEART, 3));
+    //p.addCard(new Card(Card.SUITE.HEART, 5));
+    p.addCard(new Card(Card.SUITE.HEART, 4));
+    p.addCard(new Card(Card.SUITE.HEART, 4));
+    p.addCard(new Card(Card.SUITE.HEART, 5));
+    p.addCard(new Card(Card.SUITE.HEART, 6));
+    p.addCard(new Card(Card.SUITE.HEART, 6));
+    p.addCard(new Card(Card.SUITE.HEART, 6));
+    
+    p.sortHand();
+    
+    p.resortCards(Card.SUITE.SPADE, 2);
+    
+    var cards = [];
+    p.aiLevel = 3;
+    debugger;
+    //p.playHonor(cards, game);
+    //cards = p.getStrongHand();
+    p.duckCards(cards, Card.SUITE.HEART, true, 3);
+    console.log(Card.showCards(cards));
+}
 
-//p.addCard(new Card(Card.SUITE.SPADE, 10));
-p.addCard(new Card(Card.SUITE.SPADE, 9));
+//////////////////////////////////////////////////////
 
-////////////////////////////////////////////////
-p.addCard(new Card(Card.SUITE.HEART, 3));
-//p.addCard(new Card(Card.SUITE.HEART, 3));
-//p.addCard(new Card(Card.SUITE.HEART, 5));
-p.addCard(new Card(Card.SUITE.HEART, 4));
-p.addCard(new Card(Card.SUITE.HEART, 4));
-p.addCard(new Card(Card.SUITE.HEART, 5));
-p.addCard(new Card(Card.SUITE.HEART, 6));
-p.addCard(new Card(Card.SUITE.HEART, 6));
-p.addCard(new Card(Card.SUITE.HEART, 6));
+function testFollowPlay() {
+    var cards = [];
+    cards.push(new Card(Card.SUITE.SPADE, 6));
+    cards.push(new Card(Card.SUITE.SPADE, 6));
+    cards.push(new Card(Card.SUITE.SPADE, 7));
+    cards.push(new Card(Card.SUITE.SPADE, 7));
+    cards.push(new Card(Card.SUITE.SPADE, 8));
+    cards.push(new Card(Card.SUITE.SPADE, 8));
+    curRound.addHand(players[0], cards);
+    console.log(curRound.getNextLeadingPlayer().id);
+    /*
+    cards = [];
+    cards.push(new Card(Card.SUITE.SPADE, 8));
+    cards.push(new Card(Card.SUITE.SPADE, 8));
+    cards.push(new Card(Card.SUITE.SPADE, 7));
+    cards.push(new Card(Card.SUITE.SPADE, 7));
+    curRound.addHand(players[1], cards);
+    console.log(curRound.getNextLeadingPlayer().id);
+    
+    cards = [];
+    cards.push(new Card(trump_suite, 5));
+    cards.push(new Card(trump_suite, 5));
+    cards.push(new Card(trump_suite, 4));
+    cards.push(new Card(trump_suite, 4));
+    curRound.addHand(players[2], cards);
+    console.log(curRound.getNextLeadingPlayer().id);
+    
+    cards = [];
+    cards.push(new Card(trump_suite, 5));
+    cards.push(new Card(trump_suite, 5));
+    cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+    cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
+    curRound.addHand(players[5], cards);
+    console.log(curRound.getNextLeadingPlayer().id);
+    */
+    
+    players[1].spades = [];
+    players[1].addCard(new Card(Card.SUITE.SPADE, 3));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 3));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 4));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 4));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 5));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 5));
+    
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 6));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 6));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 7));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 7));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 8));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 8));
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 9));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 9));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 10));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 10));
+    
+    players[1].sortHand();
+    
+    var selCards = [];
+    players[1].aiLevel = 3;
+    
+    debugger;
+    players[1].followPlay(selCards, players[1].spades, true);
+    console.log(Card.showCards(selCards));
 
-p.sortHand();
+}
 
-p.resortCards(Card.SUITE.SPADE, 2);
-
-var cards = [];
-p.aiLevel = 3;
-debugger;
-//p.playHonor(cards, game);
-//cards = p.getStrongHand();
-p.duckCards(cards, Card.SUITE.HEART, true, 3);
-console.log(Card.showCards(cards));
-
-if (true) process.exit(0);
-
-
-cards.push(new Card(Card.SUITE.SPADE, 7));
-cards.push(new Card(Card.SUITE.SPADE, 7));
-cards.push(new Card(Card.SUITE.SPADE, 8));
-cards.push(new Card(Card.SUITE.SPADE, 8));
-curRound.addHand(players[0], cards);
-console.log(curRound.getNextLeadingPlayer().id);
-/*
-cards = [];
-cards.push(new Card(Card.SUITE.SPADE, 8));
-cards.push(new Card(Card.SUITE.SPADE, 8));
-cards.push(new Card(Card.SUITE.SPADE, 7));
-cards.push(new Card(Card.SUITE.SPADE, 7));
-curRound.addHand(players[1], cards);
-console.log(curRound.getNextLeadingPlayer().id);
-
-cards = [];
-cards.push(new Card(trump_suite, 5));
-cards.push(new Card(trump_suite, 5));
-cards.push(new Card(trump_suite, 4));
-cards.push(new Card(trump_suite, 4));
-curRound.addHand(players[2], cards);
-console.log(curRound.getNextLeadingPlayer().id);
-
-cards = [];
-cards.push(new Card(trump_suite, 5));
-cards.push(new Card(trump_suite, 5));
-cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
-cards.push(new Card(Card.SUITE.JOKER, Card.RANK.BigJoker));
-curRound.addHand(players[5], cards);
-console.log(curRound.getNextLeadingPlayer().id);
-*/
-
-players[1].spades = [];
-players[1].addCard(new Card(Card.SUITE.SPADE, 3));
-players[1].addCard(new Card(Card.SUITE.SPADE, 3));
-players[1].addCard(new Card(Card.SUITE.SPADE, 4));
-players[1].addCard(new Card(Card.SUITE.SPADE, 4));
-players[1].addCard(new Card(Card.SUITE.SPADE, 5));
-players[1].addCard(new Card(Card.SUITE.SPADE, 5));
-
-//players[1].addCard(new Card(Card.SUITE.SPADE, 6));
-players[1].addCard(new Card(Card.SUITE.SPADE, 6));
-players[1].addCard(new Card(Card.SUITE.SPADE, 7));
-//players[1].addCard(new Card(Card.SUITE.SPADE, 7));
-players[1].addCard(new Card(Card.SUITE.SPADE, 8));
-players[1].addCard(new Card(Card.SUITE.SPADE, 8));
-players[1].addCard(new Card(Card.SUITE.SPADE, 9));
-players[1].addCard(new Card(Card.SUITE.SPADE, 9));
-players[1].addCard(new Card(Card.SUITE.SPADE, 10));
-players[1].addCard(new Card(Card.SUITE.SPADE, 10));
-
-players[1].sortHand();
-
-var selCards = [];
-players[1].aiLevel = 3;
-players[1].followPlay(selCards, players[1].spades, true);
-console.log(Card.showCards(selCards));
-
-if (true) process.exit(0);
 
 p.spades = [];
 p.spades.push(new Card(Card.SUITE.SPADE, 6));

@@ -548,10 +548,11 @@ Hand.SIMPLE_TYPE = {
     QUADS: {cat: Hand.COMBINATION.QUADS, len: 4}
 };
 
-Hand.canBeat = function(hand, leadingHand) {
+Hand.canBeat = function(hand, leadingHand, divisor = 1) {
     if(leadingHand == null) return false;
     if(hand.type.cat !== leadingHand.type.cat || hand.type.len < leadingHand.type.len) return false;
-    return hand.minRank > leadingHand.minRank;
+    var dalta = (hand.type.len - leadingHand.type.len) / divisor;
+    return hand.minRank + dalta > leadingHand.minRank;
 };
 
 Hand.makeCards = function (simHand, orgCards, trump_suite, game_rank) {

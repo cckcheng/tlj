@@ -685,9 +685,6 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     } else {
         if(duckTrumps && this === game.contractor) {
             allCards.sort(function (a, b) {
-                var aTrump = a.isTrump(game.trump, game.rank);
-                var bTrump = b.isTrump(game.trump, game.rank);
-                if (aTrump !== bTrump) return aTrump ? 1 : -1;
                 if (a.isHonor(game.trump, game.rank)) return 1;
                 if (b.isHonor(game.trump, game.rank)) return -1;
                 if(stat) {
@@ -1502,7 +1499,8 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
     var keepTop = false;
-    if(!pointFirst && this.aiLevel >= 2 && firstHand.isTrump && cardList[0].isTrump(game.trump, game.rank)) {
+    var playingTrump = cardList[0].isTrump(game.trump, game.rank);
+    if(!pointFirst && this.aiLevel >= 2 && firstHand.isTrump && playingTrump) {
         keepTop = this.shouldKeepTopTrump(game);
     }
 
@@ -1510,7 +1508,11 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     switch(firstHand.type.cat) {
         case Hand.COMBINATION.SINGLE:
             if(this.aiLevel >= 2) {
-                Card.selectCardsSmart(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
+                if(playingTrump && this === game.contractor) {
+                    Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
+                } else {
+                    Card.selectCardsSmart(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
+                }
             } else {
                 Card.selectCardsByPoint(cards, tmpCards, pointFirst, game.trump, game.rank, firstHand.cardNumber, keepTop);
             }
@@ -1573,6 +1575,7 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
 Player.prototype.tryBeatLeading = function (cards, cardList, sameSide) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
+//    var ruffing = !firstHand.isTrump && cardList[0].isTrump(game.trump, game.rank);
     if (firstHand.isFlop) {
         // unable to beat
         this.followPlay(cards, cardList, false);
@@ -1678,7 +1681,18 @@ Player.prototype.tryBeatLeading = function (cards, cardList, sameSide) {
             stat = new HandStat(cardList, game.trump, game.rank);
             rnks = stat.sortedRanks(leadingHand.type.len);
             if(rnks.length > 0 && rnks[rnks.length-1] > leadingHand.maxRank) {
-                sHand = new SimpleHand(leadingHand.type, rnks[rnks.length-1], cardList === this.trumps);
+                var xRank = rnks[rnks.length-1];
+                if(this.aiLevel >= 3 && rnks.length > 1
+                     && (game.currentRound.allFriendsLeft(game, this) || this.noOpponentCanBeat(game, firstHand.suite))) {
+                    rnks.sort(function (a, b) {
+                        var aPoint = Card.rankToPoint(a, game.rank);
+                        var bPoint = Card.rankToPoint(b, game.rank);
+                        if(aPoint === bPoint) return a - b;
+                        return bPoint - aPoint;
+                    });
+                    while((xRank = rnks.shift()) <= leadingHand.maxRank);
+                }
+                sHand = new SimpleHand(leadingHand.type, xRank, cardList === this.trumps);
                 cc = Hand.makeCards(sHand, cardList, game.trump, game.rank);
                 cc.forEach(function (c) {
                     cards.push(c);

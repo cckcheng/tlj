@@ -639,16 +639,26 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
                     });
                 });
             } else {
-                if(tractors.length > 1 && Hand.canBeat(tractors[0], leadingHand)) {
-                    tractors[0].type.len = len;
-                    var cc = Hand.makeCards(tractors[0], tmpCards, trump, gameRank);
-                    cc.forEach(function (c) {
-                        cards.push(c);
-                        tmpCards.splice(c.indexOf(tmpCards), 1);
-                    });
-                } else {
+                var canBeat = false;
+                for(x = 0; x < tractors.length; x++){
+                    if(Hand.canBeat(tractors[x], leadingHand, 2)) {
+                        var delta = (tractors[x].type.len - leadingHand.type.len) / 2;
+                        tractors[x].type.len = len;
+                        tractors[x].minRank += delta;
+                        var cc = Hand.makeCards(tractors[x], tmpCards, trump, gameRank);
+                        cc.forEach(function (c) {
+                            cards.push(c);
+                            tmpCards.splice(c.indexOf(tmpCards), 1);
+                        });
+                        canBeat = true;
+                        break;
+                    }
+                }
+                
+                if(!canBeat) {
                     var left = len;
-                    for (var x = tractors.length - 1; x >= 0 && left >= 4; x--) {
+                    var asc = (leadingHand.type.len > 4);
+                    for (var x = (asc ? 0 : tractors.length - 1); asc ? x < tractors.length : x >= 0 && left >= 4; asc ? x++ : x--) {
                         if (tractors[x].type.len > left) {
                             tractors[x].type.len = left;
                         }
@@ -994,4 +1004,18 @@ Card.shortestSuit = function(pointFirst, suites) {
     });
     
     return suitesNotEmpty[0];
+};
+
+function toPoint(rank) {
+    if(rank === 5 || rank === 10) return rank;
+    if(rank === 13) return 10;
+    return 0;
+}
+
+Card.rankToPoint = function(rank, gameRank) {
+    if(rank === 14 || rank === 15)  {
+        return toPoint(gameRank);
+    }
+    if(rank >= gameRank) rank++;
+    return toPoint(rank);
 };
