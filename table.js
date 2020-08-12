@@ -1450,7 +1450,7 @@ Table.prototype.canJoin = function (player) {
         maxIndex -= 2;  // max rank: K
     }
     
-    if(this.coins > 0 && maxRank >= this.matchType.ranks[maxIndex]) {
+    if(this.coins > 0 && this.playerRecord[player.id] == null && maxRank >= this.matchType.ranks[maxIndex]) {
         player.alertMessage = Table.Messages.TableCloseEnd[player.lang];
         return false;
     }

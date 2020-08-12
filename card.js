@@ -654,7 +654,7 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
                         break;
                     }
                 }
-                
+
                 if(!canBeat) {
                     var left = len;
                     var asc = (leadingHand.type.len > 4);

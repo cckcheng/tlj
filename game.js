@@ -100,6 +100,12 @@ function Game(players, deckNumber) {
             (player2 === this.contractor || player2 === this.partner);
     };
 
+    this.isFriendNext = function (player) {
+        var idx = this.players.indexOf(player) + 1;
+        if(idx === this.players.length) idx = 0;
+        return this.isSameSide(player, this.players[idx]);
+    };
+
     this.sumPoints = function (exPlayer) {
         var sum = this.collectedPoint;
         for (var x = 0, p; p = players[x]; x++) {

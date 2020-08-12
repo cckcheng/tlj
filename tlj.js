@@ -103,8 +103,8 @@ function testDuckCards(p) {
 
 function testFollowPlay() {
     var cards = [];
-    cards.push(new Card(Card.SUITE.SPADE, 6));
-    cards.push(new Card(Card.SUITE.SPADE, 6));
+    //cards.push(new Card(Card.SUITE.SPADE, 9));
+    //cards.push(new Card(Card.SUITE.SPADE, 9));
     cards.push(new Card(Card.SUITE.SPADE, 7));
     cards.push(new Card(Card.SUITE.SPADE, 7));
     cards.push(new Card(Card.SUITE.SPADE, 8));
@@ -148,10 +148,10 @@ function testFollowPlay() {
     //players[1].addCard(new Card(Card.SUITE.SPADE, 6));
     players[1].addCard(new Card(Card.SUITE.SPADE, 6));
     players[1].addCard(new Card(Card.SUITE.SPADE, 7));
-    players[1].addCard(new Card(Card.SUITE.SPADE, 7));
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 7));
     players[1].addCard(new Card(Card.SUITE.SPADE, 8));
     players[1].addCard(new Card(Card.SUITE.SPADE, 8));
-    //players[1].addCard(new Card(Card.SUITE.SPADE, 9));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 9));
     players[1].addCard(new Card(Card.SUITE.SPADE, 9));
     players[1].addCard(new Card(Card.SUITE.SPADE, 10));
     players[1].addCard(new Card(Card.SUITE.SPADE, 10));
