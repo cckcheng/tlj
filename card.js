@@ -546,8 +546,9 @@ Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, 
             } else {
                 var tractors = stat.getTractors(2, isTrump);
                 if (tractors.length > 0) {
-                    tractors[0].type.len = 4;
-                    var cc = Hand.makeCards(tractors[0], tmpCards, trump, gameRank);
+                    var tIdx = tractors.length - 1;
+                    tractors[tIdx].type.len = 4;
+                    var cc = Hand.makeCards(tractors[tIdx], tmpCards, trump, gameRank);
                     cc.forEach(function (c) {
                         cards.push(c);
                         tmpCards.splice(c.indexOf(tmpCards), 1);
@@ -657,7 +658,7 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
 
                 if(!canBeat) {
                     var left = len;
-                    var asc = (leadingHand.type.len > 4);
+                    var asc = (len > 4);
                     for (var x = (asc ? 0 : tractors.length - 1); asc ? x < tractors.length : x >= 0 && left >= 4; asc ? x++ : x--) {
                         if (tractors[x].type.len > left) {
                             tractors[x].type.len = left;
