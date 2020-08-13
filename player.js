@@ -1297,7 +1297,7 @@ Player.prototype.endPlay = function (cards, game) {
             if(this === game.contractor) {
                 suite = this.choosePartnerVoidSuite(game, game.partner, null);
             } else if(this === game.partner) {
-                suite = this.choosePartnerVoidSuite(game, game.contractor, null);
+                suite = this.choosePartnerVoidSuite(game, game.contractor, game.partnerDef.suite);
             }
             if(suite != null) {
                 var cardList = this.getCardsBySuite(suite);
@@ -1356,7 +1356,7 @@ Player.prototype.endPlay = function (cards, game) {
                 if(this === game.contractor) {
                     suite = this.choosePartnerVoidSuite(game, game.partner, null);
                 } else if(this === game.partner) {
-                    suite = this.choosePartnerVoidSuite(game, game.contractor, null);
+                    suite = this.choosePartnerVoidSuite(game, game.contractor, game.partnerDef.suite);
                 }
                 if(suite != null) {
                     var cardList = this.getCardsBySuite(suite);
@@ -1888,13 +1888,7 @@ Player.prototype.tryPlayJokerPair = function (cards) {
     var xRank = cards[cards.length-1].rank;
     var cardList = this.trumps;
     if(xRank === honorRank) {
-        if(cards.length != 4) return cards;
-        var nCards = [];
-        for(var x=cardList.length-1,c; c=cardList[x]; x--) {
-            if(c.rank < viceRank) break;
-            nCards.push(c);
-        }
-        return nCards;
+        return cards;
     }
 
     var nCards = [];
