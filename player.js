@@ -643,7 +643,7 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
             return a.length - b.length;
         });
         
-        if(ntSuites[0].length <= num) {
+        if(ntSuites[0].length <= num && this.getStrongHandOneSuit([], ntSuites[0]) == null) {
             var cx = ntSuites[0].length;
             for (var x = 0; x < cx; x++) {
                 cards.push(ntSuites[0][x]);
@@ -665,7 +665,7 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
     var stat = this.aiLevel >= 2 ? new HandStat(allCards, game.trump, game.rank) : null;
 
     if(this.aiLevel >= 3 && this.totalCardLeft() - num <= 4) {
-        var pointNeeded = game.contractPoint - game.collectedPoint;
+        var pointNeeded = game.contractPoint - game.sumPoints(this);
         var withDeclarer = pointNeeded > 40 ? 1 : -1;
         allCards.sort(function (a, b) {
             if(a.equals(defCard)) return -withDeclarer;
@@ -703,11 +703,25 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
                 return pointFirst ? bPoint - aPoint : aPoint - bPoint;
             });
         } else {
+            var withDeclarer = -1;
+            if(this.aiLevel >= 5 && exSuite === Card.SUITE.JOKER && game.leadingPlayer === game.contractor) {
+                if(game.rank === 10 || game.rank === 13) {
+                    if(game.sumPoints(this) < game.contractPoint / 2
+                        && game.cardsPlayed[Card.SUITE.JOKER] >= Config.THRESHOLD_INIT_DRAW_TRUMP) withDeclarer = 1;
+                }
+            }
+            
+            var keepHonor = true;
+            var pSuite = game.partnerDef.suite;
+            if(this.aiLevel >= 3 && game.partner != null) {
+                keepHonor = false;
+            }
             allCards.sort(function (a, b) {
-                if(a.equals(defCard)) return 1;
-                if(b.equals(defCard)) return -1;
-                if (a.isHonor(game.trump, game.rank)) return 1;
-                if (b.isHonor(game.trump, game.rank)) return -1;
+                if(a.equals(defCard)) return -withDeclarer;
+                if(b.equals(defCard)) return withDeclarer;
+
+                if ((keepHonor || a.suite !== pSuite) && a.isHonor(game.trump, game.rank)) return 1;
+                if ((keepHonor || b.suite !== pSuite) && b.isHonor(game.trump, game.rank)) return -1;
                 var aPoint = a.getPoint();
                 var bPoint = b.getPoint();
     
@@ -777,22 +791,36 @@ Player.prototype.ruff = function (cards, sameSide) {
 
 // cards - output
 // cardList - one suit
-Player.prototype.getStrongHandOneSuit = function (cards, cardList) {
+// dominate - if true, then return stronger hand
+Player.prototype.getStrongHandOneSuit = function (cards, cardList, dominate = false) {
     var game = this.currentTable.game;
     var stat,rnks, sHand, isTrump, tractors;
 
     if (cardList.length >= 3) {
         isTrump = cardList === this.trumps;
-        if(isTrump && game.partner == null && this === game.contractor) {
-            if(this.orgLength[Card.SUITE.JOKER] - this.trumps.length >= Config.THRESHOLD_INIT_DRAW_TRUMP) {
-                // avoid draw too many trumps
-                return null;
+        if(game.partner == null && this === game.contractor) {
+            var hasPsuite = this.getCardsBySuite(game.partnerDef.suite).length > 0;
+            if(hasPsuite) {
+                if(isTrump) {
+                    if(game.cardsPlayed[Card.SUITE.JOKER] >= Config.THRESHOLD_INIT_DRAW_TRUMP) {
+                        // avoid draw too many trumps
+                        return null;
+                    }
+                } else {
+                    if(game.cardsPlayed[cardList[0].suite] > Config.MAX_SAFE_CARDS_PLAYED) {
+                        // avoid possible ruff
+                        return null;
+                    }
+                }
             }
         }
         stat = new HandStat(cardList, game.trump, game.rank);
         if (cardList.length === 3) {
             if (stat.totalTrips > 0) {
                 rnks = stat.sortedRanks(3);
+                if(dominate) {
+                    if(rnks[rnks.length - 1] <= MIN_RANK_DOMINATE) return null;
+                }
                 sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
                 Card.copyCards(Hand.makeCards(sHand, cardList, game.trump, game.rank), cards);
                 return sHand;
@@ -813,11 +841,17 @@ Player.prototype.getStrongHandOneSuit = function (cards, cardList) {
                     if (a.type.len === b.type.len) return b.minRank - a.minRank;
                     return b.type.len - a.type.len;
                 });
+                if(dominate && tractors[0].type.len <= 4) {
+                    if(tractors[0].minRank < MIN_RANK_DOMINATE) return null;
+                }
                 Card.copyCards(Hand.makeCards(tractors[0], cardList, game.trump, game.rank), cards);
                 return tractors[0];
             }
             if (stat.totalTrips > 0) {
                 rnks = stat.sortedRanks(3);
+                if(dominate) {
+                    if(rnks[rnks.length - 1] <= MIN_RANK_DOMINATE) return null;
+                }
                 sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
                 Card.copyCards(Hand.makeCards(sHand, cardList, game.trump, game.rank), cards);
                 return sHand;
@@ -942,6 +976,7 @@ Player.prototype.shouldPlayPartner = function () {
     }
     
     if(this.aiLevel >= 4) {
+        if(game.rank === 10 || game.rank === 13) return true;
         if(game.cardNumberPlayed >= Config.THRESHOLD_PARTNER) return true;
         if(this.matchInfo.points >= Config.THRESHOLD_POINTS_EARN) return true;
         if(game.sumPoints(this) > game.contractPoint / 2) return false;
@@ -989,10 +1024,9 @@ Player.prototype.passToPartner = function (cards) {
 };
 
 Player.prototype.choosePartnerVoidSuite = function (game, partner, pSuite) {
-    var voidSuite = pSuite;
-    var len = pSuite ? game.cardsPlayed[pSuite] : 0;
+    var voidSuite = null;
+    var len = 0;
     for (var i = 0, suit, lst; suit = Card.SUITES[i]; i++) {
-        if (suit === pSuite) continue;
         lst = this.getCardsBySuite(suit);
         if (lst.length > 0 && partner.voids[suit]) {
             var sLen = game.cardsPlayed[suit];
@@ -1002,8 +1036,15 @@ Player.prototype.choosePartnerVoidSuite = function (game, partner, pSuite) {
             }
         }
     }
+    
+    var hasPsuite = (pSuite != null && this.getCardsBySuite(pSuite).length > 0);
+    if(voidSuite != null) {
+        if(!hasPsuite || len <= Config.MAX_SAFE_CARDS_PLAYED+1) return voidSuite;
+        if(game.cardsPlayed[pSuite] < len) return pSuite;
+        return voidSuite;
+    }
 
-    return voidSuite;
+    return hasPsuite ? pSuite : null;
 };
 
 Player.prototype.getAllSuites = function () {
@@ -1301,8 +1342,10 @@ Player.prototype.endPlay = function (cards, game) {
             }
             if(suite != null) {
                 var cardList = this.getCardsBySuite(suite);
-                Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
-                return;
+                if(cardList.length > 0) {
+                    Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
+                    return;
+                }
             }
         }
 
@@ -1360,8 +1403,10 @@ Player.prototype.endPlay = function (cards, game) {
                 }
                 if(suite != null) {
                     var cardList = this.getCardsBySuite(suite);
-                    Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
-                    return;
+                    if(cardList.length > 0) {
+                        Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
+                        return;
+                    }
                 }
             }
 

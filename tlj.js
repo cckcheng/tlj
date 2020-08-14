@@ -48,8 +48,8 @@ game.enterPlayStage();
 game.setTrump(trump_suite);
 var curRound = game.currentRound;
 
-//testDuckCards(p);
-testFollowPlay();
+testDuckCards(p);
+//testFollowPlay();
 if(true) {
     process.exit(0);
 }
@@ -63,7 +63,7 @@ function testDuckCards(p) {
     p.addCard(new Card(Card.SUITE.SPADE, 14));
     p.addCard(new Card(Card.SUITE.SPADE, 14));
     p.addCard(new Card(Card.SUITE.SPADE, 13));
-    //p.addCard(new Card(Card.SUITE.SPADE, 13));
+    p.addCard(new Card(Card.SUITE.SPADE, 13));
     //p.addCard(new Card(Card.SUITE.SPADE, 13));
     //p.addCard(new Card(Card.SUITE.SPADE, 12));
     //p.addCard(new Card(Card.SUITE.SPADE, 12));
@@ -87,6 +87,8 @@ function testDuckCards(p) {
     p.addCard(new Card(Card.SUITE.HEART, 6));
     
     p.sortHand();
+    
+    console.log(p.getStrongHandOneSuit([], p.spades));
     
     p.resortCards(Card.SUITE.SPADE, 2);
     

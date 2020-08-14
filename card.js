@@ -58,7 +58,7 @@ Card.prototype.display = function () {
 };
 
 Card.SUITE = {
-	CLUB: 'C',
+	  CLUB: 'C',
     DIAMOND: 'D',
     HEART: 'H',
     SPADE: 'S',

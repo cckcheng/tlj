@@ -34,6 +34,7 @@ function Game(players, deckNumber) {
     this.partnerDef = null;
 
     this.cardsPlayed = {
+        V: 0,
         C: 0,
         D: 0,
         H: 0,
@@ -804,6 +805,8 @@ function Round(players, trump, gameRank) {
             this.cardNumber = cards.length;
             if(!hand.isTrump) {
                 game.updateCardsPlayed(hand.suite, cards.length);
+            } else {
+                game.updateCardsPlayed(Card.SUITE.JOKER, cards.length);
             }
         } else if (hand.compareTo(leadingHand, firstHand) > 0) {
             leadingHand = hand;
