@@ -655,6 +655,10 @@ Player.prototype.duckCards = function (cards, exSuite, pointFirst, num) {
                 allCards = allCards.concat(ntSuites[x]);
             }
         }
+    } else if(this.aiLevel >= 5 && exSuite === Card.SUITE.JOKER && num ===1 && !pointFirst) {
+        if(this.totalCardLeft() < Config.CARD_NUMBER_ENDPLAY) {
+            pointFirst = this.possiblePartnerWin(game);
+        }
     }
 
     var defCard = null;
@@ -1922,6 +1926,27 @@ Player.prototype.possiblePartnerRuff = function (game, suite) {
             if(p === game.contractor || p === game.partner) continue;
             if(p.voids[suite] && p.hasTrump()) return true;
         }
+    }
+    return false;
+};
+
+// check possible partner has greater trump
+Player.prototype.possiblePartnerWin = function (game) {
+    var leadingHand = game.currentRound.getLeadingHand();
+    if(!leadingHand.isTrump) return false;
+    
+    if(game.isTopRank(Card.SUITE.JOKER, leadingHand.maxRank)) return false;
+    
+    var players = this.currentTable.players;
+    var startIdx = this.currentTable.getSeat(this);
+    if(startIdx >= players.length) startIdx = 0;
+    var firstPlayer = game.leadingPlayer;
+
+    for(var x = startIdx, p; ; x++) {
+        if(x === players.length) x = 0;
+        p = players[x];
+        if(p === firstPlayer) break;
+        if(game.isSameSide(this, p) && p.hasTrump()) return true;
     }
     return false;
 };

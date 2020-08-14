@@ -115,6 +115,27 @@ function Game(players, deckNumber) {
         }
         return sum;
     };
+    
+    this.countHigherCards = function(cards, maxRank) {
+        if (cards == null || cards.length < 1) return 0;
+        var n = 0;
+        var gTrump = this.trump;
+        var gRank = this.rank;
+        cards.forEach(function (c) {
+            if (c.trumpRank(gTrump, gRank) > maxRank) n++;
+        });
+        return n;
+    };
+    
+    this.isTopRank = function(suite, maxRank) {
+        var n = 0;
+        var tObj = this;
+        this.players.forEach((p) => {
+            n += tObj.countHigherCards(p.getCardsBySuite(suite), maxRank);
+        });
+        
+        return n < 1;
+    };
 }
 
 function PartnerDef(def) {
@@ -841,15 +862,6 @@ function Round(players, trump, gameRank) {
         return leadingHand;
     };
 
-    function countHigherCards(cards, maxRank) {
-        if (cards == null || cards.length < 1) return 0;
-        var n = 0;
-        cards.forEach(function (c) {
-            if (c.trumpRank(trump, gameRank) > maxRank) n++;
-        });
-        return n;
-    }
-
     function hasPossibleHighers(hand, exPlayer) {
         switch (hand.type.cat) {
             case Hand.COMBINATION.TRACTOR4:
@@ -866,9 +878,9 @@ function Round(players, trump, gameRank) {
 
         }
 
+        var game = exPlayer.currentTable.game;
         if(exPlayer.aiLevel >= 3){
             var startIdx = exPlayer.currentTable.getSeat(exPlayer);
-            var game = exPlayer.currentTable.game;
             if(startIdx >= players.length) startIdx = 0;
             var firstPlayer = game.leadingPlayer;
 
@@ -919,9 +931,9 @@ function Round(players, trump, gameRank) {
         for (var x = 0, p; p = players[x]; x++) {
             if (p === exPlayer) continue;
             if (hand.isTrump) {
-                count += countHigherCards(p.trumps, hand.maxRank);
+                count += game.countHigherCards(p.trumps, hand.maxRank);
             } else {
-                count += countHigherCards(p.getCardsBySuite(hand.suite), hand.maxRank);
+                count += game.countHigherCards(p.getCardsBySuite(hand.suite), hand.maxRank);
             }
             if (count >= hand.type.len) return true;
         }
