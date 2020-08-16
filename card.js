@@ -68,6 +68,7 @@ Card.SUITE = {
 Card.SUITES = ['C', 'D', 'H', 'S'];
 
 Card.RANK = {
+    Ace: 14,
     SmallJoker: 97,
     BigJoker: 98
 };
@@ -1019,4 +1020,15 @@ Card.rankToPoint = function(rank, gameRank) {
     }
     if(rank >= gameRank) rank++;
     return toPoint(rank);
+};
+
+// count total number of a card in cards list
+Card.countCard = function(cards, c) {
+    if(cards == null || cards.length < 1) return 0;
+    var n = 0;
+    cards.forEach((o) => {
+        if(o.equals(c)) n++;
+    });
+    
+    return n;
 };

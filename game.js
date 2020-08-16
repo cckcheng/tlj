@@ -127,14 +127,17 @@ function Game(players, deckNumber) {
         return n;
     };
     
+    this.maxTrumpRank = function(cards) {
+        if (cards == null || cards.length < 1) return 0;
+        return cards[cards.length - 1].trumpRank(this.trump, this.Rank);
+    };
+    
     this.isTopRank = function(suite, maxRank) {
-        var n = 0;
-        var tObj = this;
-        this.players.forEach((p) => {
-            n += tObj.countHigherCards(p.getCardsBySuite(suite), maxRank);
-        });
-        
-        return n < 1;
+        if(maxRank < Card.RANK.Ace) return false;
+        for (var x = 0, p; p = this.players[x]; x++) {
+            if(this.maxTrumpRank(p.getCardsBySuite(suite)) > maxRank) return false;
+        }
+        return true;
     };
 }
 

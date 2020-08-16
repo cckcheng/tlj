@@ -26,6 +26,11 @@ while (players.length < 6) {
 
 table.startGame(true);
 
+for(var x=0, p; p=table.players[x]; x++) {
+    console.log(p.id);
+    p.aiLevel = 4;
+}
+
 //if (true) process.exit(0);
 
 //var game = new Game(players, 4);
@@ -36,7 +41,7 @@ table.startGame(true);
 
 var n = 1;
 //var trump_suite = Card.SUITE.HEART;
-var trump_suite = Card.SUITE.SPADE;
+var trump_suite = Card.SUITE.CLUB;
 var game_rank = 2;
 
 var game = table.game;
@@ -48,10 +53,39 @@ game.enterPlayStage();
 game.setTrump(trump_suite);
 var curRound = game.currentRound;
 
-testDuckCards(p);
+testEagerPartner();
+//testIsFriend();
+//testDuckCards(p);
 //testFollowPlay();
 if(true) {
     process.exit(0);
+}
+
+function testEagerPartner(){
+    game.setPartnerDef('SA0');
+    p = players[1];
+    p.newHand();
+    addSuit(p, 'S', 2,13,13,14,14,5,5,5,13);
+    addSuit(p, 'H', 10,10,11,12,12, 4, 4,4, 5,5,6);
+    p.sortHand();
+    p.resortCards(trump_suite, 2);
+    
+    console.log(p.showHand());
+    debugger;
+    console.log(p.eagerPlayPartner('S'));
+}
+
+function testIsFriend(){
+    game.partner = players[1];
+    console.log("contractor: " + game.contractor.id);
+    console.log("partner: " + game.partner.id);
+    debugger;
+    console.log(players[0].id +': '+game.isFriendNext(players[0]));
+    console.log(players[1].id +': '+game.isFriendNext(players[1]));
+    console.log(players[2].id +': '+game.isFriendNext(players[2]));
+    console.log(players[3].id +': '+game.isFriendNext(players[3]));
+    console.log(players[4].id +': '+game.isFriendNext(players[4]));
+    console.log(players[5].id +': '+game.isFriendNext(players[5]));
 }
 
 function testDuckCards(p) {
@@ -169,6 +203,12 @@ function testFollowPlay() {
 
 }
 
+
+function addSuit(p, suite, ...ranks) {
+    ranks.forEach((rnk) => {
+        p.addCard(new Card(suite, rnk));
+    });
+}
 
 p.spades = [];
 p.spades.push(new Card(Card.SUITE.SPADE, 6));

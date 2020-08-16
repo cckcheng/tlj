@@ -823,7 +823,7 @@ Player.prototype.getStrongHandOneSuit = function (cards, cardList, dominate = fa
             if (stat.totalTrips > 0) {
                 rnks = stat.sortedRanks(3);
                 if(dominate) {
-                    if(rnks[rnks.length - 1] <= MIN_RANK_DOMINATE) return null;
+                    if(rnks[rnks.length - 1] <= Config.MIN_RANK_DOMINATE) return null;
                 }
                 sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
                 Card.copyCards(Hand.makeCards(sHand, cardList, game.trump, game.rank), cards);
@@ -846,7 +846,7 @@ Player.prototype.getStrongHandOneSuit = function (cards, cardList, dominate = fa
                     return b.type.len - a.type.len;
                 });
                 if(dominate && tractors[0].type.len <= 4) {
-                    if(tractors[0].minRank < MIN_RANK_DOMINATE) return null;
+                    if(tractors[0].minRank < Config.MIN_RANK_DOMINATE) return null;
                 }
                 Card.copyCards(Hand.makeCards(tractors[0], cardList, game.trump, game.rank), cards);
                 return tractors[0];
@@ -854,7 +854,7 @@ Player.prototype.getStrongHandOneSuit = function (cards, cardList, dominate = fa
             if (stat.totalTrips > 0) {
                 rnks = stat.sortedRanks(3);
                 if(dominate) {
-                    if(rnks[rnks.length - 1] <= MIN_RANK_DOMINATE) return null;
+                    if(rnks[rnks.length - 1] <= Config.MIN_RANK_DOMINATE) return null;
                 }
                 sHand = new SimpleHand(Hand.SIMPLE_TYPE.TRIPS, rnks[rnks.length - 1], isTrump);
                 Card.copyCards(Hand.makeCards(sHand, cardList, game.trump, game.rank), cards);
@@ -868,6 +868,14 @@ Player.prototype.getStrongHandOneSuit = function (cards, cardList, dominate = fa
 
 Player.prototype.getStrongHand = function () {
     var game = this.currentTable.game;
+    
+    if(this === game.partner && this !== game.contractor) {
+        var cards = [];
+        if(this.getStrongHandOneSuit(cards, this.getCardsBySuite(game.partnerDef.suite), true) != null) {
+            return cards;
+        }
+    }
+
     var arr = this.getAllSuites();
     var x = Math.floor(Math.random() * (arr.length));
     var stat,rnks, sHand, isTrump, tractors;
@@ -1627,6 +1635,30 @@ Player.prototype.followPlay = function (cards, cardList, pointFirst) {
     }
 };
 
+// pSuite: partnerDef.suite
+Player.prototype.eagerPlayPartner = function (pSuite) {
+    if(this.aiLevel < 4) return false;
+    if(this.isDeadPartner()) return false;
+    var cards = [];
+    var pList = this.getCardsBySuite(pSuite);
+    if(this.getStrongHandOneSuit(cards, pList, true) == null) return false;
+    if(cards.length === 4){
+        var game = this.currentTable.game;
+        if(game.honorsPlayed[pSuite] < 1 && cards[3].isHonor(game.trump, game.rank)) {
+            if(Card.countCard(pList, cards[3]) < 3 && Card.countCard(pList, cards[0]) < 3){
+                return false;  // avoid AAKK
+            }
+        }
+    }
+    if(Config.AGGRESSIVE_PARNTER) return true;
+
+    for(var x = 0, s; s = Card.SUITES[x]; x++) {
+        if(s === pSuite) continue;
+        if(this.getStrongHandOneSuit([], this.getCardsBySuite(s), true) != null) return true;
+    }
+    return false;
+};
+
 Player.prototype.tryBeatLeading = function (cards, cardList, sameSide) {
     var game = this.currentTable.game;
     var firstHand = game.currentRound.getFirstHand();
@@ -1658,6 +1690,10 @@ Player.prototype.tryBeatLeading = function (cards, cardList, sameSide) {
                         var defCard = partnerDef.getDefCard();
                         var viceCard = partnerDef.getViceCard(game.rank);
                         if (card.equals(defCard)) {
+                            if(this.eagerPlayPartner(partnerDef.suite)) {
+                                cards.push(card);
+                                return true;
+                            }
                             var viceRank = viceCard.trumpRank(game.trump, game.rank);
                             if (viceRank === leadingHand.maxRank) {
                                 if (game.contractor !== leadingHand.player && this.shouldPlayPartner()) {
