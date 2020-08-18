@@ -1554,7 +1554,8 @@ Table.joinPlayer = function(player, category) {
             var table = Table.createTable(player, category, {
                 tableType: 'FREE', allowJoin: true, showMinBid: true
             });
-            table.startGame();
+//            table.startGame();
+            Table.delayStart(table, 0, player);
             return;
         case 'NOVICE':
         case 'INTERMEDIATE':
@@ -1591,17 +1592,14 @@ Table.joinPlayer = function(player, category) {
     var waitSeconds = getSecondsToNextSyncTable();
     if(waitSeconds < 0) waitSeconds = Config.START_WAIT_SECONDS;
 
-    if(waitSeconds > 0) {
-        Table.delayStart(table, waitSeconds, player);
-    } else {
-        table.startGame();
-    }
+    Table.delayStart(table, waitSeconds, player);
 };
 
 Table.delayStart = function(table, waitSeconds, player) {
     if(waitSeconds <= 0) {
-        table.startGame();
-        return;
+        waitSeconds = 5;  // wait 5 seconds by default
+//        table.startGame();
+//        return;
     }
     var mServer = table.mainServer;
     table.status = 'break';

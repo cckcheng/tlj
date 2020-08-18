@@ -432,14 +432,8 @@ SqlDb.prototype.addTable = function(table) {
         if(err) {
             Mylog.log(err.message);
         } else {
-            q = "select last_insert_rowid() as tbid";
-            mainDB.get(q, [], (err, row) => {
-                if(err) {
-                } else {
-                    table.id = row.tbid;
-                    table.updateTableList('add');
-                }
-            });
+            table.id = this.lastID;
+            table.updateTableList('add');
         }
     });
 };
