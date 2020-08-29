@@ -28,7 +28,7 @@ table.startGame(true);
 
 for(var x=0, p; p=table.players[x]; x++) {
     console.log(p.id);
-    p.aiLevel = 5;
+    p.aiLevel = 4;
 }
 
 //if (true) process.exit(0);
@@ -42,7 +42,7 @@ for(var x=0, p; p=table.players[x]; x++) {
 var n = 1;
 //var trump_suite = Card.SUITE.HEART;
 var trump_suite = Card.SUITE.CLUB;
-var game_rank = 2;
+var game_rank = 8;
 
 var game = table.game;
 var p = table.players[0];
@@ -51,7 +51,7 @@ game.contractor = p;
 game.partner = table.players[1];
 game.enterPlayStage();
 game.setTrump(trump_suite);
-game.setPartnerDef('SA0');
+game.setPartnerDef('DA0');
 var curRound = game.currentRound;
 
 testDuckPlay(table.players);
@@ -65,16 +65,18 @@ if(true) {
 
 function testDuckPlay(pp) {
     p.newHand();
-    addSuit(p, 'S', 13,13,14, 10,10);
+//SAKQQJJ10105222
+    addSuit(p, 'S', 13,14,12,12,11,11, 10,10,5,2,2,2);
+//    addSuit(p, 'S', 13,14,5,2,2,2);
     addSuit(p, 'C', 8,8,9,10,10, 13);
 //    addSuit(p, 'H', 8,8,9,9,10,10, 13);
-    addSuit(p, 'D', 11,11,10,10, 3, 7, 8);
+//    addSuit(p, 'D', 11,11,10,10, 3, 7, 8);
     p.sortHand();
-    p.resortCards(trump_suite, 2);
+    p.resortCards(trump_suite, 8);
 
     curRound.addHand(pp[1], makeCards('H', 3,3,4,4));
     curRound.addHand(pp[3], makeCards('C', 5,5,6,6));
-    
+    debugger;
     var cards = p.autoPlayCards(false);
     
     console.log(Card.showCards(cards));

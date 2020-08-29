@@ -268,9 +268,9 @@ function Table(o, mainServer, category) {
         // reword winners
         if(this.coins > 0) {
             var totalPrize = this.players.length * this.coins * this.prizePoolScale;
-            var p1 = totalPrize * 0.5;
-            var p2 = totalPrize * 0.3;
-            var p3 = totalPrize * 0.2;
+            var p1 = totalPrize * 0.6;
+            var p2 = totalPrize * 0.25;
+            var p3 = totalPrize * 0.15;
             var nm = winners[1].length;
             if(nm >= 3) {
                 this.splitPrize(winners[1], totalPrize);
@@ -475,14 +475,14 @@ Table.CATEGORY = {
     INTERMEDIATE: {
         icon: 58673,
         coins: 200,
-        prizePoolScale: 1.1,
+        prizePoolScale: 1,
         en: 'Intermediate',
         zh: '中级'
     },
     ADVANCED: {
         icon: 58676,
         coins: 500,
-        prizePoolScale: 1.2,
+        prizePoolScale: 1,
         en: 'Advanced',
         zh: '高级'
     }
@@ -1105,7 +1105,7 @@ function gameOver(t) {
         t.broadcastGameInfo(json, null, langInfo);
     }, Config.PAUSE_SECONDS_BETWEEN_ROUND * 1000, t);
 
-    Mylog.log(new Date().toLocaleString() + ', #' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
+    Mylog.log(new Date().toLocaleString() + ', ' + t.id + '#' + t.games.length + ': ' + t.game.contractPoint + '|' + t.game.collectedPoint
          + ' ' + t.game.playerStatusEn);
 
     if (t.matchOver) {
