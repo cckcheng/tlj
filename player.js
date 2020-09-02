@@ -868,12 +868,13 @@ Player.prototype.getStrongHandOneSuit = function (cards, cardList, dominate = fa
 
 Player.prototype.getStrongHand = function () {
     var game = this.currentTable.game;
-    
+    var isPartner = false;
     if(this === game.partner && this !== game.contractor) {
         var cards = [];
         if(this.getStrongHandOneSuit(cards, this.getCardsBySuite(game.partnerDef.suite), true) != null) {
             return cards;
         }
+        isPartner = true;
     }
 
     var arr = this.getAllSuites();
@@ -881,6 +882,7 @@ Player.prototype.getStrongHand = function () {
     var stat,rnks, sHand, isTrump, tractors;
     var strongest = null, strongestCards = null;
     for(var i=0; i<arr.length; i++) {
+        if(isPartner && arr[x] === this.trumps) continue;  // avoid draw contractor's trump
         var strongCards = [];
         var strongHand = this.getStrongHandOneSuit(strongCards, arr[x]);
         if(strongHand != null) {
@@ -1003,7 +1005,7 @@ Player.prototype.passToPartner = function (cards) {
     var partnerDef = game.partnerDef;
     if (partnerDef.noPartner) {
         this.randomPlay(cards);
-        return false;
+        return;
     }
 
     if(game.partner != null && this.aiLevel >= 2) {
@@ -1017,7 +1019,7 @@ Player.prototype.passToPartner = function (cards) {
     var cardList = this.getCardsBySuite(partnerDef.suite);
     if (cardList.length < 1) {
         this.randomPlay(cards);
-        return false;
+        return;
     }
 
     if (this.playPartnerCards(cards)) return true;
@@ -1027,7 +1029,10 @@ Player.prototype.passToPartner = function (cards) {
             var suite = this.choosePartnerVoidSuite(game, game.contractor, partnerDef.suite);
             cardList = this.getCardsBySuite(suite);
             Card.selectCardsByPoint(cards, cardList, !this.possibleOpponentRuff(game, suite), game.trump, game.rank, 1);
-            return true;
+            return;
+        } else {
+            Card.selectPointCardsFirst(cards, cardList);
+            return;
         }
         pointFirst = game.isFriendNext(this);
     }
@@ -1196,7 +1201,9 @@ Player.prototype.playHonorOrPoint = function(cards, cardList, game) {
         this.tryAddViceHonor(cardList, cards, cards.length, game);
         return;
     }
-    Card.selectCardsByPoint(cards, cardList, !(this === game.contractor || this === game.parnter), game.trump, game.rank, 1);
+//    var pointFirst = !(this === game.contractor || this === game.parnter);
+    var pointFirst = game.isFriendNext(this);
+    Card.selectCardsByPoint(cards, cardList, pointFirst, game.trump, game.rank, 1);
 };
 
 Player.prototype.findPairAndPlay = function (cards, game, findInOrder) {
@@ -1399,12 +1406,13 @@ Player.prototype.endPlay = function (cards, game) {
         allCards.sort(Card.compareRank);
         var xCard = allCards[allCards.length - 1];
         if(xCard.trumpRank(game.trump, game.rank) === 13) {
-            cards.push(xCard);
-            if(allCards.length > 1) {
-                if(allCards[allCards.length - 2].equals(xCard)) {
-                    cards.push(xCard);
-                }
-            }
+            xCard.extractAll(cards, allCards);
+//            cards.push(xCard);
+//            if(allCards.length > 1) {
+//                if(allCards[allCards.length - 2].equals(xCard)) {
+//                    cards.push(xCard);
+//                }
+//            }
         } else {
             if(game.contractor !== game.partner && this.partnerHasTrump(game)) {
                 var suite = null;
@@ -2051,9 +2059,10 @@ Player.prototype.playTopTrump = function (cards, game) {
         if(p.trumps[p.trumps.length-1].trumpRank(game.trump, game.rank) > xRank) return false;
     }
 
-    cards.push(card);
-    if(this.trumps.length > 1 && this !== game.partner) {
-        if(this.trumps[this.trumps.length - 2].equals(card)) cards.push(card);
+    if(this !== game.partner) {
+        card.extractAll(cards, this.trumps);
+    } else {
+        cards.push(card);
     }
     return true;
 };

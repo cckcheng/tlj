@@ -474,6 +474,19 @@ Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, 
     return tmpCards;
 };
 
+Card.selectPointCardsFirst = function (cards, cardList) {
+    var lst = cardList.slice();
+    lst.sort(function (a, b) {
+        var aPoint = a.getPoint();
+        var bPoint = b.getPoint();
+        if (aPoint === bPoint) return a.rank - b.rank;
+        return bPoint - aPoint;
+    });
+    
+    var c0 = lst[0];
+    c0.extractAll(cards, lst);
+};
+
 Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank, num, keepTop) {
     var tmpCards = cardList.slice();
     var stat = new HandStat(tmpCards, trump, gameRank);
@@ -1031,4 +1044,12 @@ Card.countCard = function(cards, c) {
     });
     
     return n;
+};
+
+// extract all same card in a suite
+Card.prototype.extractAll = function (cards, cardList) {
+    var c = this;
+    cardList.forEach((o) => {
+        if(o.equals(c)) cards.push(o);
+    });
 };

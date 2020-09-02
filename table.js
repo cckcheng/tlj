@@ -191,7 +191,7 @@ function Table(o, mainServer, category) {
                     delete this.mainServer.protectedTables[this.passCode];
                 } 
                 if(this.mainServer.pendingReboot && Object.keys(tableList).length < 1) {
-                    mainServer.stop();                
+                    mainServer.stop();
                 }
                 break;
         }
@@ -268,6 +268,7 @@ function Table(o, mainServer, category) {
         // reword winners
         if(this.coins > 0) {
             var totalPrize = this.players.length * this.coins * this.prizePoolScale;
+            if(this.passCode > 0) totalPrize *= Config.PRIVATE_PRIZE_SCALE;  // fee for private table
             var p1 = totalPrize * 0.6;
             var p2 = totalPrize * 0.25;
             var p3 = totalPrize * 0.15;
@@ -278,13 +279,13 @@ function Table(o, mainServer, category) {
                 this.splitPrize(winners[1], p1 + p2);
                 this.splitPrize(winners[3], p3);
             } else {
-                this.rewardPlayer(winners[1][0], p1);
+                this.rewardPlayer(winners[1][0], Math.round(p1));
                 
                 nm = winners[2].length;
                 if(nm > 1) {
                     this.splitPrize(winners[2], p2 + p3);
                 } else {
-                    this.rewardPlayer(winners[2][0], p2);
+                    this.rewardPlayer(winners[2][0], Math.round(p2));
                     this.splitPrize(winners[3], p3);
                 }
             }

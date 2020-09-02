@@ -54,13 +54,27 @@ game.setTrump(trump_suite);
 game.setPartnerDef('DA0');
 var curRound = game.currentRound;
 
-testDuckPlay(table.players);
+testPassPartner();
+//testDuckPlay(table.players);
 //testEagerPartner();
 //testIsFriend();
 //testDuckCards(p);
 //testFollowPlay();
 if(true) {
     process.exit(0);
+}
+
+function testPassPartner() {
+    p.newHand();
+    addSuit(p, 'S', 13,14,12,12,11,11, 10,10,5,2,2,2);
+    addSuit(p, 'C', 8,8,9,10,10, 13);
+    addSuit(p, 'D', 11,10,10,10,11);
+    p.sortHand();
+    p.resortCards(trump_suite, 8);
+    var cards = [];
+    debugger;
+    p.passToPartner(cards);
+    console.log(Card.showCards(cards));
 }
 
 function testDuckPlay(pp) {
