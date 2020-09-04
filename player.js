@@ -880,9 +880,11 @@ Player.prototype.getStrongHand = function () {
     var arr = this.getAllSuites();
     var x = Math.floor(Math.random() * (arr.length));
     var stat,rnks, sHand, isTrump, tractors;
-    var strongest = null, strongestCards = null;
-    for(var i=0; i<arr.length; i++) {
-        if(isPartner && arr[x] === this.trumps) continue;  // avoid draw contractor's trump
+    var strongest = null;
+    var strongestCards = null;
+    for(var i=0; i<arr.length; i++,x++) {
+        if(x === arr.length) x=0;
+        if(isPartner && game.trump === Card.SUITE.JOKER && arr[x] === this.trumps) continue;  // avoid draw contractor's trump if NT game
         var strongCards = [];
         var strongHand = this.getStrongHandOneSuit(strongCards, arr[x]);
         if(strongHand != null) {
@@ -900,9 +902,6 @@ Player.prototype.getStrongHand = function () {
                 strongestCards = strongCards;
             }
         }
-
-        x++;
-        if(x === arr.length) x=0;
     }
 
     return strongestCards;
@@ -2047,7 +2046,7 @@ Player.prototype.recalStrong = function (cards) {
 };
 
 Player.prototype.playTopTrump = function (cards, game) {
-    if(this.trumps.length < 1 || game.trump === Card.SUITE.JOKER) return false;
+    if(this.trumps.length < 1 || (game.trump === Card.SUITE.JOKER && this === game.partner)) return false;
     if(!this.opponentHasTrump(game)) return false;
 
     var card = this.trumps[this.trumps.length - 1];
@@ -2097,7 +2096,6 @@ Player.prototype.autoPlayCards = function (isLeading) {
             if(this.playTopTrump(cards, game)) return cards;
             if(this.playHonor(cards, game)) return cards;
         }
-        
         var strongHand = this.getStrongHand();
         if (strongHand != null) {
             cards = strongHand;
