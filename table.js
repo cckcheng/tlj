@@ -1388,6 +1388,9 @@ Table.prototype.updatePlayerRecord = function (playerId, tblPlayer) {
                 deducted: false,  // whether deducted the match fee
                 games: {}
             };
+            if(tblPlayer.property && tblPlayer.property.account_id) {
+                this.playerRecord[playerId].account_id = tblPlayer.property.account_id;
+            }
         }
     } else {
         if(this.playerRecord[playerId] == null) {
@@ -1427,6 +1430,8 @@ Table.prototype.linkPlayer = function (player) {
 };
 
 Table.prototype.canJoin = function (player) {
+    if(this.resumeReturnPlayer(player)) return true;
+
     player.alertMessage = Table.Messages.NoSeat[player.lang];  // MUST set player.alertMessage if return false 
     if(this.robots.length < 1) return false;
 
@@ -1487,6 +1492,56 @@ Table.prototype.canJoin = function (player) {
     }
     this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
     this.broadcastMessage(Table.Messages.PlayerIn, player.name);
+    return true;
+};
+
+Table.prototype.resumeReturnPlayer = function (player) {
+    var orgPlayer = player;
+    var robot = null;
+    if(this.playerRecord[player.id] != null) {
+        if(this.robots.length < 1) return false;
+        robot = this.playerRecord[player.id].tblPlayer;
+        var idx = this.robots.indexOf(robot);
+        if(idx < 0) {
+            // occupied by other player
+            robot = this.robots.shift();
+        } else {
+            this.robots.splice(idx, 1);
+        }
+    } else {
+        if(player.property.account_id) {
+            for(pid in this.playerRecord) {
+                tPlayer = this.playerRecord[pid].tblPlayer;
+                if(this.playerRecord[pid].account_id === player.property.account_id) {
+                    if(tPlayer.id == null || tPlayer.id === pid) {
+                        robot = tPlayer;
+                        this.mainServer.removePlayer(tPlayer);
+                    } else {
+                        // occupied by other player
+                        if(this.robots.length < 1) return false;
+                        robot = this.robots.shift();
+                    }
+                    this.playerRecord[player.id] = this.playerRecord[pid];
+                    delete this.playerRecord[pid];
+                    break;
+                }
+            }
+            if(robot == null) return false;
+        } else {
+            return false;
+        }
+    }
+    
+    robot.replaceRobot(player);
+    this.mainServer.activePlayers[player.id] = player = robot;
+    if(!this.resume(player)) {
+        return false;
+    }
+    
+    if(orgPlayer.currentTable != null) {
+        orgPlayer.currentTable.removeVisiter(orgPlayer);
+    }
+
     return true;
 };
 
@@ -1648,6 +1703,8 @@ Table.joinTable = function(player, json, tblPlayer) {
         tblPlayer.toRobot(-1);
     }
 
+    if(table.resumeReturnPlayer(player)) return;  // possible same user switch device
+    
     if(!player.checkBalance(table.coins)) return;    
     if(!table.canJoin(player)) {
         player.sendMessage(player.alertMessage);
@@ -1663,6 +1720,9 @@ Table.watchTable = function(player, tid) {
         Table.pushTableList(player);
         return;
     }
+
+    if(table.resumeReturnPlayer(player)) return;
+    
     table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
     player.pushData(table);
 
