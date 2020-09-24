@@ -2721,7 +2721,7 @@ Player.prototype.buryCards = function (strCards) {
 };
 
 Player.prototype.promote = function (delta) {
-    this.matchInfo.currentRank = this.currentTable.getNextRank(this.matchInfo.currentRank, delta);
+    this.matchInfo.currentRank = this.currentTable.getNextRank(this.matchInfo, delta);
 };
 
 Player.prototype.evaluate = function () {

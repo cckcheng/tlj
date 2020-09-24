@@ -65,6 +65,10 @@ Table.Messages = {
         en: 'Hole point multiple: ',
         zh: '底分倍数: '
     },
+    MissionOn: {
+        en: 'Contract times needed: 2',
+        zh: '要求坐庄次数: 2'
+    },
 
     PlayerIn: {
         en: '{0} in',
@@ -348,6 +352,14 @@ function Table(o, mainServer, category) {
         return ai;
     };
     
+    this.getDefaultOption = function() {
+        var opt = '';
+        if(this.matchType !== Table.MATCH_TYPE.FULL) return opt;
+        if(Config.DEFAULT_OPTION[this.category]) opt += Config.DEFAULT_OPTION[this.category];
+        
+        return opt;
+    };
+    
     this.setOptions = function(opt) {
         if(opt == null || opt.length < 1) return;
         opts = opt.split(',');
@@ -368,6 +380,9 @@ function Table(o, mainServer, category) {
                 case 'B':
                     this.options.longBreakMinutes = parseInt(opts[x].substring(1));
                     break;
+                case 'T':  // contract task
+                    this.options.missionOn = true;
+                    break;
             }
         }
         
@@ -381,6 +396,11 @@ function Table(o, mainServer, category) {
         } else if(this.options.lateTrump) {
             this.options.summary.en += Table.Messages.LateTrump.en;
             this.options.summary.zh += Table.Messages.LateTrump.zh;
+        }
+        
+        if(this.options.missionOn) {
+            this.options.summary.en += Table.Messages.MissionOn.en;
+            this.options.summary.zh += Table.Messages.MissionOn.zh;
         }
         
         if(this.options.holeMultiple != null) {
@@ -1111,6 +1131,13 @@ function gameOver(t) {
 
     if (t.matchOver) {
         t.dismissed = true;
+        if(t.options.missionOn) {
+            for (var x = 0, p, adj=0; p = t.players[x]; x++) {
+                adj = t.missionAdjust(p.matchInfo);
+                if(adj !== 0) p.promote(adj);
+            }
+        }
+        
         var summary = t.matchSummary();
         setTimeout(function (t) {
             t.broadcastGameInfo({
@@ -1361,7 +1388,18 @@ Table.prototype.getSeat = function (player) {
     return this.players.indexOf(player) + 1;    // 1->6
 };
 
-Table.prototype.getNextRank = function (rank, delta) {
+// check mission status
+Table.prototype.missionAdjust = function (matchInfo) {
+    var adj = 0;
+    if(this.options.missionOn && !matchInfo.missionDone && matchInfo.contracts < 2) {
+        adj = matchInfo.contracts > 0 ? -1 : -3;
+        matchInfo.missionDone = true;
+    }
+    return adj;
+};
+
+Table.prototype.getNextRank = function (matchInfo, delta) {
+    var rank = matchInfo.currentRank;
     var idx = this.matchType.ranks.indexOf(rank);
     var maxIdx = this.matchType.ranks.length - 1;
     if (idx < 0)
@@ -1370,6 +1408,7 @@ Table.prototype.getNextRank = function (rank, delta) {
     if (nextIdx < 0)
         nextIdx = 0;
     if (nextIdx > maxIdx) {
+        nextIdx += this.missionAdjust(matchInfo);
         return this.matchType.ranks[maxIdx] + nextIdx - maxIdx;
     }
 
@@ -1566,7 +1605,9 @@ Table.createTable = function(player, category, o) {
     }
     
     var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
-    if(o.option) table.setOptions(o.option);
+    var tblOpt = table.getDefaultOption();
+    if(o.option) tblOpt += ',' + o.option;
+    table.setOptions(tblOpt);
     table.coins = coins;
     if(coins > 0) table.prizePoolScale = tabCat.prizePoolScale;
     mServer.allTables[category].push(table);
@@ -1816,6 +1857,7 @@ function MatchInfo(t, player) {
     this.alert = null;
     this.penalty = null;
     this.totalPenalty = 0;
+    this.missionDone = false;
 
     this.reset = function () {
         // call reset when start a new game
@@ -1835,6 +1877,19 @@ function MatchInfo(t, player) {
 
     this.toJson = function (seat) {
         var pName = this.player.name;
+        if(t.options.missionOn && !this.missionDone) {
+            /*if(this.contracts < 2) {
+                pName += '|\u0f1d';
+                if(this.contracts < 1) {
+                    pName += '\u0f1e';
+                }
+            }*/
+            if(this.contracts === 0) {
+                pName += '(-3)';
+            } else if(this.contracts === 1) {
+                pName += '(-1)';
+            }
+        }
         if (this.player.id != null && this.player.sock == null) {
             pName += '(away)';
         }
