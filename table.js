@@ -354,7 +354,11 @@ function Table(o, mainServer, category) {
     
     this.getDefaultOption = function() {
         var opt = '';
-        if(this.matchType !== Table.MATCH_TYPE.FULL) return opt;
+        if(Config.TESTING) {
+        } else if(this.matchType !== Table.MATCH_TYPE.FULL) {
+            return opt;
+        }
+
         if(Config.DEFAULT_OPTION[this.category]) opt += Config.DEFAULT_OPTION[this.category];
         
         return opt;
@@ -1402,11 +1406,10 @@ Table.prototype.getNextRank = function (matchInfo, delta) {
     var rank = matchInfo.currentRank;
     var idx = this.matchType.ranks.indexOf(rank);
     var maxIdx = this.matchType.ranks.length - 1;
-    if (idx < 0)
-        return -1;
+    if (idx < 0) return -1;
     var nextIdx = idx + delta;
-    if (nextIdx < 0)
-        nextIdx = 0;
+    if (nextIdx < 0) return nextIdx;
+//        nextIdx = 0;
     if (nextIdx > maxIdx) {
         nextIdx += this.missionAdjust(matchInfo);
         return this.matchType.ranks[maxIdx] + nextIdx - maxIdx;
