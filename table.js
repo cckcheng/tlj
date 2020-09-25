@@ -5,6 +5,7 @@ var Mylog = require('./mylog');
 var Player = require('./player');
 var Func = require('./func');
 var Card = require('./card');
+var Group = require('./group');
 const {Game, Hand, SimpleHand} = require('./game');
 
 Table.init = function() {
@@ -1796,6 +1797,8 @@ Table.pushTableList = function(player) {
         if(Config.TABLE_OPTION[k] != null) json.category += '|' + Config.TABLE_OPTION[k];
         writeTableList(player, json, k, mServer.allTables[k]);
     }
+    
+    Group.listGroups(player, json, 'INTERMEDIATE', mServer.groups);
     if(player.property.account_id) {
         json.coin = player.property.coins;
     }

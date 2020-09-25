@@ -4,6 +4,7 @@ var sqlite3 = require('sqlite3').verbose();
 var Config = require('./conf');
 var Mylog = require('./mylog');
 var Card = require('./card');
+var Group = require('./group');
 var Sendmail = require('./sendmail');
 
 function SqlDb() {
@@ -44,6 +45,20 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
             cb('-');
         } else {
             cb(row.country_code);
+        }
+    });
+};
+
+SqlDb.prototype.loadGroups = function(mainServer) {
+    mainServer.groups = [];
+    var q = 'select * from tour_group where status!=' + Group.STATUS.CLOSED;
+    this.db.all(q, [], (err, rows) => {
+        if (err) {
+            Mylog.log(err.message);
+        } else {
+            rows.forEach((row) => {
+                mainServer.groups.push(new Group(row));
+            });
         }
     });
 };
