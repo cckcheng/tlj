@@ -83,6 +83,10 @@ Table.Messages = {
         en: '{0} is watching',
         zh: '{0}来了, 在旁观'
     },
+    InvalidPlayer: {
+        en: 'Invalid Player, unable to join',
+        zh: ''
+    },
     
     GameNumber: {
         en: 'Game {0}',
@@ -191,7 +195,7 @@ function Table(o, mainServer, category) {
                 tableList[this.id] = this;
                 break;
             case 'remove':
-                delete tableList[this.id];
+                if(tableList[this.id]) delete tableList[this.id];
                 if(this.passCode > 0) {
                     delete this.mainServer.protectedTables[this.passCode];
                 } 
@@ -533,6 +537,10 @@ Table.prototype.allRobots = function () {
 Table.prototype.dismiss = function () {
     if (this.dismissed) return true;
 
+    if(this.group_id) {
+        if(this.games.length < 2) return false;  // to avoid tour abort too soon
+    }
+    
     var noPlayerLeft = true;
     for (var x = 0, p; x < SEAT_NUMBER; x++) {
         p = this.players[x];
@@ -1533,9 +1541,24 @@ Table.prototype.canJoin = function (player) {
     if(watchTable != null) {
         watchTable.removeVisiter(orgPlayer);
     }
-    this.broadcastGameInfo({action: 'in', name: player.name, seat: this.getSeat(player)}, player);
+    
+    var pName = this.playerNameWithAddon(player);
+
+    this.broadcastGameInfo({action: 'in', name: pName, seat: this.getSeat(player)}, player);
     this.broadcastMessage(Table.Messages.PlayerIn, player.name);
     return true;
+};
+
+Table.prototype.playerNameWithAddon = function (player) {
+    var pName = player.name;
+    if(this.options.missionOn && !player.matchInfo.missionDone) {
+        if(player.matchInfo.contracts === 0) {
+            pName += '(-3)';
+        } else if(player.matchInfo.contracts === 1) {
+            pName += '(-1)';
+        }
+    }
+    return pName;
 };
 
 Table.prototype.resumeReturnPlayer = function (player) {
@@ -1608,7 +1631,8 @@ Table.createTable = function(player, category, o) {
         return null;
     }
     
-    var table = new Table({matchType: mType, allowJoin: o.private ? false: true, showMinBid: o.showMinBid}, mServer, category);
+    var table = new Table({matchType: mType, allowJoin: o.private ? false: (o.allowJoin == null ? true : o.allowJoin),
+        showMinBid: o.showMinBid}, mServer, category);
     var tblOpt = table.getDefaultOption();
     if(o.option) tblOpt += ',' + o.option;
     table.setOptions(tblOpt);
@@ -1725,6 +1749,10 @@ Table.joinTable = function(player, json, tblPlayer) {
             return;
         }
     } else if(json.tid) {
+        if(tid.startsWith('G')) {
+            player.sendMessage(Table.Messages.InvalidPlayer[player.lang]);
+            return;
+        }
         table = mServer.tableListById[json.tid];
         if(table == null || table.dismissed) {
             player.sendMessage(Table.Messages.TableEnded[player.lang]);
@@ -1757,6 +1785,10 @@ Table.joinTable = function(player, json, tblPlayer) {
 };
 
 Table.watchTable = function(player, tid) {
+    if(tid.startsWith('G')) {
+        Group.proceedGroup(player, tid.substring(1));
+        return;
+    }
     var mServer = player.mainServer;
     var tableList = mServer.tableListById;
     var table = tableList[tid];
@@ -1784,7 +1816,7 @@ Table.pushTableList = function(player) {
         json.stat = players.length + ' player' + (players.length>1 ? 's' : '') + ', ' 
                   + tables.length + ' table' + (tables.length>1 ? 's' : ''); 
     }
-    
+
     var first = true, cat;
     for(k in Table.CATEGORY) {
         if(first) {
@@ -1797,11 +1829,13 @@ Table.pushTableList = function(player) {
         if(Config.TABLE_OPTION[k] != null) json.category += '|' + Config.TABLE_OPTION[k];
         writeTableList(player, json, k, mServer.allTables[k]);
     }
-    
+
     Group.listGroups(player, json, 'INTERMEDIATE', mServer.groups);
     if(player.property.account_id) {
         json.coin = player.property.coins;
     }
+
+    //Mylog.log(JSON.stringify(json));
     player.pushJson(json);
 };
 
@@ -1815,7 +1849,7 @@ function writeTableList(player, json, k, tables) {
     json[k] = '';
     for(var x=0,idx=tables.length-1,t,tk; idx>=0 && x<Config.MAX_LIST_TABLES; x++,idx--) {
         t = tables[idx];
-        if(t.id == null) continue;
+        if(t.id == null || t.group_id) continue;
         if(json[k].length>0) json[k] += ',';
         tk = (t.passCode > 0 ? 'L' : 'P') + t.id;  // L: private, P: public
         json[k] += tk;

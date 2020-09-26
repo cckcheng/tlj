@@ -50,14 +50,37 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
 };
 
 SqlDb.prototype.loadGroups = function(mainServer) {
-    mainServer.groups = [];
-    var q = 'select * from tour_group where status!=' + Group.STATUS.CLOSED;
+    if(mainServer.groups == null) mainServer.groups = {};
+    var q = 'select g.* from tour_group g where g.status!=' + Group.STATUS.CLOSED;
     this.db.all(q, [], (err, rows) => {
         if (err) {
             Mylog.log(err.message);
         } else {
             rows.forEach((row) => {
-                mainServer.groups.push(new Group(row));
+                org = mainServer.groups[row.id];
+                if(org) {
+                    if(org.table) return;
+                    if(org.status === Group.STATUS.NEW || org.status === Group.STATUS.OPEN) {
+                        mainServer.groups[row.id] = new Group(row, mainServer);
+                    }
+                } else {
+                    mainServer.groups[row.id] = new Group(row, mainServer);
+                }
+            });
+        }
+    });
+};
+
+SqlDb.prototype.getPlayerNames = function(group) {
+    var q = 'select b.account_id,b.player_name,max(b.last_time) from group_player a'
+        + ' join users b on a.account_id=b.account_id where a.group_id=? group by b.account_id';
+    group.players = {};
+    this.db.all(q, [group.id], (err, rows) => {
+        if (err) {
+            Mylog.log(err.message);
+        } else {
+            rows.forEach((row) => {
+                group.players[row.account_id] = row.player_name;
             });
         }
     });

@@ -194,7 +194,9 @@ function Player(o, mainServer) {
             this.idleTimer = null;
         }
         if (this.currentTable != null && !this.currentTable.dismissed) {
-            this.currentTable.broadcastGameInfo({action: 'in', name: this.name, seat: this.currentTable.getSeat(this)}, this);
+            var pName = this.currentTable.playerNameWithAddon(this);
+            //Mylog.log(pName);
+            this.currentTable.broadcastGameInfo({action: 'in', name: pName, seat: this.currentTable.getSeat(this)}, this);
         }
     };
 
