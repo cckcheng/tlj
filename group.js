@@ -22,17 +22,20 @@ function Group(o, mainServer) {
                     this.status === Group.STATUS.FINISHED;
                     mainServer.myDB.updateRecord('tour_group', 'id', this.id, {table_id: this.table.id, status: Group.STATUS.FINISHED});
                 }
-                s += ", finished";
+                s += ": " + showTimeString(this.startTime) + ", finished";
             } else {
                 s += ", " + Table.Messages.GameNumber[lang].format(this.table.games.length);
             }
         } else if(this.status === Group.STATUS.OPEN) {
             if(this.startTime != null) {
-                //s += ": " + Object.values(this.players);
-                s += " " + showTimeString(this.startTime);
+                s += ": " + showTimeString(this.startTime);
+                //s += "\n" + Object.values(this.players);
+            } else {
+                s += ", " + Object.values(this.players);
             }
         } else {
-            s += ", finished";
+            s += ": " + showTimeString(this.startTime) + ", finished";
+            //s += "\n" + Object.values(this.players);
         }
         return s;
     };
@@ -48,9 +51,9 @@ Group.STATUS = {
 
 Group.sort = function(groups) {
     groups.sort(function (a, b) {
-        if(a.start_time != null && b.start_time != null) return a.start_time - b.start_time;
-        if(a.start_time != null) return -1;
-        if(b.start_time != null) return 1;
+        if(a.startTime != null && b.startTime != null) return a.startTime > b.startTime ? 1 : -1;
+        if(a.startTime != null) return -1;
+        if(b.startTime != null) return 1;
         return a.id - b.id;
     });
 };
@@ -85,6 +88,7 @@ function listByStatus(player, json, k, groups, status) {
 }
 
 function showTimeString(dt) {
+    if(dt == null) return '';
     return dt.toLocaleString('en-CA', {timeZoneName: "short", hour12: false});
 }
 
@@ -92,6 +96,7 @@ function sendFinishedGroupInfo(player, group, msg) {
     var json = {action: 'msg', lang: player.lang};
     json.title = group.group_name;
     json.content = Object.values(group.players);
+    json.content += '\n' + showTimeString(group.startTime);
     json.content += '\n' + msg;
     player.pushJson(json);
 }
@@ -112,7 +117,7 @@ Group.proceedGroup = function(player, gid) {
     if(group.table) {
         var table = group.table;
         if(table.dismissed) {
-            sendFinishedGroupInfo(player, group, table.matchSummaryLang ? table.matchSummaryLang[player.lang] : 'aborted');
+            sendFinishedGroupInfo(player, group, table.matchSummaryLang ? table.matchSummaryLang[player.lang].summary : 'aborted');
             return;
         }
         if(group.players[player.property.account_id]) {

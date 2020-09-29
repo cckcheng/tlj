@@ -84,8 +84,8 @@ Table.Messages = {
         zh: '{0}来了, 在旁观'
     },
     InvalidPlayer: {
-        en: 'Invalid Player, unable to join',
-        zh: ''
+        en: 'Invalid player, unable to join',
+        zh: '非参赛选手, 无法加入'
     },
     
     GameNumber: {
@@ -1749,7 +1749,7 @@ Table.joinTable = function(player, json, tblPlayer) {
             return;
         }
     } else if(json.tid) {
-        if(tid.startsWith('G')) {
+        if(json.tid.startsWith('G')) {
             player.sendMessage(Table.Messages.InvalidPlayer[player.lang]);
             return;
         }
