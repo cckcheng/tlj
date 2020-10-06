@@ -106,7 +106,7 @@ SqlDb.prototype.addGroup = function(mainServer, player, dt) {
 
 SqlDb.prototype.loadGroups = function(mainServer) {
     if(mainServer.groups == null) mainServer.groups = {};
-    var q = 'select g.* from tour_group g where g.status!=' + Group.STATUS.CLOSED;
+    var q = 'select g.*,t.summary from tour_group g left join tables t on t.table_id=g.table_id where g.status!=' + Group.STATUS.CLOSED;
     this.db.all(q, [], (err, rows) => {
         if (err) {
             Mylog.log(err.message);
@@ -117,6 +117,8 @@ SqlDb.prototype.loadGroups = function(mainServer) {
                     if(org.table) return;
                     if(org.status === Group.STATUS.NEW || org.status === Group.STATUS.OPEN) {
                         mainServer.groups[row.id] = new Group(row, mainServer);
+                    } else {
+                        mainServer.groups[row.id].summary = row.summary;
                     }
                 } else {
                     mainServer.groups[row.id] = new Group(row, mainServer);

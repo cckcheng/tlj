@@ -107,13 +107,6 @@ Group.proceedGroup = function(player, gid) {
     var group = mServer.groups[gid];
     if(group == null) return;
 
-    switch(group.status) {
-        case Group.STATUS.FINISHED:
-        case Group.STATUS.CLOSED:
-            sendFinishedGroupInfo(player, group, 'finished');
-            return;
-    }
-    
     if(group.table) {
         var table = group.table;
         if(table.dismissed) {
@@ -134,6 +127,13 @@ Group.proceedGroup = function(player, gid) {
         return;
     }
     
+    switch(group.status) {
+        case Group.STATUS.FINISHED:
+        case Group.STATUS.CLOSED:
+            sendFinishedGroupInfo(player, group, group.summary);
+            return;
+    }
+    
     var s0 = (new Date()).getTime()/1000;
     var s1 = group.startTime.getTime()/1000;
     var delta = Math.round(s1 - s0);
@@ -141,6 +141,7 @@ Group.proceedGroup = function(player, gid) {
         sendFinishedGroupInfo(player, group, 'canceled');
         return;
     }
+    
     if(delta < 15 * 60 && group.players[player.property.account_id]) {
         if(delta < 0) delta = 0;
         var table = Table.createTable(player, 'INTERMEDIATE', {
