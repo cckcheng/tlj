@@ -49,6 +49,61 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
     });
 };
 
+SqlDb.prototype.listGroups = function(mainServer, player, dt) {
+    var json = {action: 'group', type: 'list'};
+    if(dt.user == null || dt.user != 1) {
+        player.pushJson(json);
+        return;
+    }
+
+    var q = "select b.account_id,b.player_name,max(b.last_time) ltm from accounts a join users b on a.id=b.account_id"
+        + " where b.last_time>datetime('now','-2 months') group by b.account_id order by ltm desc limit 50";
+    this.db.all(q, [], (err, rows) => {
+        if (err) {
+            Mylog.log(err.message);
+        } else {
+            json.ids = '';
+            rows.forEach((row) => {
+                json.ids += ',' + row.account_id;
+                json[row.account_id] = row.player_name;
+            });
+            if(json.ids.length > 0) {
+                json.ids = json.ids.substr(1);
+                player.pushJson(json);
+            }
+        }
+    });
+};
+
+SqlDb.prototype.addGroup = function(mainServer, player, dt) {
+    var thisObj = this;
+    var mainDB = this.db;
+    var q = "insert into tour_group (group_name,start_time,status) values (?,datetime(?,'unixepoch'),?)";
+    mainDB.run(q, [dt.name,dt.time,Group.STATUS.OPEN], function(err) {
+        if (err) {
+            Mylog.log(err.message);
+            player.pushJson({action: 'msg', lang: 'en', title: 'Alert', content: err.message});
+        } else {
+            if(dt.ids == null || dt.ids.length < 1) {
+                player.pushJson({action: 'msg', lang: 'en', title: 'Success', content: 'Group created'});
+                thisObj.loadGroups(mainServer);
+                return;
+            }
+            var grpId = this.lastID;
+            q = "Insert into group_player (group_id, account_id) select ?,id from accounts where id in (" + dt.ids + ")";
+            mainDB.run(q, [grpId], function(err) {
+                if (err) {
+                    Mylog.log(err.message);
+                    player.pushJson({action: 'msg', lang: 'en', title: 'Alert', content: err.message});
+                } else {
+                    player.pushJson({action: 'msg', lang: 'en', title: 'Success', content: 'Group created'});
+                    thisObj.loadGroups(mainServer);
+                }
+            });
+        }
+    });
+};
+
 SqlDb.prototype.loadGroups = function(mainServer) {
     if(mainServer.groups == null) mainServer.groups = {};
     var q = 'select g.* from tour_group g where g.status!=' + Group.STATUS.CLOSED;

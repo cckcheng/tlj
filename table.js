@@ -360,7 +360,7 @@ function Table(o, mainServer, category) {
     this.getDefaultOption = function() {
         var opt = '';
         if(Config.TESTING) {
-        } else if(this.matchType !== Table.MATCH_TYPE.FULL) {
+        } else if(this.matchType !== Table.MATCH_TYPE.FULL && this.matchType !== Table.MATCH_TYPE.HALF) {
             return opt;
         }
 
