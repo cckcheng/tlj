@@ -39,6 +39,21 @@ function Group(o, mainServer) {
         }
         return s;
     };
+    
+    this.toString = function() {
+        var s = this.group_name + '|';
+        if(this.startTime) s += this.startTime.getTime();
+        s += '|';
+        if(group.accIds) {
+            s += group.accIds;
+        } else if(group.players) {
+            var pids = '';
+            for(pid in group.players) pids += ',' + pid;
+            if(pids.length > 0) pids = pids.substr(1);
+            s += pids;
+        }
+        return s;
+    };
 }
 
 Group.STATUS = {

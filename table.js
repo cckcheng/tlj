@@ -943,6 +943,10 @@ function procSetTrump(t, trump) {
         });
     }
 
+    if(t.options.missionOn) {
+        var pName = t.playerNameWithAddon(t.game.contractor);
+        t.broadcastGameInfo({action: 'in', name: pName, seat: t.getSeat(t.game.contractor)});
+    }
     t.buryCards();
 }
 

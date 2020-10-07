@@ -51,6 +51,23 @@ SqlDb.prototype.getCountryCode = function (ip, cb) {
 
 SqlDb.prototype.listGroups = function(mainServer, player, dt) {
     var json = {action: 'group', type: 'list'};
+    if(mainServer.groups) {
+        json.gids = '';
+        for(k in mainServer.groups) {
+            group = mainServer.groups[k];
+            switch(group.status) {
+                case Group.STATUS.NEW:
+                case Group.STATUS.OPEN:
+                    break;
+                default:
+                    continue;
+            }
+            if(json.gids.length > 0) json.gids += ',';
+            gid = 'G' + group.id;
+            json.gids += gid;
+            json[gid] = group.toString();
+        }
+    }
     if(dt.user == null || dt.user != 1) {
         player.pushJson(json);
         return;
@@ -75,38 +92,66 @@ SqlDb.prototype.listGroups = function(mainServer, player, dt) {
     });
 };
 
-SqlDb.prototype.addGroup = function(mainServer, player, dt) {
+SqlDb.prototype.saveGroup = function(mainServer, player, dt) {
     var thisObj = this;
     var mainDB = this.db;
     var q = "insert into tour_group (group_name,start_time,status) values (?,datetime(?,'unixepoch'),?)";
-    mainDB.run(q, [dt.name,dt.time,Group.STATUS.OPEN], function(err) {
+    var params = [dt.gname,dt.time];
+    var grpId;
+    if(dt.gid) {
+        grpId = dt.gid.substr(1);
+        q = "update tour_group set group_name=?,start_time=datetime(?,'unixepoch') where id=?";
+        params.push(grpId);
+    } else {
+        params.push(Group.STATUS.OPEN);
+    }
+    mainDB.run(q, params, function(err) {
         if (err) {
             Mylog.log(err.message);
             player.pushJson({action: 'msg', lang: 'en', title: 'Alert', content: err.message});
         } else {
+            function cb() {
+                thisObj.listGroups(mainServer, player, {user: 0});
+            }
+            
             if(dt.ids == null || dt.ids.length < 1) {
-                player.pushJson({action: 'msg', lang: 'en', title: 'Success', content: 'Group created'});
-                thisObj.loadGroups(mainServer);
+                //player.pushJson({action: 'msg', lang: 'en', title: 'Success', content: 'Group created'});
+                thisObj.loadGroups(mainServer, cb);
                 return;
             }
-            var grpId = this.lastID;
-            q = "Insert into group_player (group_id, account_id) select ?,id from accounts where id in (" + dt.ids + ")";
-            mainDB.run(q, [grpId], function(err) {
-                if (err) {
-                    Mylog.log(err.message);
-                    player.pushJson({action: 'msg', lang: 'en', title: 'Alert', content: err.message});
-                } else {
-                    player.pushJson({action: 'msg', lang: 'en', title: 'Success', content: 'Group created'});
-                    thisObj.loadGroups(mainServer);
-                }
-            });
+            
+            function addGroupPlayer(grpId) {
+                var qInsert = "Insert into group_player (group_id, account_id) select ?,id from accounts where id in (" + dt.ids + ")";
+                mainDB.run(qInsert, [grpId], function(err) {
+                    if (err) {
+                        Mylog.log(err.message);
+                        player.pushJson({action: 'msg', lang: 'en', title: 'Alert', content: err.message});
+                    } else {
+                        //player.pushJson({action: 'msg', lang: 'en', title: 'Success', content: 'Group created'});
+                        thisObj.loadGroups(mainServer, cb);
+                    }
+                });
+            }
+            
+            if(grpId) {
+                mainDB.run("delete from group_player where group_id=?", [grpId], function(err) {
+                    if(err) {
+                        Mylog.log(err.message);
+                    } else {
+                        addGroupPlayer(grpId);
+                    }
+                });
+            } else {
+                addGroupPlayer(this.lastID);
+            }
         }
     });
 };
 
-SqlDb.prototype.loadGroups = function(mainServer) {
+SqlDb.prototype.loadGroups = function(mainServer, cb) {
     if(mainServer.groups == null) mainServer.groups = {};
-    var q = 'select g.*,t.summary from tour_group g left join tables t on t.table_id=g.table_id where g.status!=' + Group.STATUS.CLOSED;
+    var q = 'select g.*,t.summary,(select group_concat(account_id) from group_player where group_id=g.id) accIds'
+            + ' from tour_group g left join tables t on t.table_id=g.table_id where g.status!=' + Group.STATUS.CLOSED;
     this.db.all(q, [], (err, rows) => {
         if (err) {
             Mylog.log(err.message);
@@ -124,6 +169,7 @@ SqlDb.prototype.loadGroups = function(mainServer) {
                     mainServer.groups[row.id] = new Group(row, mainServer);
                 }
             });
+            if(cb) cb();
         }
     });
 };
