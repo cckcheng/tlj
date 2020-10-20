@@ -86,6 +86,7 @@ SqlDb.prototype.listGroups = function(mainServer, player, dt) {
             });
             if(json.ids.length > 0) {
                 json.ids = json.ids.substr(1);
+                //Mylog.log(JSON.stringify(json));
                 player.pushJson(json);
             }
         }

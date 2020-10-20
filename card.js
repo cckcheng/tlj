@@ -672,7 +672,7 @@ Card.selectTractor2 = function (len, cards, cardList, pointFirst, trump, gameRan
 
                 if(!canBeat) {
                     var left = len;
-                    var asc = (len > 4);
+                    var asc = (len > 4 && tractors[0].type.len > 4);
                     for (var x = (asc ? 0 : tractors.length - 1); asc ? x < tractors.length : x >= 0 && left >= 4; asc ? x++ : x--) {
                         if (tractors[x].type.len > left) {
                             tractors[x].type.len = left;

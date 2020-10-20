@@ -19,7 +19,7 @@ function Group(o, mainServer) {
         if(this.table) {
             if(this.table.dismissed) {
                 if(this.status === Group.STATUS.OPEN || this.status === Group.STATUS.RUNNING) {
-                    this.status === Group.STATUS.FINISHED;
+                    this.status = Group.STATUS.FINISHED;
                     mainServer.myDB.updateRecord('tour_group', 'id', this.id, {table_id: this.table.id, status: Group.STATUS.FINISHED});
                 }
                 s += ": " + showTimeString(this.startTime) + ", finished";
@@ -34,7 +34,7 @@ function Group(o, mainServer) {
                 s += ", " + Object.values(this.players);
             }
         } else {
-            s += ": " + showTimeString(this.startTime) + ", finished";
+            s += ": " + showTimeString(this.startTime) + ", ended";
             //s += "\n" + Object.values(this.players);
         }
         return s;

@@ -54,13 +54,13 @@ game.setTrump(trump_suite);
 game.setPartnerDef('DA0');
 var curRound = game.currentRound;
 
-testPartnerPlay();
+//testPartnerPlay();
 //testPassPartner();
 //testDuckPlay(table.players);
 //testEagerPartner();
 //testIsFriend();
 //testDuckCards(p);
-//testFollowPlay();
+testFollowPlay();
 if(true) {
     process.exit(0);
 }
@@ -194,8 +194,8 @@ function testDuckCards(p) {
 
 function testFollowPlay() {
     var cards = [];
-    //cards.push(new Card(Card.SUITE.SPADE, 9));
-    //cards.push(new Card(Card.SUITE.SPADE, 9));
+    cards.push(new Card(Card.SUITE.SPADE, 9));
+    cards.push(new Card(Card.SUITE.SPADE, 9));
     cards.push(new Card(Card.SUITE.SPADE, 7));
     cards.push(new Card(Card.SUITE.SPADE, 7));
     cards.push(new Card(Card.SUITE.SPADE, 8));
@@ -229,18 +229,18 @@ function testFollowPlay() {
     */
     
     players[1].spades = [];
-    players[1].addCard(new Card(Card.SUITE.SPADE, 3));
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 3));
     players[1].addCard(new Card(Card.SUITE.SPADE, 3));
     players[1].addCard(new Card(Card.SUITE.SPADE, 4));
-    players[1].addCard(new Card(Card.SUITE.SPADE, 4));
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 4));
     players[1].addCard(new Card(Card.SUITE.SPADE, 5));
     players[1].addCard(new Card(Card.SUITE.SPADE, 5));
     
     //players[1].addCard(new Card(Card.SUITE.SPADE, 6));
     players[1].addCard(new Card(Card.SUITE.SPADE, 6));
     players[1].addCard(new Card(Card.SUITE.SPADE, 7));
-    //players[1].addCard(new Card(Card.SUITE.SPADE, 7));
-    players[1].addCard(new Card(Card.SUITE.SPADE, 8));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 7));
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 8));
     players[1].addCard(new Card(Card.SUITE.SPADE, 8));
     players[1].addCard(new Card(Card.SUITE.SPADE, 9));
     players[1].addCard(new Card(Card.SUITE.SPADE, 9));
@@ -253,7 +253,7 @@ function testFollowPlay() {
     players[1].aiLevel = 3;
     
     debugger;
-    players[1].followPlay(selCards, players[1].spades, true);
+    players[1].followPlay(selCards, players[1].spades, false);
     console.log(Card.showCards(selCards));
 
 }
