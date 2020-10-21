@@ -165,6 +165,7 @@ SqlDb.prototype.loadGroups = function(mainServer, cb) {
                         mainServer.groups[row.id] = new Group(row, mainServer);
                     } else {
                         mainServer.groups[row.id].summary = row.summary;
+                        mainServer.groups[row.id].status = row.status;
                     }
                 } else {
                     mainServer.groups[row.id] = new Group(row, mainServer);
@@ -459,6 +460,13 @@ SqlDb.prototype.registerUser = function (player, o) {
             }
         }
     });  
+};
+
+SqlDb.prototype.recordGroupScore = function (group_id, account_id, score, rank) {
+    var q = "update group_player set score=?,rank=? where group_id=? and account_id=?";
+    this.db.run(q, [score, rank, group_id, account_id], (err) => {
+        if(err) Mylog.log(err.message);
+    });
 };
 
 SqlDb.prototype.updateRecord = function (tableName, idField, idVal, o) {

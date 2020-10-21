@@ -20,9 +20,11 @@ function Group(o, mainServer) {
             if(this.table.dismissed) {
                 if(this.status === Group.STATUS.OPEN || this.status === Group.STATUS.RUNNING) {
                     this.status = Group.STATUS.FINISHED;
+                    this.summary = this.table.matchSummary();
                     mainServer.myDB.updateRecord('tour_group', 'id', this.id, {table_id: this.table.id, status: Group.STATUS.FINISHED});
                 }
-                s += ": " + showTimeString(this.startTime) + ", finished";
+                s += ": " + showTimeString(this.startTime) + ", completed";
+                this.table = null;
             } else {
                 s += ", " + Table.Messages.GameNumber[lang].format(this.table.games.length);
             }
@@ -160,7 +162,7 @@ Group.proceedGroup = function(player, gid) {
     if(delta < 15 * 60 && group.players[player.property.account_id]) {
         if(delta < 0) delta = 0;
         var table = Table.createTable(player, 'INTERMEDIATE', {
-            tableType: 'FULL', allowJoin: false, showMinBid: false, option: 'B10'
+            tableType: Config.tableType, allowJoin: false, showMinBid: false, option: 'B10'
         });
         group.table = table;
         group.status = Group.STATUS.RUNNING;

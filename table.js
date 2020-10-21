@@ -207,8 +207,10 @@ function Table(o, mainServer, category) {
     };
     
     this.matchSummary = function () {
-        var gameNum = this.games.length;
-        if (gameNum < 1) return '';
+        if(this.games) {
+            var gameNum = this.games.length;
+            if (gameNum < 1) return '';
+        }
 
         if(!this.matchOver) return this.playerStatus;
         
@@ -282,20 +284,22 @@ function Table(o, mainServer, category) {
             var p2 = totalPrize * 0.25;
             var p3 = totalPrize * 0.15;
             var nm = winners[1].length;
+            
+            var totalScore = Config.SCORE_1ST + Config.SCORE_2ND + Config.SCORE_3RD;
             if(nm >= 3) {
-                this.splitPrize(winners[1], totalPrize);
+                this.splitPrize(winners[1], totalPrize, totalScore, 1);
             } else if(nm === 2) {
-                this.splitPrize(winners[1], p1 + p2);
-                this.splitPrize(winners[3], p3);
+                this.splitPrize(winners[1], p1 + p2, Config.SCORE_1ST + Config.SCORE_2ND, 1);
+                this.splitPrize(winners[3], p3, Config.SCORE_3RD, 3);
             } else {
-                this.rewardPlayer(winners[1][0], Math.round(p1));
+                this.rewardPlayer(winners[1][0], Math.round(p1), Config.SCORE_1ST, 1);
                 
                 nm = winners[2].length;
                 if(nm > 1) {
-                    this.splitPrize(winners[2], p2 + p3);
+                    this.splitPrize(winners[2], p2 + p3, Config.SCORE_2ND + Config.SCORE_3RD, 2);
                 } else {
-                    this.rewardPlayer(winners[2][0], Math.round(p2));
-                    this.splitPrize(winners[3], p3);
+                    this.rewardPlayer(winners[2][0], Math.round(p2), Config.SCORE_2ND, 2);
+                    this.splitPrize(winners[3], p3, Config.SCORE_3RD, 3);
                 }
             }
         }
@@ -304,14 +308,15 @@ function Table(o, mainServer, category) {
         return summary;
     };
     
-    this.splitPrize = function(players, total) {
+    this.splitPrize = function(players, total, totalScore, rank) {
         var avgPrize = Math.round(total / players.length);
+        var avgScore = totalScore / players.length;
         for(var i in players) {
-            this.rewardPlayer(players[i], avgPrize);
+            this.rewardPlayer(players[i], avgPrize, avgScore, rank);
         }
     };
     
-    this.rewardPlayer = function(p, prize) {
+    this.rewardPlayer = function(p, prize, score, rank) {
         if(!p.isRobot()) {
             if(this.playerRecord[p.id] == null || !this.playerRecord[p.id].deducted) return;
             this.mainServer.myDB.updateAccount(p.id, Config.TRANSACTION.WIN, prize);
@@ -323,6 +328,10 @@ function Table(o, mainServer, category) {
                     }
                 }
             }
+        }
+
+        if(score && this.group_id && p.property.account_id && this.mainServer) {
+            this.mainServer.myDB.recordGroupScore(this.group_id, p.property.account_id, score, rank);
         }
     };
     
