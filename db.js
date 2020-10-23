@@ -96,7 +96,8 @@ SqlDb.prototype.listGroups = function(mainServer, player, dt) {
 SqlDb.prototype.saveGroup = function(mainServer, player, dt) {
     var thisObj = this;
     var mainDB = this.db;
-    var q = "insert into tour_group (group_name,start_time,status) values (?,datetime(?,'unixepoch'),?)";
+    var q = "insert into tour_group (group_name,start_time,status,tour_id) values"
+        + " (?,datetime(?,'unixepoch'),?,(select max(id) from tours where status=2))";
     var params = [dt.gname,dt.time];
     var grpId;
     if(dt.gid) {
@@ -160,7 +161,13 @@ SqlDb.prototype.loadGroups = function(mainServer, cb) {
             rows.forEach((row) => {
                 org = mainServer.groups[row.id];
                 if(org) {
-                    if(org.table) return;
+                    if(org.table) {
+                        if(org.table.dismissed) {
+                            org.table = null;
+                        } else {
+                            return;
+                        }
+                    }
                     if(org.status === Group.STATUS.NEW || org.status === Group.STATUS.OPEN) {
                         mainServer.groups[row.id] = new Group(row, mainServer);
                     } else {
