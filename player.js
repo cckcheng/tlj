@@ -1172,9 +1172,8 @@ Player.prototype.playHonor = function(cards, game, maxSuiteLength) {
             return true;
         }
         if(cardList.length > 1 && cardList[cardList.length-2].rank === game.honorRank) {
-            cards.push(xCard);
-            cards.push(xCard);
-            this.tryAddViceHonor(cardList, cards, 2, game);
+            var num = xCard.extractAll(cards, cardList);
+            this.tryAddViceHonor(cardList, cards, num, game);
             return true;
         }
 

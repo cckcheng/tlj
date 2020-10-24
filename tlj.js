@@ -28,7 +28,7 @@ table.startGame(true);
 
 for(var x=0, p; p=table.players[x]; x++) {
     console.log(p.id);
-    p.aiLevel = 4;
+    p.aiLevel = 3;
 }
 
 //if (true) process.exit(0);
@@ -60,9 +60,26 @@ var curRound = game.currentRound;
 //testEagerPartner();
 //testIsFriend();
 //testDuckCards(p);
-testFollowPlay();
+//testFollowPlay();
+testRecallStrong();
 if(true) {
     process.exit(0);
+}
+
+function testRecallStrong() {
+    p.newHand();
+    addSuit(p, 'S', 14,14,14,13, 11,11,10,10,5,3,3,3);
+    addSuit(p, 'C', 8,8,9,10,10, 13);
+    addSuit(p, 'D', 11,10,10,10,11);
+    p.sortHand();
+    p.resortCards(trump_suite, game.rank);
+    var cards = [];
+        debugger;
+    //var strongHand = p.getStrongHand();
+    //cards = p.recalStrong(strongHand);
+
+    p.playHonor(cards, game);
+    console.log(Card.showCards(cards));
 }
 
 function testPartnerPlay() {

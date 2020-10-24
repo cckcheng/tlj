@@ -1046,10 +1046,16 @@ Card.countCard = function(cards, c) {
     return n;
 };
 
-// extract all same card in a suite
+// extract all same card in a suite, return total number of specific card extracted
 Card.prototype.extractAll = function (cards, cardList) {
     var c = this;
+    var n = 0;
     cardList.forEach((o) => {
-        if(o.equals(c)) cards.push(o);
+        if(o.equals(c)) {
+            cards.push(o);
+            n++;
+        }
     });
+    
+    return n;
 };
