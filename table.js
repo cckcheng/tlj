@@ -446,7 +446,7 @@ Table.MATCH_TYPE = {
         title: 'All Points(5/10/K)',
         brief: '5 10 K',
         maxGame: 6,
-        ranks: [5, 10, 13, 14]
+        ranks: [2, 5, 10, 13, 14]
     },
     FREE: {
         title: 'Free(2->5)',
@@ -1434,7 +1434,9 @@ Table.prototype.getNextRank = function (matchInfo, delta) {
 //        nextIdx = 0;
     if (nextIdx > maxIdx) {
         nextIdx += this.missionAdjust(matchInfo);
-        return this.matchType.ranks[maxIdx] + nextIdx - maxIdx;
+        if(nextIdx > maxIdx) {
+            return this.matchType.ranks[maxIdx] + nextIdx - maxIdx;
+        }
     }
 
     return this.matchType.ranks[nextIdx];
