@@ -25,6 +25,11 @@ Table.Messages = {
         zh: '祝贺，您赢得奖金\u2666{0}'
     },
 
+    InsufficientBalance : {
+        en: 'Insufficient Balance',
+        zh: '账户余额不足',
+    },
+    
     First: {
         en: 'Winner',
 	zh: '冠军'
@@ -67,8 +72,8 @@ Table.Messages = {
         zh: '底分倍数: '
     },
     MissionOn: {
-        en: 'Contract times needed: 2',
-        zh: '要求坐庄次数: 2'
+        en: 'Contract times needed: 2\n',
+        zh: '要求坐庄次数: 2\n'
     },
 
     PlayerIn: {

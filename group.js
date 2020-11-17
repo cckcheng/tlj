@@ -160,14 +160,7 @@ Group.proceedGroup = function(player, gid) {
     }
     
     if(delta < 15 * 60 && group.players[player.property.account_id]) {
-        if(delta < 0) delta = 0;
-        var table = Table.createTable(player, 'INTERMEDIATE', {
-            tableType: Config.tableType, allowJoin: false, showMinBid: false, option: 'B10'
-        });
-        group.table = table;
-        group.status = Group.STATUS.RUNNING;
-        table.group_id = group.id;
-        Table.delayStart(table, delta, player);
+        startScheduledTable(player, delta, group, true);
         return;
     }
 
@@ -178,4 +171,52 @@ Group.proceedGroup = function(player, gid) {
 
     //Mylog.log(JSON.stringify(json));
     player.pushJson(json);
+};
+
+function startScheduledTable(player, delta, group, sendAlert) {
+    if(!player.checkBalance(Table.CATEGORY.INTERMEDIATE.coins)) {
+        if(sendAlert) player.sendMessage(Table.Messages.InsufficientBalance[player.lang]);
+        return;
+    }
+    if(delta < 0) delta = 0;
+    var table = Table.createTable(player, 'INTERMEDIATE', {
+        tableType: Config.tableType, allowJoin: false, showMinBid: false, option: 'B10'
+    });
+    group.table = table;
+    group.status = Group.STATUS.RUNNING;
+    table.group_id = group.id;
+    Table.delayStart(table, delta, player);
+}
+
+// allow automatic start/join scheduled game
+Group.AutoJoin = function(player) {
+    if(player.property.account_id == null) return;
+    var mServer = player.mainServer;
+    var groups = mServer.groups;
+    if(groups == null) return;
+    var s0 = (new Date()).getTime()/1000;
+    for(k in groups) {
+        var group = groups[k];
+        if(group.players[player.property.account_id] == null) continue;
+        switch(group.status) {
+            case Group.STATUS.RUNNING:
+                var table = group.table;
+                if(table == null || table.dismissed) continue;
+                if(table.resumeReturnPlayer(player)) return;  // possible same user switch device
+                if(!player.checkBalance(table.coins)) return;
+                if(!table.canJoin(player)) continue;
+                break;
+
+            case Group.STATUS.OPEN:
+                var s1 = group.startTime.getTime()/1000;
+                var delta = Math.round(s1 - s0);
+                if(delta < -30 * 60) continue;
+
+                if(delta < 15 * 60) {
+                    startScheduledTable(player, delta, group, false);
+                    return;
+                }
+                break;
+        }
+    }
 };
