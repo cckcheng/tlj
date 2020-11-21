@@ -151,7 +151,13 @@ SqlDb.prototype.saveGroup = function(mainServer, player, dt) {
 };
 
 SqlDb.prototype.loadGroups = function(mainServer, cb) {
-    if(mainServer.groups == null) mainServer.groups = {};
+    if(mainServer.groups == null){
+        mainServer.groups = {};
+    } else {
+        for(k in mainServer.groups) {
+            if(mainServer.groups[k].table == null) delete mainServer.groups[k];
+        }
+    }
     var q = 'select g.*,t.summary,(select group_concat(account_id) from group_player where group_id=g.id) accIds'
             + ' from tour_group g left join tables t on t.table_id=g.table_id where g.status!=' + Group.STATUS.CLOSED;
     this.db.all(q, [], (err, rows) => {
