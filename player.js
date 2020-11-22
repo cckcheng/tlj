@@ -1848,6 +1848,8 @@ Player.prototype.suggestedCards = function () {
 
     var cards = this.autoPlayCards(false);
     if (cards.length < firstHand.cardNumber) return null;
+    cards = Card.removeSingles(cards);
+    if(cards.length < 1) return null;
     return Card.cardsToString(cards);
 };
 

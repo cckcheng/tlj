@@ -1046,6 +1046,21 @@ Card.countCard = function(cards, c) {
     return n;
 };
 
+Card.removeSingles = function(cards) {
+    var singleCards = [];
+    cards.forEach((c) => {
+        if(Card.countCard(cards, c) <= 1) singleCards.push(c);
+    });
+    if(singleCards.length > 0) {
+        singleCards.forEach((c) => {
+            x = c.indexOf(cards);
+            cards.splice(x, 1);
+        });
+    }
+    
+    return cards;
+};
+
 // extract all same card in a suite, return total number of specific card extracted
 Card.prototype.extractAll = function (cards, cardList) {
     var c = this;
