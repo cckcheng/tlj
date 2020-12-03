@@ -923,7 +923,8 @@ Player.prototype.playPartnerCards = function (cards) {
     }
 
     if (cards.length < 1) {
-        if(this === game.partner && game.cardsPlayed[partnerDef.suite] > Config.MAX_SAFE_CARDS_PLAYED) return false;
+        //if(this === game.partner && game.cardsPlayed[partnerDef.suite] > Config.MAX_SAFE_CARDS_PLAYED) return false;
+        if(this === game.partner) return false;
         var viceCard = partnerDef.getViceCard(this.currentTable.game.rank);
         for (var x = 0, c; c = cardList[x]; x++) {
             if (c.equals(viceCard)) {

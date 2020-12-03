@@ -54,14 +54,14 @@ game.setTrump(trump_suite);
 game.setPartnerDef('DA0');
 var curRound = game.currentRound;
 
-//testPartnerPlay();
+testPartnerPlay();
 //testPassPartner();
 //testDuckPlay(table.players);
 //testEagerPartner();
 //testIsFriend();
 //testDuckCards(p);
 //testFollowPlay();
-testRecallStrong();
+//testRecallStrong();
 if(true) {
     process.exit(0);
 }
@@ -85,8 +85,9 @@ function testRecallStrong() {
 function testPartnerPlay() {
     var pn = game.partner;
     pn.newHand();
-    addSuit(pn, 'D', 5,5,6,6,11,13);
+    addSuit(pn, 'D', 5,5,6,10,11,13);
     addSuit(pn, 'C', 8,9,10,10, 13);
+    addSuit(pn, 'H', 8,9,10,10, 13);
     pn.sortHand();
     pn.resortCards(trump_suite, 2);
     debugger;
