@@ -420,10 +420,18 @@ Card.removeStrongHands = function (cardList, trump, gameRank, numKeep) {
     return tmpCards;
 };
 
-Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, num, keepTop) {
+Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, num, keepTop, useMaxRank) {
+    if(cardList.length <= num) {
+        cardList.forEach(function (c) {
+            cards.push(c);
+        });
+        return [];
+    }
+
     var tmpCards = cardList.slice();
     var lst = cardList.slice();
-    if(keepTop && lst.length > num) lst.splice(lst.length-1, 1);
+    var maxCard = lst[lst.length-1];
+    if((keepTop || useMaxRank) && lst.length > num) lst.splice(lst.length-1, 1);
     lst = Card.removeStrongHands(lst, trump, gameRank, num);
     if(lst.length < num) lst = cardList.slice();  // unable to keep strong hand any more
     var stat = new HandStat(lst, trump, gameRank);
@@ -465,7 +473,13 @@ Card.selectCardsSmart = function (cards, cardList, pointFirst, trump, gameRank, 
         });
     }
 
-    for (var x = 0, c; x < num; x++) {
+    var total = num;
+    if(useMaxRank) {
+        cards.push(maxCard);
+        tmpCards.splice(tmpCards.length-1, 1);
+        total--;
+    }
+    for (var x = 0, c; x < total; x++) {
         c = lst[x];
         cards.push(c);
         tmpCards.splice(c.indexOf(tmpCards), 1);
@@ -517,7 +531,7 @@ Card.selectCardsByPoint = function (cards, cardList, pointFirst, trump, gameRank
 };
 
 // select pair, trips, quads
-Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, trump, gameRank, keepTop) {
+Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, trump, gameRank, keepTop, useMaxRank) {
     var wholeLength = handType.len + cards.length;
     var tmpCards = cardList.slice();
     var stat = new HandStat(tmpCards, trump, gameRank);
@@ -527,9 +541,15 @@ Card.selectSimpleHandByPoint = function (handType, cards, cardList, pointFirst, 
 
     var isTrump = tmpCards[0].isTrump(trump, gameRank);
     var rnks = stat.sortedRanks(handType.len);
+    var rnk0;
     if (rnks.length > 0) {
-        rnks.sort(sortByPoint(pointFirst, trump, gameRank));
-        var sHand = new SimpleHand(handType, rnks[0], isTrump);
+        if(useMaxRank) {
+            rnk0 = rnks[rnks.length - 1];
+        } else {
+            rnks.sort(sortByPoint(pointFirst, trump, gameRank));
+            rnk0 = rnks[0];
+        }
+        var sHand = new SimpleHand(handType, rnk0, isTrump);
         var cc = Hand.makeCards(sHand, tmpCards, trump, gameRank);
         cc.forEach(function (c) {
             cards.push(c);
