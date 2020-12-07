@@ -795,7 +795,12 @@ Player.prototype.ruff = function (cards, sameSide) {
 
 // use highest trump
 Player.prototype.strongRuff = function(cards, game, leadingHand, firstHand) {
-    this.followPlay(cards, this.trumps, true, true);
+    if(this.trumps.length < firstHand.cardNumber) return;
+    if(firstHand.cardNumber < 2) {
+        cards.push(this.trumps[this.trumps.length-1]);
+    } else {
+        this.followPlay(cards, this.trumps, true, true);
+    }
     var tHand = new Hand(this, cards, game.trump, game.rank);
     if (tHand.compareTo(leadingHand, firstHand) <= 0) {
         cards.splice(0, cards.length);  // clear cards
