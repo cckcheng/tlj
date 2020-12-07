@@ -75,15 +75,18 @@ if(true) {
 function testRuff() {
     p = pp[4];
     p.newHand();
-    addSuit(p, 'S', 13,14,12,12,11,11, 10,10,5,2,2,3,7,9);
-    addSuit(p, 'C', 7,7,9,9,10,10, 13,13,14, 8);
+    addSuit(p, 'S', 13,14,12,12,11,11, 10,10,5,2,2,3,7,9,8);
+    addSuit(p, 'C', 5,7,7,9,9,10,10, 13,13,14);
 //    addSuit(p, 'H', 8,8,9,9,10,10, 13);
 //    addSuit(p, 'D', 11,11,10,10, 3, 7, 8);
     p.sortHand();
     p.resortCards(trump_suite, 8);
 
-    curRound.addHand(pp[0], makeCards('H', 14,13,13));
-    curRound.addHand(pp[3], makeCards('C', 13,11,11));
+//    curRound.addHand(pp[0], makeCards('H', 14,13,13));
+//    curRound.addHand(pp[3], makeCards('C', 13,11,11));
+    curRound.addHand(pp[0], makeCards('H', 13));
+    curRound.addHand(pp[3], makeCards('C', 10));
+//    curRound.addHand(pp[4], makeCards('H', 12));
     debugger;
     var cards = p.autoPlayCards(false);
     
