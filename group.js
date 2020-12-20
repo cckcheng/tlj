@@ -180,7 +180,7 @@ function startScheduledTable(player, delta, group, sendAlert) {
     }
     if(delta < 0) delta = 0;
     var table = Table.createTable(player, 'INTERMEDIATE', {
-        tableType: Config.tableType, allowJoin: false, showMinBid: false, option: 'B10'
+        tableType: Config.tableType, allowJoin: false, showMinBid: false, option: 'B5'
     });
     group.table = table;
     group.status = Group.STATUS.RUNNING;

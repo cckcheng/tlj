@@ -361,6 +361,15 @@ function Table(o, mainServer, category) {
         return s.substr(2);
     };
 
+    this.totalRealPlayer = function() {
+        var n = 0;
+        this.players.forEach(function (p) {
+            if(p.isRobot()) return;
+            n++;
+        });
+        return n;
+    };
+
     this.getAiLevel = function() {
         var ai = Config.AI_LEVEL[this.category];
         for(var x=0,p; p=this.players[x]; x++) {
@@ -677,6 +686,13 @@ Table.prototype.resume = function (player) {
                         msg = player.lang === 'zh' ? '新桌，等待玩家加入...' : 'New table, please wait for other players...';
                     }
                     if(msg != null) player.sendMessage(msg);
+                    if(this.options.minPlayers > 0 && this.totalRealPlayer() === this.options.minPlayers) {
+                        Mylog.log('enough players');
+                        setTimeout(function(t) {
+                            if(t.game) return;
+                            t.startGame();
+                        }, 3000, this);
+                    }
                     return true;
                 }
                 break;
@@ -699,7 +715,7 @@ Table.prototype.addPlayer = function (player, isRobot) {
     }
 
     if (this.players.indexOf(player) >= 0) {
-        Mylog('already in this table');
+        Mylog.log('already in this table');
         return true;
     }
 
@@ -1214,11 +1230,14 @@ function procAfterPause(t) {
     }
 }
 
-Table.prototype.goPause = function (seconds) {
+Table.prototype.goPause = function (seconds, preGame) {
     if (this.autoTime != null) return;  // prevent multi timeout
     this.onPause = true;
     this.autoTimer = setTimeout(function (t) {
         t.autoTimer = null;
+        if(preGame && t.game != null) {
+            return;
+        }
         procAfterPause(t);
     }, seconds * 1000, this);
 };
@@ -1751,7 +1770,7 @@ Table.delayStart = function(table, waitSeconds, player) {
     table.actionPlayerIdx = -1;
     table.resumeTime = (new Date()).getTime() + waitSeconds * 1000;
     table.resume(mServer.activePlayers[player.id]);
-    table.goPause(waitSeconds);
+    table.goPause(waitSeconds, true);
 };
 
 Table.joinTable = function(player, json, tblPlayer) {
