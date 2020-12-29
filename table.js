@@ -687,11 +687,15 @@ Table.prototype.resume = function (player) {
                     }
                     if(msg != null) player.sendMessage(msg);
                     if(this.options.minPlayers > 0 && this.totalRealPlayer() === this.options.minPlayers) {
-                        Mylog.log('enough players');
-                        setTimeout(function(t) {
-                            if(t.game) return;
-                            t.startGame();
-                        }, 3000, this);
+                        //Mylog.log('enough players');
+                        var tm = (new Date()).getTime();
+                        if(this.resumeTime > tm + 10000) {
+                            this.resumeTime = tm + 3000;
+                            setTimeout(function(t) {
+                                if(t.game) return;
+                                t.startGame();
+                            }, 3000, this);
+                        }
                     }
                     return true;
                 }
@@ -1839,7 +1843,7 @@ Table.watchTable = function(player, tid) {
 
     if(table.resumeReturnPlayer(player)) return;
     
-    table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
+    //table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
     player.pushData(table);
 
     table.addVisiter(player);
