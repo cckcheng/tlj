@@ -352,6 +352,7 @@ SqlDb.prototype.updateAccount = function (playerId, action, coins) {
 };
 
 SqlDb.prototype.registerUser = function (player, o) {
+    var port = player.sock.localPort;
     var mainDB = this.db;
 
     if(o.email) {
@@ -435,9 +436,11 @@ SqlDb.prototype.registerUser = function (player, o) {
                     player.regTimes++;
                 }
 
+                var initCoin = (port === Config.PORT_IOS ? Config.INIT_COIN_IOS : Config.INIT_COIN);
+
                 var codeExpiry = calcTime(Config.AUTHCODE_EXPIRE_MINUTE);
-                params = o.gid ? [o.gid, o.email, Config.INIT_COIN, 1, null, null, null]
-                              : [o.email, o.email, Config.INIT_COIN, 0, authCode, codeExpiry, calcTime(0)];
+                params = o.gid ? [o.gid, o.email, initCoin, 1, null, null, null]
+                              : [o.email, o.email, initCoin, 0, authCode, codeExpiry, calcTime(0)];
                 mainDB.run(q21, params, function(err) {
                     if (err) {
                         Mylog.log(err.message);
@@ -459,11 +462,11 @@ SqlDb.prototype.registerUser = function (player, o) {
                                     account_id: accountId,
                                     authcode: authCode,
                                     code_expiry: codeExpiry,
-                                    coins: Config.INIT_COIN
+                                    coins: initCoin
                                 });
                             }
                         }).run('Insert Into transactions (account_id,coins,action) values (?,?,?)',
-                                [accountId,Config.INIT_COIN,Config.TRANSACTION.TOPUP], function(err) {
+                                [accountId,initCoin,Config.TRANSACTION.TOPUP], function(err) {
                             if (err) {
                                 Mylog.log(err.message);
                             }
