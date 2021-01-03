@@ -1820,7 +1820,7 @@ Table.watchTable = function(player, tid) {
 
     if(table.resumeReturnPlayer(player)) return;
     
-    table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
+    //table.broadcastMessage(Table.Messages.PlayerWatching, player.name);
     player.pushData(table);
 
     table.addVisiter(player);
