@@ -74,7 +74,7 @@ SqlDb.prototype.listGroups = function(mainServer, player, dt) {
     }
 
     var q = "select b.account_id,b.player_name,max(b.last_time) ltm from accounts a join users b on a.id=b.account_id"
-        + " where b.last_time>datetime('now','-2 months') group by b.account_id order by ltm desc limit 50";
+        + " where a.coins>200 and b.last_time>datetime('now','-2 months') group by b.account_id order by ltm desc limit 50";
     this.db.all(q, [], (err, rows) => {
         if (err) {
             Mylog.log(err.message);
