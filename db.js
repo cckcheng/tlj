@@ -535,10 +535,6 @@ SqlDb.prototype.readAccount = function (player, o) {
                         thisObj.verifyAccount(player, o);
                     }
                 }
-            } else {
-                if(port === Config.PORT_IOS) {
-                    player.property.member = true;
-                } 
             }
         }
     });
@@ -559,17 +555,12 @@ SqlDb.prototype.recordUser = function (player, o) {
                         thisObj.verifyAccount(player, o);
                     }
                 }
-            } else {
-                if(port === Config.PORT_IOS) {
-                    player.property.member = true;
-                } 
             }
         }
     });
 
     this.getCountryCode(o.ip, function (countryCode) {
-        var q0 = port !== Config.PORT_IOS ? "insert or ignore into users (player_id,port,start_time) values (?,?,datetime('now'))"
-           : "insert or ignore into users (player_id,port,start_time,expire_time) values (?,?,datetime('now'),datetime('now','+1 month'))";
+        var q0 = "insert or ignore into users (player_id,port,start_time) values (?,?,datetime('now'))";
         var q1 = "update users set player_name=?,lang=?,country_code=?,last_time=datetime('now')"
                 + ",ip=? where player_id=?";
         mainDB.serialize(() => {
