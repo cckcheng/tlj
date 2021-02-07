@@ -436,7 +436,7 @@ SqlDb.prototype.registerUser = function (player, o) {
                     player.regTimes++;
                 }
 
-                var initCoin = (port === Config.PORT_IOS ? Config.INIT_COIN_IOS : Config.INIT_COIN);
+                var initCoin = (port === Config.PORT_IOS || port === Config.PORT_PREMIUM_IOS ? Config.INIT_COIN_IOS : Config.INIT_COIN);
 
                 var codeExpiry = calcTime(Config.AUTHCODE_EXPIRE_MINUTE);
                 params = o.gid ? [o.gid, o.email, initCoin, 1, null, null, null]
