@@ -211,6 +211,20 @@ function Table(o, mainServer, category) {
         }
     };
     
+    this.totalPrize = function() {
+        var cnt = 0;
+        this.players.forEach(function (p) {
+            if(p.isRobot()) {
+                cnt += 0.5;
+            } else {
+                cnt += 1;
+            }
+        });
+        var totalPrize = cnt * this.coins * this.prizePoolScale;
+        if(this.passCode > 0) totalPrize *= Config.PRIVATE_PRIZE_SCALE;  // fee for private table
+        return totalPrize;
+    };
+    
     this.matchSummary = function () {
         if(this.games) {
             var gameNum = this.games.length;
@@ -283,9 +297,8 @@ function Table(o, mainServer, category) {
         
         // reword winners
         if(this.coins > 0) {
-            var totalPrize = this.players.length * this.coins * this.prizePoolScale;
-            if(this.passCode > 0) totalPrize *= Config.PRIVATE_PRIZE_SCALE;  // fee for private table
-            var p1 = totalPrize * 0.6;
+            var totalPrize = this.totalPrize();
+            var p1 = totalPrize * 0.5;
             var p2 = totalPrize * 0.25;
             var p3 = totalPrize * 0.15;
             var nm = winners[1].length;
