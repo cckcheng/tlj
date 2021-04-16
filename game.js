@@ -1106,7 +1106,7 @@ Game.prototype.promote = function () {
         }
 
         this.contractor.promote(delta);
-        if (this.contractor !== this.partner) this.partner.promote(delta);
+        if (this.contractor !== this.partner && this.partner != null) this.partner.promote(delta);
 
         if (this.partnerDef.noPartner) {
             this.enSummary += '\nDeclarer (1vs5) promoted ' + delta + ' rank' + (delta > 1 ? 's' : '') + '\n';
