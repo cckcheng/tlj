@@ -113,6 +113,7 @@ SqlDb.prototype.saveGroup = function(mainServer, player, dt) {
             player.pushJson({action: 'msg', lang: 'en', title: 'Alert', content: err.message});
         } else {
             function cb() {
+                mainDB.run("update tour_group set status=? where status=? and start_time<datetime('now','-1 day')", [Group.STATUS.CLOSED, Group.STATUS.FINISHED]);
                 thisObj.listGroups(mainServer, player, {user: 0});
             }
             
