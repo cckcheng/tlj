@@ -354,7 +354,8 @@ function Table(o, mainServer, category) {
     };
     
     this.playerNames = function () {
-        var s = '';
+        if (this.players == null) return '';
+	var s = '';
         this.players.forEach(function (p) {
             s += ', ' + p.name + '(' + Card.RankToString(p.matchInfo.currentRank);
             if (p.id != null && p.sock == null) {
@@ -366,6 +367,7 @@ function Table(o, mainServer, category) {
     };
 
     this.realPlayerNames = function () {
+        if (this.players == null) return '';
         var s = '';
         this.players.forEach(function (p) {
             if(p.isRobot()) return;
