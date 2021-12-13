@@ -22,29 +22,41 @@ app.use(bodyParser.urlencoded({extended: false}));
 //app.use(helmet());
 app.use(limiter);
 
-var inForm = '<form action="/docount" method="POST" id="inputform">'
-    + '<fieldset>'
-    + '<h3>Chinese Character Counter</h3>'
-    + '<label>Input Paragraph</label><br>'
-    + '<textarea id="intxt" name="intxt" rows="20" cols="150"></textarea>'
-    + '<br><br>'
-    + '<button type="submit">Submit</button>'
-    + '</fieldset>'
-    + '</form>';
-
 app.get('/count', function(req, res) {
 //    res.send(toHtml(inForm));
-    res.send(inForm);
+    res.send(inputForm({}));
 });
 
-app.post('/docount', function(req, res) {
+app.post('/count', function(req, res) {
     //res.send('good');
-    res.send(count(req.body.intxt, mxNum));
+//    res.send(count(req.body.intxt, mxNum));
+    var maxNum = req.body.maxnum;
+    if(!maxNum || maxNum<1) maxNum = 10; 
+    res.send(inputForm(req.body, count(req.body.intxt, maxNum)));
 });
 
 server.listen(9000, function() {
     console.log('Server listening on port: ' + 9000);
 });
+
+function inputForm(o, result) {
+    var maxNum = o.maxnum;
+    if(!maxNum || maxNum<1) maxNum = 10; 
+    var inForm = '<form action="/count" method="POST" id="inputform">'
+        + '<fieldset>'
+        + '<h3>Chinese Character Counter</h3>'
+        + '<label>Max. Characters</label>'
+        + '<input type="number" name="maxnum" value="' + maxNum + '"><br><br>'
+        + '<label>Input Paragraph</label><br>'
+        + '<textarea id="intxt" name="intxt" rows="20" cols="150">'
+        + (o.intxt || '') + '</textarea>'
+        + '<br><br>'
+        + '<button type="submit">Submit</button>'
+        + '</fieldset>'
+        + '</form>';
+    if(result) inForm += '<p>' + result + '</p>';
+    return inForm;
+}
 
 function toHtml(str) {
     var html = '<html><head><meta content="text/html; charset=UTF-8" http-equiv="content-type"></head>';
@@ -67,8 +79,7 @@ function count(txt, maxNum) {
     });
     
     var numArr = Object.values(mp);
-    numArr.sort();
-    numArr.reverse();
+    numArr.sort(function(a, b){return b-a;});
     
     var res = '';
     var total = 0;
@@ -79,7 +90,7 @@ function count(txt, maxNum) {
         if(num === prev) continue;
         prev = num;
         var mch = findMatch(mp, num);
-console.log('===' + mch);
+//console.log('===' + mch);
         res += mch + ': ' + num + '<br>';
         maxNum -= mch.length;
     }
