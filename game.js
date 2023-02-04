@@ -265,7 +265,7 @@ function Hand(player, cards, trump, rank) {
                 if (tractors.length < 1) return -1;
                 if (tractors[tractors.length - 1].type.len < sHand.type.len) return -1;
                 if (other.isTrump) {
-                    tractorsOther = stat.getTractors(2, true);
+                    tractorsOther = statOther.getTractors(2, true);
                     if (tractorsOther[tractorsOther.length - 1].minRank >= tractors[tractors.length - 1].minRank) return -1;
                 }
                 break;
@@ -274,7 +274,7 @@ function Hand(player, cards, trump, rank) {
                 if (tractors.length < 1) return -1;
                 if (tractors[tractors.length - 1].type.len < sHand.type.len) return -1;
                 if (other.isTrump) {
-                    tractorsOther = stat.getTractors(3, true);
+                    tractorsOther = statOther.getTractors(3, true);
                     if (tractorsOther[tractorsOther.length - 1].minRank >= tractors[tractors.length - 1].minRank) return -1;
                 }
                 break;
@@ -283,7 +283,7 @@ function Hand(player, cards, trump, rank) {
                 if (tractors.length < 1) return -1;
                 if (tractors[tractors.length - 1].type.len < sHand.type.len) return -1;
                 if (other.isTrump) {
-                    tractorsOther = stat.getTractors(4, true);
+                    tractorsOther = statOther.getTractors(4, true);
                     if (tractorsOther[tractorsOther.length - 1].minRank >= tractors[tractors.length - 1].minRank) return -1;
                 }
                 break;
