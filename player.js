@@ -1981,6 +1981,7 @@ Player.prototype.possiblePartnerRuff = function (game, suite) {
 Player.prototype.possiblePartnerWin = function (game) {
     var leadingHand = game.currentRound.getLeadingHand();
     if(!leadingHand.isTrump) return false;
+    if(leadingHand.cardNumber > 1) return false;  // probably unable to beat the leading hand (most cases the leading hand is declarer
     
     if(game.isTopRank(Card.SUITE.JOKER, leadingHand.maxRank)) return false;
     
