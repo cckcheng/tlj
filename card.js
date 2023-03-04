@@ -595,10 +595,12 @@ function sortByPoint(pointFirst, trump, gameRank) {
         var aPoint = Card.getPointByTrumpRank(a, trump, gameRank);
         var bPoint = Card.getPointByTrumpRank(b, trump, gameRank);
         if (aPoint === bPoint) return a - b;
-        if (aPoint === 5 && bPoint < 5) {
-            return a + (13-5) - b;
-        } else if (bPoint === 5 && aPoint < 5) {
-            return a - (b + (13-5));
+        if(!pointFirst && gameRank !== 5) {
+            if (aPoint === 5 && bPoint < 5) {
+                return 12.5 - b;
+            } else if (bPoint === 5 && aPoint < 5) {
+                return a - 12.5;
+            }
         }
         return pointFirst ? bPoint - aPoint : aPoint - bPoint;
     };

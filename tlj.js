@@ -54,13 +54,13 @@ game.setTrump(trump_suite);
 game.setPartnerDef('DA0');
 var curRound = game.currentRound;
 
-testPartnerPlay();
+//testPartnerPlay();
 //testPassPartner();
 //testDuckPlay(table.players);
 //testEagerPartner();
 //testIsFriend();
 //testDuckCards(p);
-//testFollowPlay();
+testFollowPlay();
 //testRecallStrong();
 if(true) {
     process.exit(0);
@@ -212,8 +212,8 @@ function testDuckCards(p) {
 
 function testFollowPlay() {
     var cards = [];
-    cards.push(new Card(Card.SUITE.SPADE, 9));
-    cards.push(new Card(Card.SUITE.SPADE, 9));
+    //cards.push(new Card(Card.SUITE.SPADE, 9));
+    //cards.push(new Card(Card.SUITE.SPADE, 9));
     cards.push(new Card(Card.SUITE.SPADE, 7));
     cards.push(new Card(Card.SUITE.SPADE, 7));
     cards.push(new Card(Card.SUITE.SPADE, 8));
@@ -254,13 +254,13 @@ function testFollowPlay() {
     players[1].addCard(new Card(Card.SUITE.SPADE, 5));
     players[1].addCard(new Card(Card.SUITE.SPADE, 5));
     
-    //players[1].addCard(new Card(Card.SUITE.SPADE, 6));
-    players[1].addCard(new Card(Card.SUITE.SPADE, 6));
-    players[1].addCard(new Card(Card.SUITE.SPADE, 7));
-    players[1].addCard(new Card(Card.SUITE.SPADE, 7));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 12));
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 12));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 14));
+    players[1].addCard(new Card(Card.SUITE.SPADE, 14));
     //players[1].addCard(new Card(Card.SUITE.SPADE, 8));
     players[1].addCard(new Card(Card.SUITE.SPADE, 8));
-    players[1].addCard(new Card(Card.SUITE.SPADE, 9));
+    //players[1].addCard(new Card(Card.SUITE.SPADE, 9));
     players[1].addCard(new Card(Card.SUITE.SPADE, 9));
     players[1].addCard(new Card(Card.SUITE.SPADE, 10));
     players[1].addCard(new Card(Card.SUITE.SPADE, 10));
